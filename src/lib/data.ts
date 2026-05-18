@@ -1,0 +1,326 @@
+export const I18N = {
+  es: {
+    appName: 'CoinDev',
+    tagline: 'Tus finanzas, claras como el agua',
+    home: 'Inicio',
+    movements: 'Movimientos',
+    add: 'Registrar',
+    reports: 'Reportes',
+    netBalance: 'Balance neto',
+    thisMonth: 'Este mes',
+    income: 'Ingresos',
+    expense: 'Gastos',
+    savings: 'Ahorro',
+    accounts: 'Cuentas',
+    budgets: 'Presupuestos',
+    fixed: 'Gastos fijos',
+    seeAll: 'Ver todo',
+    recent: 'Movimientos recientes',
+    perDay: 'al día',
+    ofIncome: 'del ingreso',
+    week: 'Semana',
+    month: 'Mes',
+    quarter: 'Trimestre',
+    year: 'Año',
+    newMovement: 'Nuevo movimiento',
+    incomeType: 'Ingreso',
+    expenseType: 'Gasto',
+    amount: 'Monto',
+    category: 'Categoría',
+    account: 'Cuenta',
+    date: 'Fecha',
+    description: 'Descripción',
+    descriptionHint: '¿En qué fue?',
+    recurring: 'Fijo / recurrente',
+    save: 'Guardar movimiento',
+    cancel: 'Cancelar',
+    today: 'Hoy',
+    yesterday: 'Ayer',
+    accountsTitle: 'Tus cuentas',
+    addAccount: 'Agregar cuenta',
+    balance: 'Saldo',
+    cash: 'Efectivo',
+    bank: 'Cuenta bancaria',
+    savingsAcc: 'Ahorros',
+    credit: 'Tarjeta de crédito',
+    budgetsTitle: 'Presupuestos',
+    spent: 'Gastado',
+    of: 'de',
+    left: 'restante',
+    over: 'sobre el límite',
+    fixedTitle: 'Compromisos fijos',
+    fixedSubtitle: 'Lo que se va cada mes sin pensarlo',
+    monthly: 'mensual',
+    nextDue: 'Próximo pago',
+    reportsTitle: 'Reportes',
+    distribution: 'Distribución por categoría',
+    evolution: 'Evolución del año',
+    topMerchants: 'Donde más gastas',
+    goodMorning: 'Buenos días',
+    goodAfternoon: 'Buenas tardes',
+    goodEvening: 'Buenas noches',
+    transfer: 'Transferencia',
+    updated: 'Actualizado',
+    vsLastMonth: 'vs. mes anterior',
+    transactions: 'movimientos',
+    searchPlaceholder: 'Buscar movimientos, cuentas…',
+    searchMov: 'Buscar movimiento…',
+    all: 'Todo',
+    settings: 'Ajustes',
+    language: 'Idioma',
+    mainCurrency: 'Moneda principal',
+    notifications: 'Notificaciones',
+    security: 'Seguridad',
+    theme: 'Tema',
+    signOut: 'Cerrar sesión',
+    used: 'Usado',
+  },
+  en: {
+    appName: 'CoinDev',
+    tagline: 'Your money, crystal clear',
+    home: 'Home',
+    movements: 'Transactions',
+    add: 'Add',
+    reports: 'Reports',
+    netBalance: 'Net balance',
+    thisMonth: 'This month',
+    income: 'Income',
+    expense: 'Expenses',
+    savings: 'Savings',
+    accounts: 'Accounts',
+    budgets: 'Budgets',
+    fixed: 'Fixed costs',
+    seeAll: 'See all',
+    recent: 'Recent activity',
+    perDay: 'per day',
+    ofIncome: 'of income',
+    week: 'Week',
+    month: 'Month',
+    quarter: 'Quarter',
+    year: 'Year',
+    newMovement: 'New transaction',
+    incomeType: 'Income',
+    expenseType: 'Expense',
+    amount: 'Amount',
+    category: 'Category',
+    account: 'Account',
+    date: 'Date',
+    description: 'Description',
+    descriptionHint: 'What was it?',
+    recurring: 'Fixed / recurring',
+    save: 'Save transaction',
+    cancel: 'Cancel',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    accountsTitle: 'Your accounts',
+    addAccount: 'Add account',
+    balance: 'Balance',
+    cash: 'Cash',
+    bank: 'Bank account',
+    savingsAcc: 'Savings',
+    credit: 'Credit card',
+    budgetsTitle: 'Budgets',
+    spent: 'Spent',
+    of: 'of',
+    left: 'left',
+    over: 'over limit',
+    fixedTitle: 'Fixed commitments',
+    fixedSubtitle: 'What leaves your account every month',
+    monthly: 'monthly',
+    nextDue: 'Next due',
+    reportsTitle: 'Reports',
+    distribution: 'Category breakdown',
+    evolution: 'Year evolution',
+    topMerchants: 'Where you spend most',
+    goodMorning: 'Good morning',
+    goodAfternoon: 'Good afternoon',
+    goodEvening: 'Good evening',
+    transfer: 'Transfer',
+    updated: 'Updated',
+    vsLastMonth: 'vs. last month',
+    transactions: 'transactions',
+    searchPlaceholder: 'Search transactions, accounts…',
+    searchMov: 'Search transactions…',
+    all: 'All',
+    settings: 'Settings',
+    language: 'Language',
+    mainCurrency: 'Main currency',
+    notifications: 'Notifications',
+    security: 'Security',
+    theme: 'Theme',
+    signOut: 'Sign out',
+    used: 'Used',
+  },
+} as const;
+
+export type Lang = 'es' | 'en';
+export type T = typeof I18N['es'] | typeof I18N['en'];
+export type Currency = 'CRC' | 'USD';
+
+export const FX = { CRC: 1, USD: 1 / 510 };
+
+export function fmtMoney(
+  crcAmount: number,
+  currency: Currency = 'CRC',
+  opts: { showCurrency?: boolean; decimals?: number; sign?: boolean } = {}
+): string {
+  const v = crcAmount * FX[currency];
+  const { decimals = currency === 'USD' ? 2 : 0, sign = false } = opts;
+  const abs = Math.abs(v);
+  const n = abs.toLocaleString(currency === 'USD' ? 'en-US' : 'es-CR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+  const symbol = currency === 'USD' ? '$' : '₡';
+  const prefix = sign ? (v >= 0 ? '+' : '−') : v < 0 ? '−' : '';
+  return `${prefix}${symbol}${n}`;
+}
+
+export interface Category {
+  id: string;
+  label_es: string;
+  label_en: string;
+  color: string;
+  glyph: string;
+}
+
+export const CATEGORIES: Category[] = [
+  { id: 'rent',      label_es: 'Alquiler',      label_en: 'Rent',          color: '#9F7BFF', glyph: 'home'   },
+  { id: 'groceries', label_es: 'Supermercado',  label_en: 'Groceries',     color: '#4FE0A9', glyph: 'cart'   },
+  { id: 'transport', label_es: 'Transporte',    label_en: 'Transport',     color: '#5B9BFF', glyph: 'car'    },
+  { id: 'food',      label_es: 'Comida fuera',  label_en: 'Eating out',    color: '#FF8BB5', glyph: 'fork'   },
+  { id: 'subs',      label_es: 'Suscripciones', label_en: 'Subscriptions', color: '#5BE5D1', glyph: 'play'   },
+  { id: 'utilities', label_es: 'Servicios',     label_en: 'Utilities',     color: '#F2C94C', glyph: 'bolt'   },
+  { id: 'health',    label_es: 'Salud',         label_en: 'Health',        color: '#FF6B83', glyph: 'pulse'  },
+  { id: 'fun',       label_es: 'Ocio',          label_en: 'Leisure',       color: '#C77DFF', glyph: 'spark'  },
+  { id: 'salary',    label_es: 'Salario',       label_en: 'Salary',        color: '#4FE0A9', glyph: 'wallet' },
+  { id: 'freelance', label_es: 'Freelance',     label_en: 'Freelance',     color: '#5BE5D1', glyph: 'laptop' },
+];
+
+export const CAT = Object.fromEntries(CATEGORIES.map(c => [c.id, c])) as Record<string, Category>;
+
+export interface Account {
+  id: string;
+  name: string;
+  kind: 'bank' | 'cash' | 'savings' | 'credit';
+  balance: number;
+  color: string;
+  tail: string;
+  limit?: number;
+}
+
+export const ACCOUNTS: Account[] = [
+  { id: 'bac',        name: 'BAC Cuenta Corriente', kind: 'bank',    balance: 845000,   color: '#5B9BFF', tail: '••4271' },
+  { id: 'cash',       name: 'Efectivo',             kind: 'cash',    balance: 62500,    color: '#4FE0A9', tail: '' },
+  { id: 'savings',    name: 'Ahorros emergencia',   kind: 'savings', balance: 1820000,  color: '#F2C94C', tail: '' },
+  { id: 'credomatic', name: 'Credomatic Visa',       kind: 'credit',  balance: -287400,  color: '#9F7BFF', tail: '••1108', limit: 1500000 },
+];
+
+export interface Movement {
+  id: string;
+  type: 'income' | 'expense';
+  cat: string;
+  amount: number;
+  account: string;
+  date: Date;
+  desc: string;
+  fixed: boolean;
+}
+
+function mkMovs(): Movement[] {
+  const today = new Date(2026, 4, 18);
+  const d = (back: number) => new Date(today.getFullYear(), today.getMonth(), today.getDate() - back);
+  return [
+    { id: 'm1',  type: 'expense', cat: 'food',      amount: 8400,    account: 'cash',       date: d(0),  desc: 'Soda La Casona',          fixed: false },
+    { id: 'm2',  type: 'expense', cat: 'transport', amount: 3200,    account: 'cash',       date: d(0),  desc: 'Uber al trabajo',          fixed: false },
+    { id: 'm3',  type: 'expense', cat: 'groceries', amount: 47800,   account: 'bac',        date: d(1),  desc: 'Auto Mercado',             fixed: false },
+    { id: 'm4',  type: 'expense', cat: 'food',      amount: 5650,    account: 'credomatic', date: d(1),  desc: "Rappi · McDonald's",       fixed: false },
+    { id: 'm5',  type: 'income',  cat: 'freelance', amount: 320000,  account: 'bac',        date: d(2),  desc: 'Cliente · diseño web',     fixed: false },
+    { id: 'm6',  type: 'expense', cat: 'subs',      amount: 8900,    account: 'credomatic', date: d(3),  desc: 'Spotify Premium',          fixed: true  },
+    { id: 'm7',  type: 'expense', cat: 'subs',      amount: 9400,    account: 'credomatic', date: d(3),  desc: 'Netflix',                  fixed: true  },
+    { id: 'm8',  type: 'expense', cat: 'fun',       amount: 18200,   account: 'cash',       date: d(4),  desc: 'Cine + palomitas',         fixed: false },
+    { id: 'm9',  type: 'expense', cat: 'transport', amount: 12500,   account: 'bac',        date: d(5),  desc: 'Gasolina Delta',           fixed: false },
+    { id: 'm10', type: 'expense', cat: 'groceries', amount: 23900,   account: 'bac',        date: d(7),  desc: 'PriceSmart',               fixed: false },
+    { id: 'm11', type: 'expense', cat: 'health',    amount: 32000,   account: 'bac',        date: d(8),  desc: 'Farmacia Fischel',         fixed: false },
+    { id: 'm12', type: 'expense', cat: 'food',      amount: 14600,   account: 'credomatic', date: d(9),  desc: 'Rappi · Pops',             fixed: false },
+    { id: 'm13', type: 'income',  cat: 'salary',    amount: 950000,  account: 'bac',        date: d(11), desc: 'Salario quincenal',        fixed: true  },
+    { id: 'm14', type: 'expense', cat: 'rent',      amount: 320000,  account: 'bac',        date: d(13), desc: 'Alquiler · Sabana',        fixed: true  },
+    { id: 'm15', type: 'expense', cat: 'utilities', amount: 18500,   account: 'bac',        date: d(13), desc: 'ICE · electricidad',       fixed: true  },
+    { id: 'm16', type: 'expense', cat: 'utilities', amount: 24800,   account: 'bac',        date: d(14), desc: 'Kölbi · internet',         fixed: true  },
+    { id: 'm17', type: 'expense', cat: 'utilities', amount: 6200,    account: 'bac',        date: d(14), desc: 'Acueductos · agua',        fixed: true  },
+    { id: 'm18', type: 'expense', cat: 'subs',      amount: 4500,    account: 'credomatic', date: d(16), desc: 'iCloud 200GB',             fixed: true  },
+    { id: 'm19', type: 'expense', cat: 'fun',       amount: 28000,   account: 'cash',       date: d(17), desc: 'Bar con amigos',           fixed: false },
+    { id: 'm20', type: 'expense', cat: 'groceries', amount: 38400,   account: 'bac',        date: d(20), desc: 'Auto Mercado',             fixed: false },
+    { id: 'm21', type: 'expense', cat: 'transport', amount: 14000,   account: 'bac',        date: d(22), desc: 'Gasolina',                 fixed: false },
+    { id: 'm22', type: 'expense', cat: 'food',      amount: 7800,    account: 'credomatic', date: d(23), desc: 'Almuerzo · Rostipollos',   fixed: false },
+    { id: 'm23', type: 'income',  cat: 'salary',    amount: 950000,  account: 'bac',        date: d(26), desc: 'Salario quincenal',        fixed: true  },
+    { id: 'm24', type: 'expense', cat: 'fun',       amount: 9500,    account: 'cash',       date: d(28), desc: 'Concierto promotor',       fixed: false },
+  ];
+}
+
+export const MOVEMENTS = mkMovs();
+
+export interface Budget {
+  cat: string;
+  limit: number;
+  spent: number;
+}
+
+export const BUDGETS: Budget[] = [
+  { cat: 'groceries', limit: 150000, spent: 110100 },
+  { cat: 'food',      limit: 80000,  spent: 36450  },
+  { cat: 'transport', limit: 50000,  spent: 29700  },
+  { cat: 'fun',       limit: 60000,  spent: 55700  },
+  { cat: 'health',    limit: 40000,  spent: 32000  },
+];
+
+export const YEAR_EVOLUTION = [
+  { m: 'Ene', income: 1820000, expense: 1410000, future: false },
+  { m: 'Feb', income: 1900000, expense: 1380000, future: false },
+  { m: 'Mar', income: 2050000, expense: 1620000, future: false },
+  { m: 'Abr', income: 1890000, expense: 1490000, future: false },
+  { m: 'May', income: 2220000, expense: 1505000, future: false },
+  { m: 'Jun', income: 0, expense: 0, future: true },
+  { m: 'Jul', income: 0, expense: 0, future: true },
+  { m: 'Ago', income: 0, expense: 0, future: true },
+  { m: 'Sep', income: 0, expense: 0, future: true },
+  { m: 'Oct', income: 0, expense: 0, future: true },
+  { m: 'Nov', income: 0, expense: 0, future: true },
+  { m: 'Dic', income: 0, expense: 0, future: true },
+];
+
+export type Period = 'week' | 'month' | 'quarter' | 'year';
+
+export function getRange(period: Period) {
+  const today = new Date(2026, 4, 18);
+  const start = new Date(today);
+  if (period === 'week') start.setDate(today.getDate() - 7);
+  else if (period === 'month') start.setDate(1);
+  else if (period === 'quarter') start.setMonth(today.getMonth() - 2);
+  else if (period === 'year') start.setMonth(0, 1);
+  return { start, end: today };
+}
+
+export function filterMovs(movs: Movement[], period: Period) {
+  const { start, end } = getRange(period);
+  return movs.filter(m => m.date >= start && m.date <= end);
+}
+
+export function aggregate(movs: Movement[]) {
+  const income = movs.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0);
+  const expense = movs.filter(m => m.type === 'expense').reduce((s, m) => s + m.amount, 0);
+  const fixedExp = movs.filter(m => m.type === 'expense' && m.fixed).reduce((s, m) => s + m.amount, 0);
+  const net = income - expense;
+  const savingsRate = income > 0 ? net / income : 0;
+  const fixedRatio = income > 0 ? fixedExp / income : 0;
+  const savingsAcc = ACCOUNTS.find(a => a.id === 'savings')!.balance;
+  const dailyExp = expense / 30;
+  const emergencyDays = dailyExp > 0 ? Math.round(savingsAcc / dailyExp) : 0;
+  return { income, expense, net, savingsRate, fixedRatio, fixedExp, emergencyDays };
+}
+
+export function greet(t: T, name: string): string {
+  const h = new Date().getHours();
+  const phrase = h < 12 ? t.goodMorning : h < 19 ? t.goodAfternoon : t.goodEvening;
+  return `${phrase}, ${name}`;
+}
