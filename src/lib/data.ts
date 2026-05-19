@@ -347,7 +347,7 @@ export const FX_RATES: FxRate[] = [
 export type Period = 'week' | 'month' | 'quarter' | 'year';
 
 export function getRange(period: Period) {
-  const today = new Date(2026, 4, 18);
+  const today = new Date();
   const start = new Date(today);
   if (period === 'week') start.setDate(today.getDate() - 7);
   else if (period === 'month') start.setDate(1);
