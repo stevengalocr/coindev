@@ -5,9 +5,9 @@ import { createClient } from '@/lib/supabase';
 import {
   fetchProfile, fetchAccounts, fetchTransactions, fetchBudgets,
   fetchSavingsGoals, fetchUnreadNotificationsCount,
-  insertTransaction, upsertProfile,
+  insertTransaction, insertAccount, insertBudget, insertSavingsGoal, upsertProfile,
   toAccount, toMovement, toBudget, toGoal,
-  type DbProfile, type NewTransaction,
+  type DbProfile, type NewTransaction, type NewAccount, type NewBudget, type NewSavingsGoal,
 } from '@/lib/db';
 import type { Account, Movement, Budget, SavingsGoal } from '@/lib/data';
 
@@ -44,6 +44,9 @@ interface DataState {
   unreadNotifications: number;
   loading: boolean;
   addTransaction: (tx: NewTransaction) => Promise<void>;
+  addAccount: (data: NewAccount) => Promise<void>;
+  addBudget: (data: NewBudget) => Promise<void>;
+  addGoal: (data: NewSavingsGoal) => Promise<void>;
   saveProfile: (patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme'>>) => Promise<void>;
   refetch: () => Promise<void>;
 }
@@ -100,6 +103,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await load();
   }, [load]);
 
+  const addAccount = useCallback(async (data: NewAccount) => {
+    await insertAccount(data);
+    await load();
+  }, [load]);
+
+  const addBudget = useCallback(async (data: NewBudget) => {
+    await insertBudget(data);
+    await load();
+  }, [load]);
+
+  const addGoal = useCallback(async (data: NewSavingsGoal) => {
+    await insertSavingsGoal(data);
+    await load();
+  }, [load]);
+
   const saveProfile = useCallback(async (
     patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme'>>
   ) => {
@@ -110,7 +128,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   return (
     <DataCtx.Provider value={{
       user, profile, accounts, movements, budgets, goals, yearEvolution,
-      unreadNotifications, loading, addTransaction, saveProfile, refetch: load,
+      unreadNotifications, loading,
+      addTransaction, addAccount, addBudget, addGoal,
+      saveProfile, refetch: load,
     }}>
       {children}
     </DataCtx.Provider>

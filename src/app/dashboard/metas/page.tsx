@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { fmtMoney, type SavingsGoal } from '@/lib/data';
 import { MoneyText } from '@/components/shell/MoneyText';
+import { AddGoalModal } from '@/components/screens/AddGoalModal';
 
 function statusColor(status: SavingsGoal['status']): string {
   switch (status) {
@@ -32,6 +34,7 @@ function monthsRemaining(target: Date): number {
 export default function MetasPage() {
   const { t, currency, lang } = useApp();
   const { goals, loading } = useData();
+  const [addOpen, setAddOpen] = useState(false);
 
   const totalTarget  = goals.reduce((s, g) => s + g.target, 0);
   const totalCurrent = goals.reduce((s, g) => s + g.current, 0);
@@ -50,7 +53,7 @@ export default function MetasPage() {
           </h1>
           <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{t.goalsSubtitle}</div>
         </div>
-        <button style={{
+        <button onClick={() => setAddOpen(true)} style={{
           display: 'flex', alignItems: 'center', gap: 6,
           padding: '0 16px', height: 36, borderRadius: 'var(--r-md)',
           background: 'var(--gradient-hero)', color: '#0C0E14',
@@ -59,6 +62,7 @@ export default function MetasPage() {
           + {t.addGoal}
         </button>
       </div>
+      <AddGoalModal open={addOpen} onClose={() => setAddOpen(false)} />
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>

@@ -356,14 +356,25 @@ export default function DashboardPage() {
       </div>
 
       <style>{`
+        .stats-grid {
+          grid-template-areas: 'hero hero income expense savings' !important;
+          grid-template-columns: 1.5fr 1fr 1fr 1fr !important;
+        }
+        .stats-grid > *:first-child { grid-area: hero; }
         @media (max-width: 1100px) {
-          .stats-grid { grid-template-columns: 1fr 1fr !important; }
+          .stats-grid {
+            grid-template-columns: 1fr 1fr !important;
+            grid-template-areas: 'hero hero' 'income expense' 'savings savings' !important;
+          }
           .body-row { grid-template-columns: 1fr !important; }
           .accounts-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 640px) {
-          .stats-grid { grid-template-columns: 1fr !important; }
-          .accounts-grid { grid-template-columns: 1fr !important; }
+          .stats-grid {
+            grid-template-columns: 1fr 1fr !important;
+            grid-template-areas: 'hero hero' 'income expense' 'savings savings' !important;
+          }
+          .accounts-grid { grid-template-columns: 1fr 1fr !important; }
         }
       `}</style>
     </div>

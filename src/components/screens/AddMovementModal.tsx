@@ -6,17 +6,17 @@ import { useData } from '@/hooks/useData';
 import { CATEGORIES } from '@/lib/data';
 import { Icon } from '@/components/ui/Icon';
 
-interface Props { open: boolean; onClose: () => void }
+interface Props { open: boolean; onClose: () => void; initialFixed?: boolean; initialType?: 'expense' | 'income' }
 
-export function AddMovementModal({ open, onClose }: Props) {
+export function AddMovementModal({ open, onClose, initialFixed = false, initialType = 'expense' }: Props) {
   const { t, currency, lang } = useApp();
   const { accounts, addTransaction } = useData();
-  const [type, setType] = useState<'expense' | 'income'>('expense');
+  const [type, setType] = useState<'expense' | 'income'>(initialType);
   const [amount, setAmount] = useState('');
-  const [cat, setCat] = useState('food');
+  const [cat, setCat] = useState(initialType === 'income' ? 'salary' : 'food');
   const [accId, setAccId] = useState('');
   const [desc, setDesc] = useState('');
-  const [fixed, setFixed] = useState(false);
+  const [fixed, setFixed] = useState(initialFixed);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -26,8 +26,8 @@ export function AddMovementModal({ open, onClose }: Props) {
   }, [accounts, accId]);
 
   useEffect(() => {
-    if (!open) { setAmount(''); setDesc(''); setFixed(false); setCat('food'); setType('expense'); setError(''); }
-  }, [open]);
+    if (!open) { setAmount(''); setDesc(''); setFixed(initialFixed); setCat(initialType === 'income' ? 'salary' : 'food'); setType(initialType); setError(''); }
+  }, [open, initialFixed, initialType]);
 
   useEffect(() => {
     if (!open) return;

@@ -7,11 +7,13 @@ import { CAT, fmtMoney } from '@/lib/data';
 import { Icon } from '@/components/ui/Icon';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
+import { AddBudgetModal } from '@/components/screens/AddBudgetModal';
 
 export default function PresupuestosPage() {
   const { t, currency, lang } = useApp();
   const { budgets, loading } = useData();
   const [hoverId, setHoverId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const totalLimit = budgets.reduce((s, b) => s + b.limit, 0);
   const totalSpent = budgets.reduce((s, b) => s + b.spent, 0);
@@ -28,9 +30,10 @@ export default function PresupuestosPage() {
           <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.budgetsTitle}</h1>
           <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{monthCap}</div>
         </div>
-        <button style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <button onClick={() => setAddOpen(true)} style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <Icon name="plus" size={15} stroke={2.4} /> {lang === 'es' ? 'Nuevo presupuesto' : 'New budget'}
         </button>
+        <AddBudgetModal open={addOpen} onClose={() => setAddOpen(false)} />
       </div>
 
       {loading ? (

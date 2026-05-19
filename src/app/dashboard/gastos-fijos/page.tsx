@@ -1,15 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { CAT, fmtMoney } from '@/lib/data';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { Icon } from '@/components/ui/Icon';
+import { AddMovementModal } from '@/components/screens/AddMovementModal';
 
 export default function GastosFijosPage() {
   const { t, currency, lang } = useApp();
   const { movements, loading } = useData();
+  const [addOpen, setAddOpen] = useState(false);
 
   const fixedMovs = movements.filter(m => m.type === 'expense' && m.fixed);
   const map: Record<string, typeof fixedMovs[0]> = {};
@@ -24,10 +27,16 @@ export default function GastosFijosPage() {
 
   return (
     <div style={{ maxWidth: 760 }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.fixedTitle}</h1>
-        <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{t.fixedSubtitle}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.fixedTitle}</h1>
+          <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{t.fixedSubtitle}</div>
+        </div>
+        <button onClick={() => setAddOpen(true)} style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="plus" size={15} stroke={2.4} /> {lang === 'es' ? 'Nuevo gasto fijo' : 'New fixed expense'}
+        </button>
       </div>
+      <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} initialFixed initialType="expense" />
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>Cargando…</div>

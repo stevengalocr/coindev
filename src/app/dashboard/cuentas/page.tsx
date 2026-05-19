@@ -1,15 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { fmtMoney, type Account } from '@/lib/data';
 import { Icon } from '@/components/ui/Icon';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { AccountGlyph } from '@/components/shell/CategoryGlyph';
+import { AddAccountModal } from '@/components/screens/AddAccountModal';
 
 export default function CuentasPage() {
   const { t, currency, lang } = useApp();
   const { accounts, movements, loading } = useData();
+  const [addOpen, setAddOpen] = useState(false);
 
   const total = accounts.reduce((s, a) => s + a.balance, 0);
 
@@ -23,8 +26,8 @@ export default function CuentasPage() {
             <MoneyText amount={total} currency={currency} size={26} weight={600} />
           </div>
         </div>
-        <button style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <Icon name="plus" size={15} stroke={2} /> {t.addAccount}
+        <button onClick={() => setAddOpen(true)} style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="plus" size={15} stroke={2.4} /> {t.addAccount}
         </button>
       </div>
 
@@ -37,14 +40,16 @@ export default function CuentasPage() {
               recent={movements.filter(m => m.account === acc.id).slice(0, 3)}
             />
           ))}
-          <button style={{
+          <button onClick={() => setAddOpen(true)} style={{
             padding: '28px 20px', borderRadius: 20, background: 'transparent',
             border: '1.5px dashed var(--border-strong)', color: 'var(--text-3)',
             fontSize: 13.5, fontWeight: 500, display: 'flex', alignItems: 'center',
             justifyContent: 'center', gap: 10, cursor: 'pointer', minHeight: 140,
+            transition: 'border-color 150ms, color 150ms',
           }}>
             <Icon name="plus" size={18} stroke={1.5} /> {t.addAccount}
           </button>
+          <AddAccountModal open={addOpen} onClose={() => setAddOpen(false)} />
         </div>
       )}
     </div>

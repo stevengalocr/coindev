@@ -72,16 +72,10 @@ function BrandPanel() {
   }, []);
 
   const features = [
-    { icon: '₡', label: 'Multi-moneda', sub: 'CRC · USD · EUR en tiempo real' },
+    { icon: '💱', label: 'Multi-moneda', sub: 'CRC · USD · EUR en tiempo real' },
     { icon: '📊', label: 'Presupuestos inteligentes', sub: 'Alertas al 80% de cada categoría' },
     { icon: '🎯', label: 'Metas de ahorro', sub: 'Seguimiento mes a mes con proyecciones' },
     { icon: '🔒', label: 'Datos solo tuyos', sub: 'RLS por usuario en cada tabla' },
-  ];
-
-  const stats = [
-    { value: '₡2.4M', label: 'Saldo total' },
-    { value: '38%', label: 'Tasa de ahorro' },
-    { value: '142d', label: 'Fondo emergencia' },
   ];
 
   return (
@@ -93,9 +87,7 @@ function BrandPanel() {
     }} className="login-brand-panel">
 
       {/* Fondo animado */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-      }}>
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <div style={{
           position: 'absolute', top: '-10%', left: '-20%',
           width: 480, height: 480, borderRadius: '50%',
@@ -114,7 +106,6 @@ function BrandPanel() {
           background: 'radial-gradient(circle, rgba(91,229,209,0.10) 0%, transparent 70%)',
           filter: 'blur(30px)',
         }} />
-        {/* Grid sutil */}
         <svg style={{ position: 'absolute', inset: 0, opacity: 0.03, width: '100%', height: '100%' }}>
           <defs>
             <pattern id="grid" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
@@ -132,9 +123,12 @@ function BrandPanel() {
             width: 44, height: 44, borderRadius: 14,
             background: 'linear-gradient(135deg, #5BE5D1 0%, #5B9BFF 50%, #9F7BFF 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20, fontWeight: 800, color: '#07090F',
             boxShadow: '0 0 32px rgba(91,155,255,0.4)',
-          }}>₡</div>
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#07090F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
           <div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#EDF0F7', letterSpacing: '-0.4px' }}>CoinDev</div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', marginTop: 1 }}>FINANZAS PERSONALES</div>
@@ -160,25 +154,8 @@ function BrandPanel() {
         </p>
       </div>
 
-      {/* Stats flotantes */}
+      {/* Features list */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{
-          display: 'flex', gap: 10, marginBottom: 28,
-        }}>
-          {stats.map(s => (
-            <div key={s.label} style={{
-              flex: 1, padding: '14px 12px',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 14, backdropFilter: 'blur(10px)',
-            }}>
-              <div className="mono" style={{ fontSize: 18, fontWeight: 700, color: '#EDF0F7', letterSpacing: '-0.03em' }}>{s.value}</div>
-              <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Features list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {features.map((f, i) => (
             <div key={f.label} style={{
@@ -326,8 +303,11 @@ export default function LoginPage() {
               width: 36, height: 36, borderRadius: 11,
               background: 'linear-gradient(135deg, #5BE5D1 0%, #5B9BFF 50%, #9F7BFF 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 17, fontWeight: 800, color: '#07090F',
-            }}>₡</div>
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#07090F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+              </svg>
+            </div>
             <span style={{ fontSize: 18, fontWeight: 700, color: '#EDF0F7' }}>CoinDev</span>
           </div>
 

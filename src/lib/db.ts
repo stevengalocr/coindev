@@ -201,6 +201,83 @@ export async function fetchBudgets(): Promise<DbBudget[]> {
 }
 
 // ── Mutations ───────────────────────────────────────────────────────
+
+export interface NewAccount {
+  name: string;
+  type: 'checking' | 'savings' | 'cash' | 'credit_card';
+  initial_balance: number;
+  color: string;
+  currency?: string;
+  credit_limit?: number;
+  last_digits?: string;
+}
+
+export async function insertAccount(data: NewAccount): Promise<void> {
+  const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  const { error } = await sb.from('accounts').insert({
+    user_id: user.id,
+    name: data.name,
+    type: data.type,
+    current_balance: data.initial_balance,
+    currency: data.currency ?? 'CRC',
+    color: data.color,
+    credit_limit: data.credit_limit ?? null,
+    last_digits: data.last_digits ?? null,
+    is_active: true,
+  });
+  if (error) throw error;
+}
+
+export interface NewBudget {
+  cat: string;
+  limit_amount: number;
+}
+
+export async function insertBudget(data: NewBudget): Promise<void> {
+  const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  const category_id = CAT_TO_DB[data.cat] ?? null;
+  if (!category_id) throw new Error('Categoría inválida');
+  const { error } = await sb.from('budgets').insert({
+    user_id: user.id,
+    category_id,
+    limit_amount: data.limit_amount,
+    period: 'monthly',
+    is_active: true,
+  });
+  if (error) throw error;
+}
+
+export interface NewSavingsGoal {
+  name: string;
+  description?: string;
+  icon: string;
+  target_amount: number;
+  currency?: string;
+  target_date?: string;
+}
+
+export async function insertSavingsGoal(data: NewSavingsGoal): Promise<void> {
+  const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  const { error } = await sb.from('savings_goals').insert({
+    user_id: user.id,
+    name: data.name,
+    description: data.description ?? null,
+    icon: data.icon,
+    target_amount: data.target_amount,
+    current_amount: 0,
+    currency: data.currency ?? 'CRC',
+    target_date: data.target_date ?? null,
+    status: 'active',
+  });
+  if (error) throw error;
+}
+
 export interface NewTransaction {
   type: 'income' | 'expense';
   cat: string;
