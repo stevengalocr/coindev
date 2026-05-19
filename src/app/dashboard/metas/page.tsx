@@ -17,13 +17,14 @@ function statusColor(status: SavingsGoal['status']): string {
   }
 }
 
-function statusLabel(status: SavingsGoal['status'], t: { completed: string; paused: string }): string {
-  switch (status) {
-    case 'active':    return 'Activa';
-    case 'completed': return t.completed;
-    case 'paused':    return t.paused;
-    case 'cancelled': return 'Cancelada';
-  }
+function statusLabel(status: SavingsGoal['status'], lang: string): string {
+  const map = {
+    active:    lang === 'es' ? 'Activa'     : 'Active',
+    completed: lang === 'es' ? 'Completada' : 'Completed',
+    paused:    lang === 'es' ? 'Pausada'    : 'Paused',
+    cancelled: lang === 'es' ? 'Cancelada'  : 'Cancelled',
+  };
+  return map[status];
 }
 
 function monthsRemaining(target: Date): number {
@@ -40,12 +41,11 @@ export default function MetasPage() {
   const totalTarget  = goals.reduce((s, g) => s + g.target, 0);
   const totalCurrent = goals.reduce((s, g) => s + g.current, 0);
   const overallPct   = totalTarget > 0 ? Math.round((totalCurrent / totalTarget) * 100) : 0;
-
-  const activeGoals = goals.filter(g => g.status === 'active');
-  const otherGoals  = goals.filter(g => g.status !== 'active');
+  const activeGoals  = goals.filter(g => g.status === 'active');
+  const otherGoals   = goals.filter(g => g.status !== 'active');
 
   return (
-    <div>
+    <div style={{ maxWidth: 1100 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, gap: 12, flexWrap: 'wrap' }}>
         <div>
@@ -54,20 +54,52 @@ export default function MetasPage() {
           </h1>
           <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{t.goalsSubtitle}</div>
         </div>
-        <button onClick={() => setAddOpen(true)} style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '0 16px', height: 36, borderRadius: 'var(--r-md)',
-          background: 'var(--gradient-hero)', color: '#0C0E14',
-          fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em', flexShrink: 0,
-        }}>
-          + {t.addGoal}
+        <button
+          onClick={() => setAddOpen(true)}
+          style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        >
+          <Icon name="plus" size={15} stroke={2.4} /> {t.addGoal}
         </button>
       </div>
       <AddGoalModal open={addOpen} onClose={() => setAddOpen(false)} />
 
+      {/* States */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>
-          {lang === 'es' ? 'Cargando…' : 'Loading…'}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Skeleton summary */}
+          <div className="cd-card" style={{ padding: '22px 24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ height: 10, width: '50%', borderRadius: 4, background: 'var(--surface-3)' }} />
+                  <div style={{ height: 24, width: '70%', borderRadius: 6, background: 'var(--surface-3)' }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 16, height: 6, borderRadius: 3, background: 'var(--surface-3)' }} />
+          </div>
+          {/* Skeleton cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            {[1, 2].map(i => (
+              <div key={i} className="cd-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--surface-3)', flexShrink: 0 }} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ height: 14, width: '55%', borderRadius: 4, background: 'var(--surface-3)' }} />
+                    <div style={{ height: 10, width: '35%', borderRadius: 4, background: 'var(--surface-3)' }} />
+                  </div>
+                  <div style={{ height: 20, width: 50, borderRadius: 6, background: 'var(--surface-3)' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ height: 18, width: '40%', borderRadius: 4, background: 'var(--surface-3)' }} />
+                    <div style={{ height: 12, width: '25%', borderRadius: 4, background: 'var(--surface-3)' }} />
+                  </div>
+                  <div style={{ height: 5, borderRadius: 3, background: 'var(--surface-3)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : goals.length === 0 ? (
         <div className="cd-card" style={{ padding: '60px 24px', textAlign: 'center' }}>
@@ -77,11 +109,18 @@ export default function MetasPage() {
           <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
             {lang === 'es' ? 'Sin metas todavía' : 'No goals yet'}
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text-3)', maxWidth: 300, margin: '0 auto' }}>
+          <div style={{ fontSize: 13, color: 'var(--text-3)', maxWidth: 300, margin: '0 auto 20px' }}>
             {lang === 'es'
               ? 'Crea tu primera meta de ahorro para empezar a seguir tu progreso.'
               : 'Create your first savings goal to start tracking your progress.'}
           </div>
+          <button
+            onClick={() => setAddOpen(true)}
+            style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <Icon name="plus" size={14} stroke={2.4} />
+            {lang === 'es' ? 'Crear primera meta' : 'Create first goal'}
+          </button>
         </div>
       ) : (
         <>
@@ -95,33 +134,24 @@ export default function MetasPage() {
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }} className="goals-summary">
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 6 }}>
-                    {t.target}
-                  </div>
-                  <MoneyText amount={totalTarget} currency={currency} size={28} weight={600} />
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 6 }}>{t.target}</div>
+                  <MoneyText amount={totalTarget} currency={currency} size={26} weight={600} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 6 }}>
-                    {t.achieved}
-                  </div>
-                  <MoneyText amount={totalCurrent} currency={currency} size={28} weight={600} style={{ color: 'var(--income)' }} />
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 6 }}>{t.achieved}</div>
+                  <MoneyText amount={totalCurrent} currency={currency} size={26} weight={600} style={{ color: 'var(--income)' }} />
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 6 }}>
                     {lang === 'es' ? 'Progreso global' : 'Overall progress'}
                   </div>
-                  <span className="mono" style={{ fontSize: 28, fontWeight: 600, color: overallPct >= 75 ? 'var(--income)' : overallPct >= 40 ? 'var(--warn)' : 'var(--text)' }}>
+                  <span className="mono" style={{ fontSize: 26, fontWeight: 600, color: overallPct >= 75 ? 'var(--income)' : overallPct >= 40 ? 'var(--warn)' : 'var(--text)' }}>
                     {overallPct}%
                   </span>
                 </div>
               </div>
               <div style={{ marginTop: 16, height: 6, borderRadius: 3, background: 'var(--surface-2)', overflow: 'hidden' }}>
-                <div style={{
-                  height: '100%', borderRadius: 3,
-                  width: `${Math.min(100, overallPct)}%`,
-                  background: 'var(--gradient-hero)',
-                  transition: 'width 600ms ease',
-                }} />
+                <div style={{ height: '100%', borderRadius: 3, width: `${Math.min(100, overallPct)}%`, background: 'var(--gradient-hero)', transition: 'width 600ms ease' }} />
               </div>
             </div>
           </div>
@@ -129,11 +159,11 @@ export default function MetasPage() {
           {/* Active goals grid */}
           {activeGoals.length > 0 && (
             <>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
                 {lang === 'es' ? `Activas · ${activeGoals.length}` : `Active · ${activeGoals.length}`}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginBottom: 24 }}>
-                {activeGoals.map(g => <GoalCard key={g.id} goal={g} t={t} currency={currency} lang={lang} />)}
+                {activeGoals.map(g => <GoalCard key={g.id} goal={g} currency={currency} lang={lang} t={t} />)}
               </div>
             </>
           )}
@@ -141,11 +171,11 @@ export default function MetasPage() {
           {/* Other goals */}
           {otherGoals.length > 0 && (
             <>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
                 {lang === 'es' ? `Otras · ${otherGoals.length}` : `Others · ${otherGoals.length}`}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-                {otherGoals.map(g => <GoalCard key={g.id} goal={g} t={t} currency={currency} lang={lang} />)}
+                {otherGoals.map(g => <GoalCard key={g.id} goal={g} currency={currency} lang={lang} t={t} />)}
               </div>
             </>
           )}
@@ -168,74 +198,46 @@ interface CardProps {
   lang: string;
 }
 
-function GoalCard({ goal, t, currency, lang }: CardProps) {
+function GoalCard({ goal, currency, lang, t }: CardProps) {
   const pct = goal.target > 0 ? Math.min(100, Math.round((goal.current / goal.target) * 100)) : 0;
   const remaining = goal.target - goal.current;
-  const monthlyNeeded = goal.targetDate && remaining > 0
-    ? remaining / monthsRemaining(goal.targetDate)
-    : null;
-  const barColor = goal.status === 'completed'
-    ? 'var(--income)'
-    : goal.status === 'paused'
-    ? 'var(--text-3)'
-    : 'var(--blue)';
+  const monthlyNeeded = goal.targetDate && remaining > 0 ? remaining / monthsRemaining(goal.targetDate) : null;
+  const barColor = goal.status === 'completed' ? 'var(--income)' : goal.status === 'paused' ? 'var(--text-3)' : 'var(--blue)';
   const sColor = statusColor(goal.status);
 
   return (
-    <div className="cd-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14, cursor: 'default' }}>
-      {/* Top row: icon + name + badge */}
+    <div className="cd-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Top: icon + name + badge */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{
-          width: 42, height: 42, borderRadius: 12, background: 'var(--surface-2)',
-          border: '1px solid var(--border)',
-          display: 'grid', placeItems: 'center', flexShrink: 0, color: 'var(--text-2)',
-        }}>
+        <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', flexShrink: 0, color: 'var(--text-2)' }}>
           <Icon name={goal.icon} size={20} stroke={1.7} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 14, fontWeight: 600, color: 'var(--text)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {goal.name}
           </div>
           {goal.description && (
-            <div style={{
-              fontSize: 11.5, color: 'var(--text-3)', marginTop: 2,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
+            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {goal.description}
             </div>
           )}
         </div>
-        <span style={{
-          fontSize: 10, fontWeight: 600, color: sColor,
-          border: `1px solid ${sColor}`, borderRadius: 6,
-          padding: '2px 7px', letterSpacing: '0.04em', flexShrink: 0,
-          opacity: 0.85,
-        }}>
-          {statusLabel(goal.status, t)}
+        <span style={{ fontSize: 10, fontWeight: 600, color: sColor, border: `1px solid ${sColor}`, borderRadius: 6, padding: '2px 7px', letterSpacing: '0.04em', flexShrink: 0, opacity: 0.9 }}>
+          {statusLabel(goal.status, lang)}
         </span>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
           <MoneyText amount={goal.current} currency={currency} size={18} weight={700} />
           <span style={{ fontSize: 11.5, color: 'var(--text-3)' }}>
             {lang === 'es' ? 'de' : 'of'}{' '}
-            <span className="mono" style={{ fontWeight: 600, color: 'var(--text-2)' }}>
-              {fmtMoney(goal.target, currency)}
-            </span>
+            <span className="mono" style={{ fontWeight: 600, color: 'var(--text-2)' }}>{fmtMoney(goal.target, currency)}</span>
           </span>
         </div>
         <div style={{ height: 5, borderRadius: 3, background: 'var(--surface-2)', overflow: 'hidden' }}>
-          <div style={{
-            height: '100%', borderRadius: 3,
-            width: `${pct}%`,
-            background: barColor,
-            transition: 'width 600ms ease',
-          }} />
+          <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: barColor, transition: 'width 600ms ease' }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
           <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>{pct}%</span>
@@ -249,11 +251,7 @@ function GoalCard({ goal, t, currency, lang }: CardProps) {
 
       {/* Monthly needed */}
       {monthlyNeeded !== null && goal.status === 'active' && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '10px 12px', borderRadius: 'var(--r-md)', background: 'var(--surface)',
-          border: '1px solid var(--border)',
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 'var(--r-md)', background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{t.monthlyNeeded}</span>
           <MoneyText amount={monthlyNeeded} currency={currency} size={13} weight={700} style={{ color: 'var(--blue)' }} />
         </div>
