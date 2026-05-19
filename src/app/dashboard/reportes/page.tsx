@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
-import { CAT, filterMovs, fmtMoney, type Period } from '@/lib/data';
+import { CAT, filterMovs, fmtMoney, aggregate, type Period } from '@/lib/data';
 import { PeriodChips } from '@/components/shell/PeriodChips';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { Donut, YearChart } from '@/components/shell/Charts';
@@ -11,7 +11,7 @@ import { MoneyText } from '@/components/shell/MoneyText';
 
 export default function ReportesPage() {
   const { t, currency, lang } = useApp();
-  const { movements, yearEvolution, loading } = useData();
+  const { movements, accounts, yearEvolution, loading } = useData();
   const [period, setPeriod] = useState<Period>('month');
 
   const movs = filterMovs(movements, period);
@@ -30,6 +30,13 @@ export default function ReportesPage() {
   const savings = income - totalExp;
   const savingsRate = income > 0 ? (savings / income) * 100 : 0;
 
+  // Financial health metrics
+  const savingsBalance = accounts.find(a => a.kind === 'savings')?.balance ?? 0;
+  const health = aggregate(movs, savingsBalance);
+  const healthSavingsRate = health.savingsRate * 100;
+  const healthFixedRatio = health.fixedRatio * 100;
+  const healthEmergencyDays = health.emergencyDays;
+
   const now = new Date();
   const yearLabel = now.getFullYear().toString();
 
@@ -42,6 +49,86 @@ export default function ReportesPage() {
         </div>
         <PeriodChips value={period} onChange={setPeriod} t={t} />
       </div>
+
+      {/* ── Financial Health ──────────────────────────────────────── */}
+      {!loading && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>{t.healthTitle}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }} className="rep-health">
+            {/* Savings rate */}
+            <div className="cd-card" style={{ padding: '18px 20px' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 500, marginBottom: 8 }}>
+                {t.savingsRateLabel}
+              </div>
+              <div className="mono" style={{
+                fontSize: 28, fontWeight: 700, lineHeight: 1,
+                color: healthSavingsRate >= 20 ? 'var(--income)' : healthSavingsRate >= 10 ? 'var(--warn)' : 'var(--expense)',
+              }}>
+                {Math.round(healthSavingsRate)}%
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 6 }}>
+                {lang === 'es' ? 'Ahorro sobre ingresos' : 'Savings over income'}
+              </div>
+              <div style={{ marginTop: 10, height: 4, borderRadius: 2, background: 'var(--surface-2)', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: 2,
+                  width: `${Math.min(100, Math.max(0, healthSavingsRate))}%`,
+                  background: healthSavingsRate >= 20 ? 'var(--income)' : healthSavingsRate >= 10 ? 'var(--warn)' : 'var(--expense)',
+                  transition: 'width 600ms ease',
+                }} />
+              </div>
+            </div>
+
+            {/* Fixed / Income ratio */}
+            <div className="cd-card" style={{ padding: '18px 20px' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 500, marginBottom: 8 }}>
+                {t.fixedRatioLabel}
+              </div>
+              <div className="mono" style={{
+                fontSize: 28, fontWeight: 700, lineHeight: 1,
+                color: healthFixedRatio < 40 ? 'var(--income)' : healthFixedRatio < 60 ? 'var(--warn)' : 'var(--expense)',
+              }}>
+                {Math.round(healthFixedRatio)}%
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 6 }}>
+                {lang === 'es' ? 'Compromisos mensuales' : 'Monthly commitments'}
+              </div>
+              <div style={{ marginTop: 10, height: 4, borderRadius: 2, background: 'var(--surface-2)', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: 2,
+                  width: `${Math.min(100, Math.max(0, healthFixedRatio))}%`,
+                  background: healthFixedRatio < 40 ? 'var(--income)' : healthFixedRatio < 60 ? 'var(--warn)' : 'var(--expense)',
+                  transition: 'width 600ms ease',
+                }} />
+              </div>
+            </div>
+
+            {/* Emergency days */}
+            <div className="cd-card" style={{ padding: '18px 20px' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 500, marginBottom: 8 }}>
+                {t.emergencyDaysLabel}
+              </div>
+              <div className="mono" style={{
+                fontSize: 28, fontWeight: 700, lineHeight: 1,
+                color: healthEmergencyDays >= 90 ? 'var(--income)' : healthEmergencyDays >= 30 ? 'var(--warn)' : 'var(--expense)',
+              }}>
+                {healthEmergencyDays}
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 6 }}>
+                {lang === 'es' ? 'Con gastos actuales' : 'At current spend'}
+              </div>
+              <div style={{ marginTop: 10, height: 4, borderRadius: 2, background: 'var(--surface-2)', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: 2,
+                  width: `${Math.min(100, (healthEmergencyDays / 180) * 100)}%`,
+                  background: healthEmergencyDays >= 90 ? 'var(--income)' : healthEmergencyDays >= 30 ? 'var(--warn)' : 'var(--expense)',
+                  transition: 'width 600ms ease',
+                }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>Cargando…</div>
@@ -141,6 +228,7 @@ export default function ReportesPage() {
         @media (max-width: 640px) {
           .rep-summary { grid-template-columns: 1fr !important; }
           .rep-grid { grid-template-columns: 1fr !important; }
+          .rep-health { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 900px) {
           .rep-grid { grid-template-columns: 1fr !important; }
