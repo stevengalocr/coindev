@@ -75,10 +75,8 @@ export default function DivisasPage() {
   return (
     <div style={{ maxWidth: 760, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      <style>{`@keyframes cd-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
-
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>
             {t.divisas}
@@ -219,6 +217,8 @@ export default function DivisasPage() {
           )}
         </div>
       </div>
+
+      <style>{`@keyframes cd-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
 
       {/* Rate table */}
       <div className="cd-card" style={{ padding: '20px 22px' }}>

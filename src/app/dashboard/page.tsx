@@ -72,18 +72,24 @@ export default function DashboardPage() {
   const donutData = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 5)
     .map(([catId, value]) => ({ value, color: CAT[catId]?.color || '#888', cat: catId }));
 
+  const now2 = new Date();
+  const dateStr2 = now2.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+  const dateLabel = dateStr2.charAt(0).toUpperCase() + dateStr2.slice(1);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.03em' }}>{t.netBalance}</div>
-          <PeriodChips value={period} onChange={setPeriod} t={t} />
+      {/* Page header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>
+            {t.home}
+          </h1>
+          <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Icon name="check" size={11} stroke={2} style={{ color: 'var(--income)', flexShrink: 0 }} />
+            {dateLabel}
+          </div>
         </div>
-        <div style={{ fontSize: 12, color: 'var(--text-4)', display: 'flex', alignItems: 'center', gap: 5 }}>
-          <Icon name="check" size={12} stroke={2} style={{ color: 'var(--income)' }} />
-          {t.updated} {new Date().toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' })}
-        </div>
+        <PeriodChips value={period} onChange={setPeriod} t={t} />
       </div>
 
       {/* Stats grid */}
