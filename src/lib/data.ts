@@ -361,16 +361,15 @@ export function filterMovs(movs: Movement[], period: Period) {
   return movs.filter(m => m.date >= start && m.date <= end);
 }
 
-export function aggregate(movs: Movement[]) {
+export function aggregate(movs: Movement[], savingsBalance = 0) {
   const income = movs.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0);
   const expense = movs.filter(m => m.type === 'expense').reduce((s, m) => s + m.amount, 0);
   const fixedExp = movs.filter(m => m.type === 'expense' && m.fixed).reduce((s, m) => s + m.amount, 0);
   const net = income - expense;
   const savingsRate = income > 0 ? net / income : 0;
   const fixedRatio = income > 0 ? fixedExp / income : 0;
-  const savingsAcc = ACCOUNTS.find(a => a.id === 'savings')!.balance;
   const dailyExp = expense / 30;
-  const emergencyDays = dailyExp > 0 ? Math.round(savingsAcc / dailyExp) : 0;
+  const emergencyDays = dailyExp > 0 ? Math.round(savingsBalance / dailyExp) : 0;
   return { income, expense, net, savingsRate, fixedRatio, fixedExp, emergencyDays };
 }
 

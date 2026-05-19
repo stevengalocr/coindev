@@ -110,7 +110,7 @@ export function YearChart({ data, big = false }: YearChartProps) {
   const incomePath = present.map(({ d, i }, k) => `${k === 0 ? 'M' : 'L'} ${xFor(i)} ${yFor(d.income)}`).join(' ');
   const expensePath = present.map(({ d, i }, k) => `${k === 0 ? 'M' : 'L'} ${xFor(i)} ${yFor(d.expense)}`).join(' ');
   const last = present[present.length - 1];
-  const currentIdx = 4;
+  const currentIdx = new Date().getMonth();
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} width="100%" style={{ display: 'block', marginTop: 8 }}>

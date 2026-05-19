@@ -54,9 +54,9 @@ export default function DashboardPage() {
   const [period, setPeriod] = useState<Period>('month');
 
   const filtered = filterMovs(movements, period);
-  const { income, expense, net } = aggregate(filtered);
-  const savings = net;
   const savingsAcc = accounts.find(a => a.kind === 'savings');
+  const { income, expense, net } = aggregate(filtered, savingsAcc?.balance ?? 0);
+  const savings = net;
 
   if (loading) {
     return (
@@ -306,6 +306,17 @@ export default function DashboardPage() {
             {t.seeAll} <Icon name="arrow-right" size={13} stroke={2} />
           </Link>
         </div>
+        {accounts.length === 0 ? (
+          <div className="cd-card" style={{ padding: '40px 24px', textAlign: 'center' }}>
+            <Icon name="bank" size={36} style={{ color: 'var(--text-3)', marginBottom: 12 }} />
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
+              {lang === 'es' ? 'Sin cuentas aún' : 'No accounts yet'}
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-3)' }}>
+              {lang === 'es' ? 'Agrega tu primera cuenta para comenzar a registrar movimientos.' : 'Add your first account to start tracking movements.'}
+            </div>
+          </div>
+        ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }} className="accounts-grid">
           {accounts.map(acc => {
             const isCredit = acc.kind === 'credit';
@@ -341,6 +352,7 @@ export default function DashboardPage() {
             );
           })}
         </div>
+        )}
       </div>
 
       <style>{`

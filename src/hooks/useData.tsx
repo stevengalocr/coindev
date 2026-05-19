@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { createClient } from '@/lib/supabase';
 import {
   fetchProfile, fetchAccounts, fetchTransactions, fetchBudgets,
-  insertTransaction, seedDemoData, upsertProfile,
+  insertTransaction, upsertProfile,
   toAccount, toMovement, toBudget,
   type DbProfile, type NewTransaction,
 } from '@/lib/db';
@@ -72,28 +72,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       ]);
 
       const lang = dbProfile?.language ?? 'es';
-
-      if (dbAccts.length === 0) {
-        await seedDemoData();
-        const [a2, t2, b2, p2] = await Promise.all([
-          fetchAccounts(), fetchTransactions(), fetchBudgets(), fetchProfile(),
-        ]);
-        const accs = a2.map(toAccount);
-        const movs = t2.map(toMovement);
-        setAccounts(accs);
-        setMovements(movs);
-        setBudgets(b2.map(b => toBudget(b, movs)));
-        setProfile(p2);
-        setYearEvolution(buildYearEvolution(movs, p2?.language ?? 'es'));
-      } else {
-        const accs = dbAccts.map(toAccount);
-        const movs = dbTxs.map(toMovement);
-        setAccounts(accs);
-        setMovements(movs);
-        setBudgets(dbBudgets.map(b => toBudget(b, movs)));
-        setProfile(dbProfile);
-        setYearEvolution(buildYearEvolution(movs, lang));
-      }
+      const accs = dbAccts.map(toAccount);
+      const movs = dbTxs.map(toMovement);
+      setAccounts(accs);
+      setMovements(movs);
+      setBudgets(dbBudgets.map(b => toBudget(b, movs)));
+      setProfile(dbProfile);
+      setYearEvolution(buildYearEvolution(movs, lang));
     } finally {
       setLoading(false);
     }

@@ -183,7 +183,9 @@ function DashInner({ children }: { children: ReactNode }) {
         </header>
 
         <main style={{ flex: 1, padding: '24px 28px 100px', minWidth: 0 }} className="main-pad">
-          {children}
+          <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+            {children}
+          </div>
         </main>
       </div>
 
