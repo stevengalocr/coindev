@@ -1,19 +1,22 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AppProvider, useApp } from '@/hooks/useApp';
 import { Icon } from '@/components/ui/Icon';
 import { greet } from '@/lib/data';
+import { SettingsPanel } from '@/components/screens/SettingsPanel';
+import { AddMovementModal } from '@/components/screens/AddMovementModal';
 
 const NAV_ITEMS = [
-  { href: '/dashboard',             icon: 'home',   key: 'home'      },
-  { href: '/dashboard/movimientos', icon: 'list',   key: 'movements' },
-  { href: '/dashboard/cuentas',     icon: 'bank',   key: 'accounts'  },
-  { href: '/dashboard/presupuestos',icon: 'flag',   key: 'budgets'   },
-  { href: '/dashboard/gastos-fijos',icon: 'shield', key: 'fixed'     },
-  { href: '/dashboard/reportes',    icon: 'chart',  key: 'reports'   },
+  { href: '/dashboard',              icon: 'home',   key: 'home'      },
+  { href: '/dashboard/movimientos',  icon: 'list',   key: 'movements' },
+  { href: '/dashboard/cuentas',      icon: 'bank',   key: 'accounts'  },
+  { href: '/dashboard/presupuestos', icon: 'flag',   key: 'budgets'   },
+  { href: '/dashboard/gastos-fijos', icon: 'shield', key: 'fixed'     },
+  { href: '/dashboard/divisas',      icon: 'swap',   key: 'divisas'   },
+  { href: '/dashboard/reportes',     icon: 'chart',  key: 'reports'   },
 ] as const;
 
 const MOBILE_NAV = [
@@ -27,6 +30,8 @@ const MOBILE_NAV = [
 function DashInner({ children }: { children: ReactNode }) {
   const { t } = useApp();
   const pathname = usePathname();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   const navLabels: Record<string, string> = {
     home:      t.home,
@@ -34,6 +39,7 @@ function DashInner({ children }: { children: ReactNode }) {
     accounts:  t.accounts,
     budgets:   t.budgets,
     fixed:     t.fixed,
+    divisas:   t.divisas,
     reports:   t.reports,
   };
 
@@ -171,6 +177,7 @@ function DashInner({ children }: { children: ReactNode }) {
                 flexShrink: 0,
               }}
               aria-label={t.settings}
+              onClick={() => setSettingsOpen(true)}
             >
               <Icon name="settings" size={15} stroke={1.6} />
             </button>
@@ -271,6 +278,7 @@ function DashInner({ children }: { children: ReactNode }) {
 
             {/* New movement CTA */}
             <button
+              onClick={() => setAddOpen(true)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -340,6 +348,7 @@ function DashInner({ children }: { children: ReactNode }) {
                       flexShrink: 0,
                     }}
                     aria-label={t.add}
+                    onClick={() => setAddOpen(true)}
                   >
                     <Icon name="plus" size={22} stroke={2.5} />
                   </button>
@@ -389,6 +398,9 @@ function DashInner({ children }: { children: ReactNode }) {
           .main-pad { padding: 16px 16px 110px !important; }
         }
       `}</style>
+
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} />
     </div>
   );
 }

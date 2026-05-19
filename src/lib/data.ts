@@ -74,6 +74,15 @@ export const I18N = {
     theme: 'Tema',
     signOut: 'Cerrar sesión',
     used: 'Usado',
+    divisas: 'Divisas',
+    converter: 'Conversor',
+    liveRates: 'Tipo de cambio',
+    buyRate: 'Compra',
+    sellRate: 'Venta',
+    rateHistory: 'Histórico 12m',
+    enterAmount: 'Ingresa un monto',
+    dark: 'Oscuro',
+    light: 'Claro',
   },
   en: {
     appName: 'CoinDev',
@@ -150,6 +159,15 @@ export const I18N = {
     theme: 'Theme',
     signOut: 'Sign out',
     used: 'Used',
+    divisas: 'Rates',
+    converter: 'Converter',
+    liveRates: 'Exchange rate',
+    buyRate: 'Buy',
+    sellRate: 'Sell',
+    rateHistory: '12m history',
+    enterAmount: 'Enter amount',
+    dark: 'Dark',
+    light: 'Light',
   },
 } as const;
 
@@ -287,6 +305,43 @@ export const YEAR_EVOLUTION = [
   { m: 'Oct', income: 0, expense: 0, future: true },
   { m: 'Nov', income: 0, expense: 0, future: true },
   { m: 'Dic', income: 0, expense: 0, future: true },
+];
+
+export const FX_HISTORY = [
+  { m: 'Jun', rate: 485 },
+  { m: 'Jul', rate: 490 },
+  { m: 'Ago', rate: 495 },
+  { m: 'Sep', rate: 492 },
+  { m: 'Oct', rate: 498 },
+  { m: 'Nov', rate: 500 },
+  { m: 'Dic', rate: 505 },
+  { m: 'Ene', rate: 502 },
+  { m: 'Feb', rate: 507 },
+  { m: 'Mar', rate: 508 },
+  { m: 'Abr', rate: 509 },
+  { m: 'May', rate: 510 },
+];
+
+export interface FxRate {
+  code: string;
+  symbol: string;
+  flag: string;
+  name_es: string;
+  name_en: string;
+  crc: number;
+  buy: number;
+  sell: number;
+  change: number;
+  up: boolean;
+}
+
+export const FX_RATES: FxRate[] = [
+  { code: 'USD', symbol: '$',    flag: '🇺🇸', name_es: 'Dólar americano',   name_en: 'US Dollar',        crc: 510,  buy: 508,  sell: 512,  change: 0.8,  up: true  },
+  { code: 'EUR', symbol: '€',    flag: '🇪🇺', name_es: 'Euro',              name_en: 'Euro',             crc: 558,  buy: 555,  sell: 561,  change: -0.3, up: false },
+  { code: 'GBP', symbol: '£',    flag: '🇬🇧', name_es: 'Libra esterlina',   name_en: 'British pound',    crc: 651,  buy: 648,  sell: 654,  change: 0.5,  up: true  },
+  { code: 'MXN', symbol: 'MX$',  flag: '🇲🇽', name_es: 'Peso mexicano',     name_en: 'Mexican peso',     crc: 30,   buy: 30,   sell: 31,   change: 0.1,  up: true  },
+  { code: 'CAD', symbol: 'CA$',  flag: '🇨🇦', name_es: 'Dólar canadiense',  name_en: 'Canadian dollar',  crc: 374,  buy: 372,  sell: 376,  change: -0.2, up: false },
+  { code: 'JPY', symbol: '¥',    flag: '🇯🇵', name_es: 'Yen japonés',       name_en: 'Japanese yen',     crc: 3,    buy: 3,    sell: 4,    change: 0.3,  up: true  },
 ];
 
 export type Period = 'week' | 'month' | 'quarter' | 'year';

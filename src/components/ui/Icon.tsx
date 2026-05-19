@@ -81,6 +81,7 @@ export function Icon({ name, size = 20, stroke = 1.7, style, className }: IconPr
         <path d="M12 7v8M10 9.5h3.5a1.4 1.4 0 0 1 0 2.8H10M10 13h4" stroke="#7a5a08" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
       </svg>
     );
+    case 'swap': return <svg {...common}><path d="M4 7h13"/><path d="m14 4 3 3-3 3"/><path d="M20 17H7"/><path d="m10 14-3 3 3 3"/></svg>;
     default: return <svg {...common}><circle cx="12" cy="12" r="6"/></svg>;
   }
 }
