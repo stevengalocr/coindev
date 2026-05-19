@@ -5,7 +5,11 @@ export const metadata: Metadata = {
   title: 'CoinDev — Tus finanzas, claras como el agua',
   description: 'Plataforma SaaS de finanzas personales diseñada para LATAM. Control total de tus movimientos, presupuestos y gastos fijos.',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico', type: 'image/x-icon' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
   },
 };
 
