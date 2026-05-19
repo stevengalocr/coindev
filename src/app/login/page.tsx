@@ -224,62 +224,28 @@ function BrandPanel() {
 /* ─────────────────────────────────────────────
    PÁGINA PRINCIPAL
 ───────────────────────────────────────────── */
-type Mode = 'login' | 'signup' | 'forgot';
-
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  function reset() { setError(''); setSuccess(''); }
-  function switchMode(m: Mode) { reset(); setMode(m); }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    reset();
+    setError('');
     setLoading(true);
-    const sb = createClient();
-
     try {
-      if (mode === 'login') {
-        const { error: err } = await sb.auth.signInWithPassword({ email, password });
-        if (err) {
-          setError(err.message.includes('Invalid login credentials')
-            ? 'Correo o contraseña incorrectos.'
-            : err.message);
-          return;
-        }
-        router.push('/dashboard');
+      const sb = createClient();
+      const { error: err } = await sb.auth.signInWithPassword({ email, password });
+      if (err) {
+        setError(err.message.includes('Invalid login credentials')
+          ? 'Correo o contraseña incorrectos.'
+          : err.message);
         return;
       }
-
-      if (mode === 'signup') {
-        if (!name.trim()) { setError('Escribe tu nombre completo.'); setLoading(false); return; }
-        if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres.'); setLoading(false); return; }
-        const { error: err } = await sb.auth.signUp({
-          email,
-          password,
-          options: { data: { full_name: name.trim() } },
-        });
-        if (err) { setError(err.message); return; }
-        setSuccess('¡Cuenta creada! Revisa tu correo para confirmar.');
-        return;
-      }
-
-      if (mode === 'forgot') {
-        const { error: err } = await sb.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/login`,
-        });
-        if (err) { setError(err.message); return; }
-        setSuccess('Te enviamos un enlace de recuperación. Revisa tu bandeja.');
-        return;
-      }
+      router.push('/dashboard');
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       setError(msg.includes('fetch') || msg.includes('network')
@@ -289,13 +255,6 @@ export default function LoginPage() {
       setLoading(false);
     }
   }
-
-  const titles: Record<Mode, { h: string; sub: string; btn: string }> = {
-    login:  { h: 'Bienvenido de vuelta', sub: 'Ingresa a tu cuenta', btn: 'Iniciar sesión' },
-    signup: { h: 'Crea tu cuenta',       sub: 'Es gratis para empezar', btn: 'Crear cuenta' },
-    forgot: { h: 'Recupera tu acceso',   sub: 'Te enviamos un enlace por correo', btn: 'Enviar enlace' },
-  };
-  const { h, sub, btn } = titles[mode];
 
   return (
     <div style={{
@@ -332,13 +291,6 @@ export default function LoginPage() {
         .login-btn-primary:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
         .login-btn-primary:active:not(:disabled) { transform: translateY(0); }
         .login-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .login-link-btn {
-          background: none; border: 0; padding: 0; cursor: pointer;
-          font-family: var(--font-sans); font-size: 13.5px;
-          color: rgba(91,155,255,0.9); text-decoration: none;
-          transition: color 150ms;
-        }
-        .login-link-btn:hover { color: #5B9BFF; }
         .login-form-wrap {
           animation: fadeUp 320ms cubic-bezier(0.2,0.8,0.2,1) both;
         }
@@ -379,52 +331,14 @@ export default function LoginPage() {
             <span style={{ fontSize: 18, fontWeight: 700, color: '#EDF0F7' }}>CoinDev</span>
           </div>
 
-          {/* Tabs de modo */}
-          {mode !== 'forgot' && (
-            <div style={{
-              display: 'flex', background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 12, padding: 4, marginBottom: 32, gap: 2,
-            }}>
-              {(['login', 'signup'] as const).map(m => (
-                <button key={m} onClick={() => switchMode(m)} style={{
-                  flex: 1, padding: '9px 0', borderRadius: 9,
-                  fontSize: 13.5, fontWeight: mode === m ? 600 : 400,
-                  color: mode === m ? '#EDF0F7' : 'rgba(255,255,255,0.35)',
-                  background: mode === m ? 'rgba(255,255,255,0.08)' : 'transparent',
-                  border: 0, cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                  transition: 'all 160ms',
-                }}>
-                  {m === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* Formulario */}
-          <div key={mode} className="login-form-wrap">
+          <div className="login-form-wrap">
             <div style={{ marginBottom: 28 }}>
-              <h1 style={{ fontSize: 26, fontWeight: 700, color: '#EDF0F7', letterSpacing: '-0.03em', marginBottom: 6 }}>{h}</h1>
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>{sub}</p>
+              <h1 style={{ fontSize: 26, fontWeight: 700, color: '#EDF0F7', letterSpacing: '-0.03em', marginBottom: 6 }}>Bienvenido de vuelta</h1>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>Ingresa a tu cuenta</p>
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }} noValidate>
-
-              {/* Nombre (solo signup) */}
-              {mode === 'signup' && (
-                <Field label="Nombre completo">
-                  <InputIcon><PersonIcon /></InputIcon>
-                  <input
-                    className="login-input"
-                    type="text"
-                    autoComplete="name"
-                    placeholder="María González"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    required
-                  />
-                </Field>
-              )}
 
               {/* Email */}
               <Field label="Correo electrónico">
@@ -440,32 +354,21 @@ export default function LoginPage() {
                 />
               </Field>
 
-              {/* Contraseña (no en forgot) */}
-              {mode !== 'forgot' && (
-                <Field label={
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Contraseña</span>
-                    {mode === 'login' && (
-                      <button type="button" className="login-link-btn" style={{ fontSize: 12.5 }} onClick={() => switchMode('forgot')}>
-                        ¿Olvidaste tu contraseña?
-                      </button>
-                    )}
-                  </div>
-                }>
-                  <InputIcon onClick={() => setShowPassword(v => !v)} style={{ cursor: 'pointer' }}>
-                    <EyeIcon off={showPassword} />
-                  </InputIcon>
-                  <input
-                    className="login-input"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                    placeholder={mode === 'signup' ? 'Mínimo 8 caracteres' : '••••••••'}
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                  />
-                </Field>
-              )}
+              {/* Contraseña */}
+              <Field label="Contraseña">
+                <InputIcon onClick={() => setShowPassword(v => !v)} style={{ cursor: 'pointer' }}>
+                  <EyeIcon off={showPassword} />
+                </InputIcon>
+                <input
+                  className="login-input"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                />
+              </Field>
 
               {/* Error */}
               {error && (
@@ -479,40 +382,12 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* Success */}
-              {success && (
-                <div style={{
-                  padding: '10px 13px', borderRadius: 10,
-                  background: 'rgba(79,224,169,0.08)',
-                  border: '1px solid rgba(79,224,169,0.2)',
-                  fontSize: 13, color: '#4FE0A9', lineHeight: 1.4,
-                }}>
-                  {success}
-                </div>
-              )}
-
-              <button type="submit" disabled={loading || !!success} className="login-btn-primary" style={{ marginTop: 6 }}>
+              <button type="submit" disabled={loading} className="login-btn-primary" style={{ marginTop: 6 }}>
                 {loading ? <SpinnerIcon /> : (
-                  <>{btn}<ArrowRightIcon /></>
+                  <>Iniciar sesión<ArrowRightIcon /></>
                 )}
               </button>
             </form>
-
-            {/* Volver desde forgot */}
-            {mode === 'forgot' && (
-              <div style={{ textAlign: 'center', marginTop: 20 }}>
-                <button className="login-link-btn" onClick={() => switchMode('login')}>
-                  ← Volver al inicio de sesión
-                </button>
-              </div>
-            )}
-
-            {/* Términos signup */}
-            {mode === 'signup' && (
-              <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: 16, lineHeight: 1.5 }}>
-                Al crear una cuenta aceptas el uso de tus datos para el funcionamiento de la plataforma.
-              </p>
-            )}
           </div>
         </div>
       </div>
@@ -549,11 +424,3 @@ function InputIcon({ children, onClick, style }: { children: React.ReactNode; on
   );
 }
 
-function PersonIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="8" r="4"/>
-      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-    </svg>
-  );
-}
