@@ -363,7 +363,7 @@ export const FX_HISTORY = [
 export interface FxRate {
   code: string;
   symbol: string;
-  flag: string;
+  cc: string;
   name_es: string;
   name_en: string;
   crc: number;
@@ -374,12 +374,12 @@ export interface FxRate {
 }
 
 export const FX_RATES: FxRate[] = [
-  { code: 'USD', symbol: '$',    flag: '🇺🇸', name_es: 'Dólar americano',   name_en: 'US Dollar',        crc: 510,  buy: 508,  sell: 512,  change: 0.8,  up: true  },
-  { code: 'EUR', symbol: '€',    flag: '🇪🇺', name_es: 'Euro',              name_en: 'Euro',             crc: 558,  buy: 555,  sell: 561,  change: -0.3, up: false },
-  { code: 'GBP', symbol: '£',    flag: '🇬🇧', name_es: 'Libra esterlina',   name_en: 'British pound',    crc: 651,  buy: 648,  sell: 654,  change: 0.5,  up: true  },
-  { code: 'MXN', symbol: 'MX$',  flag: '🇲🇽', name_es: 'Peso mexicano',     name_en: 'Mexican peso',     crc: 30,   buy: 30,   sell: 31,   change: 0.1,  up: true  },
-  { code: 'CAD', symbol: 'CA$',  flag: '🇨🇦', name_es: 'Dólar canadiense',  name_en: 'Canadian dollar',  crc: 374,  buy: 372,  sell: 376,  change: -0.2, up: false },
-  { code: 'JPY', symbol: '¥',    flag: '🇯🇵', name_es: 'Yen japonés',       name_en: 'Japanese yen',     crc: 3,    buy: 3,    sell: 4,    change: 0.3,  up: true  },
+  { code: 'USD', symbol: '$',    cc: 'US', name_es: 'Dólar americano',   name_en: 'US Dollar',        crc: 510,  buy: 508,  sell: 512,  change: 0.8,  up: true  },
+  { code: 'EUR', symbol: '€',    cc: 'EU', name_es: 'Euro',              name_en: 'Euro',             crc: 558,  buy: 555,  sell: 561,  change: -0.3, up: false },
+  { code: 'GBP', symbol: '£',    cc: 'GB', name_es: 'Libra esterlina',   name_en: 'British pound',    crc: 651,  buy: 648,  sell: 654,  change: 0.5,  up: true  },
+  { code: 'MXN', symbol: 'MX$',  cc: 'MX', name_es: 'Peso mexicano',     name_en: 'Mexican peso',     crc: 30,   buy: 30,   sell: 31,   change: 0.1,  up: true  },
+  { code: 'CAD', symbol: 'CA$',  cc: 'CA', name_es: 'Dólar canadiense',  name_en: 'Canadian dollar',  crc: 374,  buy: 372,  sell: 376,  change: -0.2, up: false },
+  { code: 'JPY', symbol: '¥',    cc: 'JP', name_es: 'Yen japonés',       name_en: 'Japanese yen',     crc: 3,    buy: 3,    sell: 4,    change: 0.3,  up: true  },
 ];
 
 export type Period = 'week' | 'month' | 'quarter' | 'year';

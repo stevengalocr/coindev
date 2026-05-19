@@ -6,6 +6,21 @@ import { FX_RATES, FX_HISTORY } from '@/lib/data';
 import { Icon } from '@/components/ui/Icon';
 import { Sparkline } from '@/components/shell/Charts';
 
+function CurrencyBadge({ cc, size = 36 }: { cc: string; size?: number }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 10,
+      background: 'var(--surface-3)', border: '1px solid var(--border)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
+      letterSpacing: '0.03em', fontFamily: 'var(--font-mono)',
+      flexShrink: 0,
+    }}>
+      {cc}
+    </div>
+  );
+}
+
 export default function DivisasPage() {
   const { t, lang } = useApp();
   const [fromCRC, setFromCRC] = useState(true);
@@ -20,6 +35,11 @@ export default function DivisasPage() {
     : '';
 
   const historyValues = FX_HISTORY.map(h => h.rate);
+
+  const now = new Date();
+  const updatedLabel = now.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', {
+    day: 'numeric', month: 'short', year: 'numeric',
+  });
 
   return (
     <div style={{ maxWidth: 760, display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -37,7 +57,7 @@ export default function DivisasPage() {
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'right' }}>
           <div>{lang === 'es' ? 'Actualizado' : 'Updated'}</div>
-          <div style={{ color: 'var(--text-2)', fontWeight: 500 }}>18 May 2026, 09:00</div>
+          <div style={{ color: 'var(--text-2)', fontWeight: 500 }}>{updatedLabel}, 09:00</div>
         </div>
       </div>
 
@@ -52,8 +72,8 @@ export default function DivisasPage() {
 
           {/* Left */}
           <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <span style={{ fontSize: 24 }}>🇺🇸</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <CurrencyBadge cc="US" size={40} />
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
                   {lang === 'es' ? 'Dólar Americano' : 'US Dollar'}
@@ -151,13 +171,13 @@ export default function DivisasPage() {
           {FX_RATES.map((rate, i) => (
             <div key={rate.code} style={{
               display: 'grid',
-              gridTemplateColumns: '32px 1fr auto auto',
+              gridTemplateColumns: '40px 1fr auto auto',
               alignItems: 'center',
               gap: 12,
-              padding: '11px 0',
+              padding: '12px 0',
               borderBottom: i < FX_RATES.length - 1 ? '1px solid var(--border)' : 'none',
             }}>
-              <span style={{ fontSize: 20, lineHeight: 1 }}>{rate.flag}</span>
+              <CurrencyBadge cc={rate.cc} size={36} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
                   {rate.code} · {lang === 'es' ? rate.name_es : rate.name_en}
@@ -175,7 +195,7 @@ export default function DivisasPage() {
                 display: 'flex', alignItems: 'center', gap: 3,
                 fontSize: 11.5, fontWeight: 600,
                 color: rate.up ? 'var(--income)' : 'var(--expense)',
-                minWidth: 48, justifyContent: 'flex-end',
+                minWidth: 52, justifyContent: 'flex-end',
               }}>
                 <Icon name={rate.up ? 'arrow-up' : 'arrow-down'} size={10} stroke={2.5} />
                 {rate.up ? '+' : ''}{rate.change}%

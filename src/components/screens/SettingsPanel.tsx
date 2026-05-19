@@ -186,11 +186,12 @@ export function SettingsPanel({ open, onClose }: Props) {
 
             <Section title={t.language}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {([{ id: 'es', flag: '🇨🇷', label: 'Español' }, { id: 'en', flag: '🇺🇸', label: 'English' }] as const).map(opt => {
+                {([{ id: 'es', cc: 'ES', label: 'Español' }, { id: 'en', cc: 'EN', label: 'English' }] as const).map(opt => {
                   const active = lang === opt.id;
                   return (
                     <button key={opt.id} onClick={() => handleLang(opt.id)} style={{ padding: '12px', borderRadius: 'var(--r-md)', border: `1.5px solid ${active ? 'var(--blue)' : 'var(--border)'}`, background: active ? 'color-mix(in oklab, var(--blue) 11%, var(--surface))' : 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13, fontWeight: active ? 600 : 400, color: active ? 'var(--text)' : 'var(--text-3)', transition: 'all 140ms' }}>
-                      <span style={{ fontSize: 18 }}>{opt.flag}</span>{opt.label}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 20, borderRadius: 5, background: active ? 'color-mix(in oklab, var(--blue) 20%, var(--surface-3))' : 'var(--surface-3)', fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)', color: active ? 'var(--blue)' : 'var(--text-3)', letterSpacing: '0.04em' }}>{opt.cc}</span>
+                      {opt.label}
                     </button>
                   );
                 })}

@@ -136,7 +136,7 @@ function DashInner({ children }: { children: ReactNode }) {
           backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
           background: 'color-mix(in oklab, var(--bg) 82%, transparent)',
           borderBottom: '1px solid var(--border)',
-          padding: '0 28px', height: 62,
+          padding: '0 36px', height: 72,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
         }} className="hidden-mobile">
           <div>
@@ -191,7 +191,7 @@ function DashInner({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main style={{ flex: 1, padding: '24px 28px 100px', minWidth: 0 }} className="main-pad">
+        <main style={{ flex: 1, padding: '32px 36px 100px', minWidth: 0 }} className="main-pad">
           <div style={{ maxWidth: 1400, margin: '0 auto' }}>
             {children}
           </div>

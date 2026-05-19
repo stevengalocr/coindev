@@ -82,6 +82,17 @@ export function Icon({ name, size = 20, stroke = 1.7, style, className }: IconPr
       </svg>
     );
     case 'swap': return <svg {...common}><path d="M4 7h13"/><path d="m14 4 3 3-3 3"/><path d="M20 17H7"/><path d="m10 14-3 3 3 3"/></svg>;
+    case 'target': return <svg {...common}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>;
+    case 'plane': return <svg {...common}><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>;
+    case 'phone': return <svg {...common}><rect x="7" y="2" width="10" height="20" rx="2.5"/><circle cx="12" cy="17.5" r="1" fill="currentColor" stroke="none"/></svg>;
+    case 'graduation': return <svg {...common}><path d="M22 9 12 4 2 9l10 5 10-5z"/><path d="M6 11.5v5c0 2 6 3.5 6 3.5s6-1.5 6-3.5v-5"/><line x1="22" y1="9" x2="22" y2="15"/></svg>;
+    case 'ring': return <svg {...common}><path d="M6 3h12l2 5H4z"/><circle cx="12" cy="14" r="6"/></svg>;
+    case 'umbrella': return <svg {...common}><path d="M23 12a11.05 11.05 0 0 0-22 0"/><path d="M12 12v5a2 2 0 0 0 4 0"/></svg>;
+    case 'dumbbell': return <svg {...common}><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3.5 9.5v5"/><path d="M20.5 9.5v5"/><path d="M6.5 12h11"/></svg>;
+    case 'paw': return <svg {...common}><circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><circle cx="4" cy="16" r="2"/><path d="M9 10c-3 2-5 5-5 8 0 2 2 4 8 4s8-2 8-4c0-3-2-6-5-8z"/></svg>;
+    case 'guitar': return <svg {...common}><path d="M3.5 17.5 9 12"/><path d="M15 3l6 6-5 5c.6 2-.2 4.5-2.5 4.5-1 0-2.3-.6-3.3-1.5L9 14c-1-1-1.5-2.3-1.5-3.3 0-2.3 2.5-3.1 4.5-2.5z"/></svg>;
+    case 'lock': return <svg {...common}><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>;
+    case 'bar-chart': return <svg {...common}><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>;
     default: return <svg {...common}><circle cx="12" cy="12" r="6"/></svg>;
   }
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { Icon } from '@/components/ui/Icon';
 
 /* ─────────────────────────────────────────────
    ICONOS SVG INLINE — sin dependencia externa
@@ -72,10 +73,10 @@ function BrandPanel() {
   }, []);
 
   const features = [
-    { icon: '💱', label: 'Multi-moneda', sub: 'CRC · USD · EUR en tiempo real' },
-    { icon: '📊', label: 'Presupuestos inteligentes', sub: 'Alertas al 80% de cada categoría' },
-    { icon: '🎯', label: 'Metas de ahorro', sub: 'Seguimiento mes a mes con proyecciones' },
-    { icon: '🔒', label: 'Datos solo tuyos', sub: 'RLS por usuario en cada tabla' },
+    { icon: 'swap',      label: 'Multi-moneda',             sub: 'CRC · USD · EUR en tiempo real' },
+    { icon: 'bar-chart', label: 'Presupuestos inteligentes', sub: 'Alertas al 80% de cada categoría' },
+    { icon: 'target',    label: 'Metas de ahorro',           sub: 'Seguimiento mes a mes con proyecciones' },
+    { icon: 'lock',      label: 'Datos solo tuyos',          sub: 'RLS por usuario en cada tabla' },
   ];
 
   return (
@@ -168,7 +169,9 @@ function BrandPanel() {
               borderRadius: 12,
               transition: 'background 400ms, border-color 400ms',
             }}>
-              <span style={{ fontSize: 18, lineHeight: 1 }}>{f.icon}</span>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.06)', display: 'grid', placeItems: 'center', color: 'rgba(255,255,255,0.6)', flexShrink: 0 }}>
+                <Icon name={f.icon} size={16} stroke={1.7} />
+              </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#EDF0F7' }}>{f.label}</div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>{f.sub}</div>

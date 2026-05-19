@@ -6,6 +6,7 @@ import { useData } from '@/hooks/useData';
 import { fmtMoney, type SavingsGoal } from '@/lib/data';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { AddGoalModal } from '@/components/screens/AddGoalModal';
+import { Icon } from '@/components/ui/Icon';
 
 function statusColor(status: SavingsGoal['status']): string {
   switch (status) {
@@ -70,7 +71,9 @@ export default function MetasPage() {
         </div>
       ) : goals.length === 0 ? (
         <div className="cd-card" style={{ padding: '60px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', margin: '0 auto 16px', color: 'var(--text-3)' }}>
+            <Icon name="target" size={26} stroke={1.6} />
+          </div>
           <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
             {lang === 'es' ? 'Sin metas todavía' : 'No goals yet'}
           </div>
@@ -184,9 +187,10 @@ function GoalCard({ goal, t, currency, lang }: CardProps) {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <div style={{
           width: 42, height: 42, borderRadius: 12, background: 'var(--surface-2)',
-          display: 'grid', placeItems: 'center', fontSize: 22, flexShrink: 0,
+          border: '1px solid var(--border)',
+          display: 'grid', placeItems: 'center', flexShrink: 0, color: 'var(--text-2)',
         }}>
-          {goal.icon}
+          <Icon name={goal.icon} size={20} stroke={1.7} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{

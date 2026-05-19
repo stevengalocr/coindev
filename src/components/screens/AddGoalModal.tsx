@@ -5,7 +5,7 @@ import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { Icon } from '@/components/ui/Icon';
 
-const GOAL_ICONS = ['🎯','🏠','🚗','✈️','📱','💻','🎓','💍','🏖️','🏋️','🐾','🎸'];
+const GOAL_ICONS = ['target','home','car','plane','phone','laptop','graduation','ring','umbrella','dumbbell','paw','guitar'];
 
 interface Props { open: boolean; onClose: () => void }
 
@@ -15,7 +15,7 @@ export function AddGoalModal({ open, onClose }: Props) {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState('🎯');
+  const [icon, setIcon] = useState('target');
   const [target, setTarget] = useState('');
   const [targetDate, setTargetDate] = useState('');
   const [saving, setSaving] = useState(false);
@@ -37,7 +37,7 @@ export function AddGoalModal({ open, onClose }: Props) {
         target_date: targetDate || undefined,
       });
       onClose();
-      setName(''); setDescription(''); setIcon('🎯'); setTarget(''); setTargetDate('');
+      setName(''); setDescription(''); setIcon('target'); setTarget(''); setTargetDate('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al guardar.');
     } finally {
@@ -75,12 +75,15 @@ export function AddGoalModal({ open, onClose }: Props) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {GOAL_ICONS.map(ic => (
                 <button key={ic} onClick={() => setIcon(ic)} style={{
-                  width: 44, height: 44, borderRadius: 12, fontSize: 20,
+                  width: 44, height: 44, borderRadius: 12,
                   border: `1.5px solid ${icon === ic ? 'var(--blue)' : 'var(--border)'}`,
                   background: icon === ic ? 'color-mix(in oklab, var(--blue) 10%, var(--surface))' : 'var(--surface)',
                   display: 'grid', placeItems: 'center', cursor: 'pointer',
+                  color: icon === ic ? 'var(--blue)' : 'var(--text-3)',
                   transition: 'all 120ms',
-                }}>{ic}</button>
+                }}>
+                  <Icon name={ic} size={18} stroke={1.7} />
+                </button>
               ))}
             </div>
           </div>
