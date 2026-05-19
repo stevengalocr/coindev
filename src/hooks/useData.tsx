@@ -6,6 +6,10 @@ import {
   fetchProfile, fetchAccounts, fetchTransactions, fetchBudgets,
   fetchSavingsGoals, fetchUnreadNotificationsCount,
   insertTransaction, insertAccount, insertBudget, insertSavingsGoal, upsertProfile,
+  updateTransaction, deleteTransaction,
+  updateAccount, deleteAccount,
+  updateBudgetByCategory, deleteBudgetByCategory,
+  updateSavingsGoal, deleteSavingsGoalById,
   toAccount, toMovement, toBudget, toGoal,
   type DbProfile, type NewTransaction, type NewAccount, type NewBudget, type NewSavingsGoal,
 } from '@/lib/db';
@@ -49,6 +53,14 @@ interface DataState {
   addGoal: (data: NewSavingsGoal) => Promise<void>;
   saveProfile: (patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme'>>) => Promise<void>;
   refetch: () => Promise<void>;
+  updateTransaction: (id: string, data: Parameters<typeof updateTransaction>[1], old: { type: 'income' | 'expense'; amount: number; account: string }) => Promise<void>;
+  deleteTransaction: (id: string, type: 'income' | 'expense', amount: number, accountId: string) => Promise<void>;
+  updateAccount: (id: string, data: { name?: string; type?: string; color?: string; credit_limit?: number | null; last_digits?: string | null }) => Promise<void>;
+  deleteAccount: (id: string) => Promise<void>;
+  updateBudget: (cat: string, limit_amount: number) => Promise<void>;
+  deleteBudget: (cat: string) => Promise<void>;
+  updateGoal: (id: string, data: { name?: string; description?: string | null; icon?: string; target_amount?: number; target_date?: string | null; status?: string }) => Promise<void>;
+  deleteGoal: (id: string) => Promise<void>;
 }
 
 const DataCtx = createContext<DataState | null>(null);
@@ -118,6 +130,46 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await load();
   }, [load]);
 
+  const updateTx = useCallback(async (id: string, data: Parameters<typeof updateTransaction>[1], old: { type: 'income' | 'expense'; amount: number; account: string }) => {
+    await updateTransaction(id, { ...data, oldType: old.type, oldAmount: old.amount, oldAccountId: old.account });
+    await load();
+  }, [load]);
+
+  const deleteTx = useCallback(async (id: string, type: 'income' | 'expense', amount: number, accountId: string) => {
+    await deleteTransaction(id, type, amount, accountId);
+    await load();
+  }, [load]);
+
+  const updateAcc = useCallback(async (id: string, data: { name?: string; type?: string; color?: string; credit_limit?: number | null; last_digits?: string | null }) => {
+    await updateAccount(id, data);
+    await load();
+  }, [load]);
+
+  const deleteAcc = useCallback(async (id: string) => {
+    await deleteAccount(id);
+    await load();
+  }, [load]);
+
+  const updateBudget2 = useCallback(async (cat: string, limit_amount: number) => {
+    await updateBudgetByCategory(cat, limit_amount);
+    await load();
+  }, [load]);
+
+  const deleteBudget2 = useCallback(async (cat: string) => {
+    await deleteBudgetByCategory(cat);
+    await load();
+  }, [load]);
+
+  const updateGoal2 = useCallback(async (id: string, data: { name?: string; description?: string | null; icon?: string; target_amount?: number; target_date?: string | null; status?: string }) => {
+    await updateSavingsGoal(id, data);
+    await load();
+  }, [load]);
+
+  const deleteGoal2 = useCallback(async (id: string) => {
+    await deleteSavingsGoalById(id);
+    await load();
+  }, [load]);
+
   const saveProfile = useCallback(async (
     patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme'>>
   ) => {
@@ -131,6 +183,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       unreadNotifications, loading,
       addTransaction, addAccount, addBudget, addGoal,
       saveProfile, refetch: load,
+      updateTransaction: updateTx,
+      deleteTransaction: deleteTx,
+      updateAccount: updateAcc,
+      deleteAccount: deleteAcc,
+      updateBudget: updateBudget2,
+      deleteBudget: deleteBudget2,
+      updateGoal: updateGoal2,
+      deleteGoal: deleteGoal2,
     }}>
       {children}
     </DataCtx.Provider>

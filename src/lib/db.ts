@@ -358,6 +358,99 @@ export async function fetchUnreadNotificationsCount(): Promise<number> {
   return count ?? 0;
 }
 
+// ── Update / Delete ─────────────────────────────────────────────────
+
+export async function updateTransaction(id: string, data: {
+  type?: 'income' | 'expense';
+  cat?: string;
+  amount?: number;
+  account_id?: string;
+  date?: string;
+  description?: string;
+  is_fixed?: boolean;
+  oldType?: 'income' | 'expense';
+  oldAmount?: number;
+  oldAccountId?: string;
+}): Promise<void> {
+  const sb = createClient();
+  const updates: Record<string, unknown> = {};
+  if (data.type !== undefined) updates.type = data.type;
+  if (data.cat !== undefined) { updates.category_id = CAT_TO_DB[data.cat] ?? null; updates.notes = data.cat; }
+  if (data.amount !== undefined) updates.amount = data.amount;
+  if (data.account_id !== undefined) updates.account_id = data.account_id;
+  if (data.date !== undefined) updates.date = data.date;
+  if (data.description !== undefined) updates.description = data.description;
+  if (data.is_fixed !== undefined) updates.is_fixed = data.is_fixed;
+  const { error } = await sb.from('transactions').update(updates).eq('id', id);
+  if (error) throw error;
+
+  // Adjust account balance
+  const oldEffect = data.oldType === 'income' ? (data.oldAmount ?? 0) : -(data.oldAmount ?? 0);
+  const newType = data.type ?? data.oldType ?? 'expense';
+  const newAmount = data.amount ?? data.oldAmount ?? 0;
+  const newEffect = newType === 'income' ? newAmount : -newAmount;
+  const delta = newEffect - oldEffect;
+  const accId = data.account_id ?? data.oldAccountId;
+  if (delta !== 0 && accId) {
+    const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accId).single();
+    if (acc) {
+      await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accId);
+    }
+  }
+}
+
+export async function deleteTransaction(id: string, type: 'income' | 'expense', amount: number, accountId: string): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.from('transactions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+  // Revert balance
+  const delta = type === 'income' ? -amount : amount;
+  const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accountId).single();
+  if (acc) {
+    await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accountId);
+  }
+}
+
+export async function updateAccount(id: string, data: { name?: string; type?: string; color?: string; credit_limit?: number | null; last_digits?: string | null }): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.from('accounts').update(data).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteAccount(id: string): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.from('accounts').update({ is_active: false, deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function updateBudgetByCategory(cat: string, limit_amount: number): Promise<void> {
+  const sb = createClient();
+  const category_id = CAT_TO_DB[cat] ?? null;
+  if (!category_id) throw new Error('Categoría inválida');
+  const { error } = await sb.from('budgets').update({ limit_amount }).eq('category_id', category_id).eq('is_active', true);
+  if (error) throw error;
+}
+
+export async function deleteBudgetByCategory(cat: string): Promise<void> {
+  const sb = createClient();
+  const category_id = CAT_TO_DB[cat] ?? null;
+  if (!category_id) throw new Error('Categoría inválida');
+  const { error } = await sb.from('budgets').update({ is_active: false }).eq('category_id', category_id);
+  if (error) throw error;
+}
+
+export async function updateSavingsGoal(id: string, data: { name?: string; description?: string | null; icon?: string; target_amount?: number; target_date?: string | null; status?: string }): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.from('savings_goals').update(data).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteSavingsGoalById(id: string): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.from('savings_goals').update({ status: 'cancelled', deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+}
+
 export async function fetchLatestExchangeRate(currency: string): Promise<number | null> {
   const sb = createClient();
   const { data } = await sb
