@@ -21,20 +21,28 @@ const NAV_ITEMS = [
   { href: '/dashboard/reportes',     icon: 'chart',  key: 'reports'   },
 ] as const;
 
-const MOBILE_NAV = [
+/* Bottom 4 + FAB + Más */
+const MOBILE_MAIN = [
   { href: '/dashboard',             icon: 'home',  key: 'home'      },
   { href: '/dashboard/movimientos', icon: 'list',  key: 'movements' },
-  null,
-  { href: '/dashboard/reportes',    icon: 'chart', key: 'reports'   },
   { href: '/dashboard/cuentas',     icon: 'bank',  key: 'accounts'  },
+  { href: '/dashboard/presupuestos',icon: 'flag',  key: 'budgets'   },
+] as const;
+
+const MOBILE_MORE = [
+  { href: '/dashboard/metas',        icon: 'spark',  key: 'goals'   },
+  { href: '/dashboard/gastos-fijos', icon: 'shield', key: 'fixed'   },
+  { href: '/dashboard/divisas',      icon: 'swap',   key: 'divisas' },
+  { href: '/dashboard/reportes',     icon: 'chart',  key: 'reports' },
 ] as const;
 
 function DashInner({ children }: { children: ReactNode }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const { profile, unreadNotifications } = useData();
   const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const navLabels: Record<string, string> = {
     home: t.home, movements: t.movements, accounts: t.accounts,
@@ -45,30 +53,25 @@ function DashInner({ children }: { children: ReactNode }) {
     href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
 
   const today = new Date();
-  const dateStr = today.toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const dateStr = today.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' });
   const dateCapitalized = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
   const displayName = profile?.full_name ?? 'Usuario';
   const initials = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
+  const moreActive = MOBILE_MORE.some(item => isActive(item.href));
+
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
 
-      {/* ── Desktop Sidebar ─────────────────────────────────────────── */}
+      {/* ── Desktop Sidebar ──────────────────────────────────────────────── */}
       <aside style={{
         width: 236, flexShrink: 0, borderRight: '1px solid var(--border)',
         background: 'var(--bg-2)', display: 'flex', flexDirection: 'column',
         height: '100vh', position: 'sticky', top: 0,
       }} className="hidden-mobile">
-
-        <div style={{
-          padding: '22px 20px 20px', borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', gap: 11,
-        }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: 12, background: 'var(--surface)',
-            border: '1px solid var(--border)', display: 'grid', placeItems: 'center', flexShrink: 0,
-          }}>
+        <div style={{ padding: '22px 20px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
             <Icon name="logo" size={22} />
           </div>
           <div>
@@ -99,38 +102,22 @@ function DashInner({ children }: { children: ReactNode }) {
 
         <div style={{ padding: '14px 16px', borderTop: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: '50%', background: 'var(--gradient-hero)',
-              display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700,
-              color: '#0C0E14', flexShrink: 0,
-            }}>{initials}</div>
+            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--gradient-hero)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700, color: '#0C0E14', flexShrink: 0 }}>{initials}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontSize: 13, fontWeight: 600, color: 'var(--text)',
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              }}>{displayName}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
-                {profile?.plan === 'pro' ? 'Plan Pro' : 'Plan Free'} · CR
-              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>{profile?.plan === 'pro' ? 'Plan Pro' : 'Plan Free'} · CR</div>
             </div>
-            <button
-              style={{
-                color: 'var(--text-3)', width: 28, height: 28, borderRadius: 8,
-                display: 'grid', placeItems: 'center', transition: 'color 140ms, background 140ms', flexShrink: 0,
-              }}
-              aria-label={t.settings}
-              onClick={() => setSettingsOpen(true)}
-            >
+            <button style={{ color: 'var(--text-3)', width: 28, height: 28, borderRadius: 8, display: 'grid', placeItems: 'center', transition: 'color 140ms, background 140ms', flexShrink: 0 }} aria-label={t.settings} onClick={() => setSettingsOpen(true)}>
               <Icon name="settings" size={15} stroke={1.6} />
             </button>
           </div>
         </div>
       </aside>
 
-      {/* ── Main Column ─────────────────────────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}
-        className="no-scrollbar">
+      {/* ── Main Column ───────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }} className="no-scrollbar">
 
+        {/* Desktop header */}
         <header style={{
           position: 'sticky', top: 0, zIndex: 40,
           backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
@@ -145,48 +132,49 @@ function DashInner({ children }: { children: ReactNode }) {
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{dateCapitalized}</div>
           </div>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)',
-              border: '1px solid var(--border)', borderRadius: 'var(--r-md)',
-              padding: '0 12px', width: 280, height: 36,
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '0 12px', width: 280, height: 36 }}>
               <Icon name="search" size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-              <input placeholder={t.searchPlaceholder} style={{
-                flex: 1, fontSize: 12.5, color: 'var(--text)',
-                background: 'transparent', outline: 'none', border: 'none',
-              }} />
+              <input placeholder={t.searchPlaceholder} style={{ flex: 1, fontSize: 12.5, color: 'var(--text)', background: 'transparent', outline: 'none', border: 'none' }} />
             </div>
-
-            <button style={{
-              width: 36, height: 36, borderRadius: 'var(--r-md)', border: '1px solid var(--border)',
-              background: 'var(--surface)', display: 'grid', placeItems: 'center',
-              color: 'var(--text-2)', position: 'relative', flexShrink: 0,
-            }} aria-label={t.notifications}>
+            <button style={{ width: 36, height: 36, borderRadius: 'var(--r-md)', border: '1px solid var(--border)', background: 'var(--surface)', display: 'grid', placeItems: 'center', color: 'var(--text-2)', position: 'relative', flexShrink: 0 }} aria-label={t.notifications}>
               <Icon name="bell" size={16} stroke={1.6} />
               {unreadNotifications > 0 && (
-                <span style={{
-                  position: 'absolute', top: 4, right: 4,
-                  minWidth: 16, height: 16, borderRadius: 8,
-                  background: 'var(--expense)', border: '1.5px solid var(--surface)',
-                  fontSize: 9, fontWeight: 700, color: '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  lineHeight: 1, padding: '0 3px',
-                }}>
+                <span style={{ position: 'absolute', top: 4, right: 4, minWidth: 16, height: 16, borderRadius: 8, background: 'var(--expense)', border: '1.5px solid var(--surface)', fontSize: 9, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, padding: '0 3px' }}>
                   {unreadNotifications <= 9 ? unreadNotifications : '9+'}
                 </span>
               )}
             </button>
-
-            <button onClick={() => setAddOpen(true)} style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 36,
-              borderRadius: 'var(--r-md)', background: 'var(--gradient-hero)',
-              color: '#0C0E14', fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em',
-              whiteSpace: 'nowrap', flexShrink: 0,
-            }}>
+            <button onClick={() => setAddOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 36, borderRadius: 'var(--r-md)', background: 'var(--gradient-hero)', color: '#0C0E14', fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em', whiteSpace: 'nowrap', flexShrink: 0 }}>
               <Icon name="plus" size={15} stroke={2.5} />
               + {t.newMovement}
+            </button>
+          </div>
+        </header>
+
+        {/* Mobile header */}
+        <header style={{
+          position: 'sticky', top: 0, zIndex: 40,
+          backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+          background: 'color-mix(in oklab, var(--bg) 88%, transparent)',
+          borderBottom: '1px solid var(--border)',
+          padding: '0 16px', height: 56,
+          display: 'none', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }} className="mobile-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              <Icon name="logo" size={18} />
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>CoinDev</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', display: 'grid', placeItems: 'center', color: 'var(--text-2)', position: 'relative' }}>
+              <Icon name="bell" size={16} stroke={1.6} />
+              {unreadNotifications > 0 && <span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, borderRadius: '50%', background: 'var(--expense)', border: '1.5px solid var(--surface)' }} />}
+            </button>
+            <button onClick={() => setAddOpen(true)} style={{ height: 34, padding: '0 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0C0E14', fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Icon name="plus" size={13} stroke={2.5} />
+              {lang === 'es' ? 'Nuevo' : 'New'}
             </button>
           </div>
         </header>
@@ -198,62 +186,97 @@ function DashInner({ children }: { children: ReactNode }) {
         </main>
       </div>
 
-      {/* ── Mobile Bottom Nav ──────────────────────────────────────── */}
+      {/* ── Mobile Bottom Nav ────────────────────────────────────────────── */}
       <nav style={{
-        display: 'none', position: 'fixed', bottom: 18,
-        left: '50%', transform: 'translateX(-50%)', zIndex: 50,
+        display: 'none', position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+        background: 'color-mix(in oklab, var(--bg-2) 95%, transparent)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderTop: '1px solid var(--border)',
+        padding: '6px 8px calc(6px + env(safe-area-inset-bottom, 0px))',
       }} className="mobile-nav">
-        <div style={{
-          background: 'var(--surface)', border: '1px solid var(--border-strong)',
-          borderRadius: 'var(--r-pill)', boxShadow: 'var(--shadow-pop)',
-          padding: '6px 10px', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)',
-          gap: 0, alignItems: 'center',
-        }}>
-          {MOBILE_NAV.map((item) => {
-            if (!item) {
-              return (
-                <div key="fab" style={{ display: 'flex', justifyContent: 'center', padding: '0 4px' }}>
-                  <button
-                    style={{
-                      width: 54, height: 54, borderRadius: '50%', background: 'var(--gradient-hero)',
-                      display: 'grid', placeItems: 'center', color: '#0C0E14',
-                      boxShadow: '0 6px 24px rgba(91,155,255,0.45)', marginTop: -22, flexShrink: 0,
-                    }}
-                    aria-label={t.add}
-                    onClick={() => setAddOpen(true)}
-                  >
-                    <Icon name="plus" size={22} stroke={2.5} />
-                  </button>
-                </div>
-              );
-            }
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', alignItems: 'center', maxWidth: 500, margin: '0 auto' }}>
+
+          {/* Main nav items */}
+          {MOBILE_MAIN.map(item => {
             const active = isActive(item.href);
-            const mobileLabels: Record<string, string> = {
-              home: t.home, movements: t.movements, reports: t.reports, accounts: t.accounts,
-            };
+            const labels: Record<string, string> = { home: t.home, movements: t.movements, accounts: t.accounts, budgets: t.budgets };
             return (
               <Link key={item.key} href={item.href} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                padding: '7px 10px', borderRadius: 20, textDecoration: 'none',
-                color: active ? 'var(--text)' : 'var(--text-3)',
-                background: active ? 'var(--surface-2)' : 'transparent',
-                minWidth: 50, transition: 'all 120ms',
+                padding: '7px 0', textDecoration: 'none',
+                color: active ? 'var(--blue)' : 'var(--text-3)',
+                transition: 'color 120ms',
               }}>
-                <Icon name={item.icon} size={20} stroke={active ? 2 : 1.6} />
-                <span style={{ fontSize: 10, fontWeight: active ? 600 : 400, letterSpacing: '0.01em', lineHeight: 1 }}>
-                  {mobileLabels[item.key]}
+                <Icon name={item.icon} size={22} stroke={active ? 2.2 : 1.6} />
+                <span style={{ fontSize: 9.5, fontWeight: active ? 700 : 400, letterSpacing: '0.01em', lineHeight: 1 }}>
+                  {labels[item.key]}
                 </span>
               </Link>
             );
           })}
+
+          {/* Más button */}
+          <button
+            onClick={() => setMoreOpen(v => !v)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+              padding: '7px 0', background: 'transparent', border: 0,
+              color: moreActive ? 'var(--blue)' : moreOpen ? 'var(--text)' : 'var(--text-3)',
+              transition: 'color 120ms',
+            }}
+          >
+            <Icon name="more" size={22} stroke={1.6} />
+            <span style={{ fontSize: 9.5, fontWeight: moreOpen ? 700 : 400, letterSpacing: '0.01em', lineHeight: 1 }}>
+              {lang === 'es' ? 'Más' : 'More'}
+            </span>
+          </button>
         </div>
       </nav>
+
+      {/* ── Mobile "Más" popup ───────────────────────────────────────────── */}
+      {moreOpen && (
+        <>
+          <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 48, background: 'rgba(3,6,15,0.5)', backdropFilter: 'blur(4px)' }} />
+          <div style={{
+            position: 'fixed', bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))', left: '50%',
+            transform: 'translateX(-50%)', zIndex: 49,
+            background: 'var(--bg-2)', border: '1px solid var(--border)',
+            borderRadius: 20, padding: '8px', width: 'calc(100% - 32px)', maxWidth: 360,
+            boxShadow: '0 -8px 32px rgba(0,0,0,0.4)',
+            animation: 'cd-slide-up 200ms cubic-bezier(0.2,0.8,0.2,1)',
+          }}>
+            <style>{`@keyframes cd-slide-up { from { transform: translateX(-50%) translateY(20px); opacity:0 } to { transform: translateX(-50%) translateY(0); opacity:1 } }`}</style>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+              {MOBILE_MORE.map(item => {
+                const active = isActive(item.href);
+                const moreLabels: Record<string, string> = { goals: t.goals, fixed: t.fixed, divisas: t.divisas, reports: t.reports };
+                return (
+                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                    padding: '14px 8px', borderRadius: 12, textDecoration: 'none',
+                    background: active ? 'color-mix(in oklab, var(--blue) 12%, var(--surface))' : 'var(--surface)',
+                    border: `1px solid ${active ? 'var(--blue)' : 'var(--border)'}`,
+                    color: active ? 'var(--blue)' : 'var(--text-2)',
+                    transition: 'all 140ms',
+                  }}>
+                    <Icon name={item.icon} size={20} stroke={active ? 2.2 : 1.6} />
+                    <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, textAlign: 'center', lineHeight: 1.2 }}>
+                      {moreLabels[item.key]}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
 
       <style>{`
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
+          .mobile-header { display: flex !important; }
           .mobile-nav { display: block !important; }
-          .main-pad { padding: 16px 16px 110px !important; }
+          .main-pad { padding: 20px 16px 110px !important; }
         }
       `}</style>
 

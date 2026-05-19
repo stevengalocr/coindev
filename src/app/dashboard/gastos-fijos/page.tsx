@@ -39,10 +39,33 @@ export default function GastosFijosPage() {
       <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} initialFixed initialType="expense" />
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>Cargando…</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {[1,2,3].map(i => (
+            <div key={i} className="cd-card" style={{ padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--surface-3)', flexShrink: 0 }} />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ height: 14, width: '45%', borderRadius: 4, background: 'var(--surface-3)' }} />
+                <div style={{ height: 11, width: '30%', borderRadius: 4, background: 'var(--surface-3)' }} />
+              </div>
+              <div style={{ height: 16, width: 70, borderRadius: 4, background: 'var(--surface-3)' }} />
+            </div>
+          ))}
+        </div>
       ) : items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>
-          {lang === 'es' ? 'Sin gastos fijos registrados.' : 'No fixed expenses recorded.'}
+        <div className="cd-card" style={{ padding: '60px 24px', textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', margin: '0 auto 16px', color: 'var(--text-3)' }}>
+            <Icon name="shield" size={26} stroke={1.6} />
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
+            {lang === 'es' ? 'Sin gastos fijos' : 'No fixed expenses'}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--text-3)', maxWidth: 300, margin: '0 auto 20px' }}>
+            {lang === 'es' ? 'Registra tus gastos recurrentes como alquiler, suscripciones y servicios.' : 'Record your recurring expenses like rent, subscriptions and services.'}
+          </div>
+          <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="plus" size={14} stroke={2.4} />
+            {lang === 'es' ? 'Agregar gasto fijo' : 'Add fixed expense'}
+          </button>
         </div>
       ) : (
         <>

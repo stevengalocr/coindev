@@ -322,23 +322,36 @@ function ConverterField({ symbol, code, value, onChange, placeholder, readOnly =
 }) {
   return (
     <div style={{
-      flex: 1, background: 'var(--surface-2)', border: '1px solid var(--border)',
-      borderRadius: 'var(--r-md)', padding: '12px 14px',
-    }}>
-      <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 500, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 5 }}>
-        {code}
+      flex: 1, background: readOnly ? 'var(--surface)' : 'var(--surface-2)',
+      border: `1.5px solid ${readOnly ? 'var(--border)' : 'var(--border)'}`,
+      borderRadius: 14, padding: '14px 16px',
+      transition: 'border-color 150ms',
+    }}
+    onFocus={e => !readOnly && (e.currentTarget.style.borderColor = 'var(--blue)')}
+    onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 8 }}>
+        <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+          {code}
+        </span>
+        {readOnly && (
+          <span style={{ marginLeft: 6, fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'var(--surface-3)', color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.06em' }}>
+            AUTO
+          </span>
+        )}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <span className="mono" style={{ fontSize: 18, color: 'var(--text-3)', fontWeight: 600 }}>{symbol}</span>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+        <span className="mono" style={{ fontSize: 20, color: 'var(--text-3)', fontWeight: 500, lineHeight: 1 }}>{symbol}</span>
         <input
           value={value}
           onChange={e => onChange?.(e.target.value.replace(/[^0-9.]/g, ''))}
           readOnly={readOnly}
           placeholder={placeholder}
+          inputMode="decimal"
           style={{
             flex: 1, background: 'transparent', border: 0, outline: 0,
-            fontSize: 22, fontWeight: 700, color: 'var(--text)',
-            fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em',
+            fontSize: 26, fontWeight: 700, color: readOnly ? 'var(--text-2)' : 'var(--text)',
+            fontFamily: 'var(--font-mono)', letterSpacing: '-0.03em', lineHeight: 1,
           }}
         />
       </div>

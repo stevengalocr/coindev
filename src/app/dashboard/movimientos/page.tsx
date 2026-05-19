@@ -81,10 +81,37 @@ export default function MovimientosPage() {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>Cargando…</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[1,2,3].map(i => (
+              <div key={i} className="cd-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[1,2].map(j => (
+                  <div key={j} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--surface-3)', flexShrink: 0 }} />
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ height: 13, borderRadius: 4, background: 'var(--surface-3)', width: '55%' }} />
+                      <div style={{ height: 10, borderRadius: 4, background: 'var(--surface-3)', width: '35%' }} />
+                    </div>
+                    <div style={{ height: 14, borderRadius: 4, background: 'var(--surface-3)', width: 60 }} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         ) : Object.entries(groups).length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>
-            {lang === 'es' ? 'No hay movimientos en este filtro.' : 'No transactions match.'}
+          <div className="cd-card" style={{ padding: '60px 24px', textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', margin: '0 auto 16px', color: 'var(--text-3)' }}>
+              <Icon name="list" size={26} stroke={1.6} />
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
+              {lang === 'es' ? 'Sin movimientos' : 'No transactions'}
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-3)', maxWidth: 300, margin: '0 auto 20px' }}>
+              {lang === 'es' ? 'Registra tu primer ingreso o gasto para empezar a ver tu historial.' : 'Record your first income or expense to start seeing your history.'}
+            </div>
+            <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="plus" size={14} stroke={2.4} />
+              {lang === 'es' ? 'Agregar movimiento' : 'Add transaction'}
+            </button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

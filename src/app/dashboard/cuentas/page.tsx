@@ -32,7 +32,20 @@ export default function CuentasPage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>Cargando…</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+          {[1,2,3].map(i => (
+            <div key={i} className="cd-card" style={{ padding: '20px 22px', minHeight: 160, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--surface-3)', flexShrink: 0 }} />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ height: 14, width: '60%', borderRadius: 4, background: 'var(--surface-3)' }} />
+                  <div style={{ height: 11, width: '40%', borderRadius: 4, background: 'var(--surface-3)' }} />
+                </div>
+              </div>
+              <div style={{ height: 28, width: '50%', borderRadius: 6, background: 'var(--surface-3)' }} />
+            </div>
+          ))}
+        </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
           {accounts.map(acc => (

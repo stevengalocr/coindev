@@ -37,10 +37,35 @@ export default function PresupuestosPage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>Cargando…</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {[1,2,3].map(i => (
+            <div key={i} className="cd-card" style={{ padding: '18px 20px', display: 'flex', gap: 14, alignItems: 'center' }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--surface-3)', flexShrink: 0 }} />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ height: 14, width: '40%', borderRadius: 4, background: 'var(--surface-3)' }} />
+                  <div style={{ height: 14, width: '25%', borderRadius: 4, background: 'var(--surface-3)' }} />
+                </div>
+                <div style={{ height: 7, borderRadius: 999, background: 'var(--surface-3)' }} />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : budgets.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>
-          {lang === 'es' ? 'Aún no tienes presupuestos.' : 'No budgets yet.'}
+        <div className="cd-card" style={{ padding: '60px 24px', textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', margin: '0 auto 16px', color: 'var(--text-3)' }}>
+            <Icon name="flag" size={26} stroke={1.6} />
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
+            {lang === 'es' ? 'Sin presupuestos' : 'No budgets yet'}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--text-3)', maxWidth: 300, margin: '0 auto 20px' }}>
+            {lang === 'es' ? 'Crea un presupuesto por categoría para controlar mejor tus gastos.' : 'Create a budget per category to better control your spending.'}
+          </div>
+          <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="plus" size={14} stroke={2.4} />
+            {lang === 'es' ? 'Nuevo presupuesto' : 'New budget'}
+          </button>
         </div>
       ) : (
         <>
