@@ -83,6 +83,19 @@ export const I18N = {
     enterAmount: 'Ingresa un monto',
     dark: 'Oscuro',
     light: 'Claro',
+    goals: 'Metas',
+    goalsTitle: 'Metas de ahorro',
+    goalsSubtitle: 'Tus objetivos financieros',
+    target: 'Meta',
+    achieved: 'Alcanzado',
+    monthlyNeeded: 'Ahorro mensual necesario',
+    completed: 'Completada',
+    paused: 'Pausada',
+    addGoal: 'Nueva meta',
+    healthTitle: 'Salud financiera',
+    savingsRateLabel: 'Tasa de ahorro',
+    fixedRatioLabel: 'Gastos fijos / Ingresos',
+    emergencyDaysLabel: 'Días de cobertura',
   },
   en: {
     appName: 'CoinDev',
@@ -168,6 +181,19 @@ export const I18N = {
     enterAmount: 'Enter amount',
     dark: 'Dark',
     light: 'Light',
+    goals: 'Goals',
+    goalsTitle: 'Savings goals',
+    goalsSubtitle: 'Your financial goals',
+    target: 'Target',
+    achieved: 'Achieved',
+    monthlyNeeded: 'Monthly savings needed',
+    completed: 'Completed',
+    paused: 'Paused',
+    addGoal: 'New goal',
+    healthTitle: 'Financial health',
+    savingsRateLabel: 'Savings rate',
+    fixedRatioLabel: 'Fixed costs / Income',
+    emergencyDaysLabel: 'Coverage days',
   },
 } as const;
 
@@ -243,6 +269,18 @@ export interface Movement {
   date: Date;
   desc: string;
   fixed: boolean;
+}
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string;
+  target: number;
+  current: number;
+  currency: string;
+  targetDate: Date | null;
+  status: 'active' | 'completed' | 'paused' | 'cancelled';
 }
 
 function mkMovs(): Movement[] {

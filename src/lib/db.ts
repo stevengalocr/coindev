@@ -1,5 +1,5 @@
 import { createClient } from './supabase';
-import type { Account, Movement, Budget } from './data';
+import type { Account, Movement, Budget, SavingsGoal } from './data';
 
 // ── Category slug ↔ DB UUID mapping ────────────────────────────────
 export const CAT_TO_DB: Record<string, string> = {
@@ -85,6 +85,33 @@ export interface DbBudget {
   category_id: string;
   limit_amount: number;
   period: string;
+}
+
+export interface DbSavingsGoal {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string;
+  target_amount: number;
+  current_amount: number;
+  currency: string;
+  target_date: string | null;
+  status: 'active' | 'completed' | 'paused' | 'cancelled';
+}
+
+export interface DbNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface DbExchangeRate {
+  currency: string;
+  rate: number;
+  fetched_at: string;
 }
 
 // ── Converters ──────────────────────────────────────────────────────
@@ -218,5 +245,52 @@ export async function insertTransaction(tx: NewTransaction): Promise<void> {
       .update({ current_balance: Number(acc.current_balance) + delta })
       .eq('id', tx.account_id);
   }
+}
+
+export function toGoal(g: DbSavingsGoal): SavingsGoal {
+  return {
+    id: g.id,
+    name: g.name,
+    description: g.description,
+    icon: g.icon || '🎯',
+    target: Number(g.target_amount),
+    current: Number(g.current_amount),
+    currency: g.currency,
+    targetDate: g.target_date ? new Date(g.target_date) : null,
+    status: g.status,
+  };
+}
+
+export async function fetchSavingsGoals(): Promise<DbSavingsGoal[]> {
+  const sb = createClient();
+  const { data } = await sb
+    .from('savings_goals')
+    .select('id,name,description,icon,target_amount,current_amount,currency,target_date,status')
+    .is('deleted_at', null)
+    .in('status', ['active', 'completed', 'paused'])
+    .order('created_at', { ascending: false });
+  return (data ?? []) as DbSavingsGoal[];
+}
+
+export async function fetchUnreadNotificationsCount(): Promise<number> {
+  const sb = createClient();
+  const { count } = await sb
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_read', false);
+  return count ?? 0;
+}
+
+export async function fetchLatestExchangeRate(currency: string): Promise<number | null> {
+  const sb = createClient();
+  const { data } = await sb
+    .from('exchange_rates')
+    .select('rate')
+    .eq('base_currency', 'USD')
+    .eq('currency', currency)
+    .order('fetched_at', { ascending: false })
+    .limit(1)
+    .single();
+  return data?.rate ?? null;
 }
 

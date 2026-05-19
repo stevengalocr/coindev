@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/movimientos',  icon: 'list',   key: 'movements' },
   { href: '/dashboard/cuentas',      icon: 'bank',   key: 'accounts'  },
   { href: '/dashboard/presupuestos', icon: 'flag',   key: 'budgets'   },
+  { href: '/dashboard/metas',        icon: 'spark',  key: 'goals'     },
   { href: '/dashboard/gastos-fijos', icon: 'shield', key: 'fixed'     },
   { href: '/dashboard/divisas',      icon: 'swap',   key: 'divisas'   },
   { href: '/dashboard/reportes',     icon: 'chart',  key: 'reports'   },
@@ -30,14 +31,14 @@ const MOBILE_NAV = [
 
 function DashInner({ children }: { children: ReactNode }) {
   const { t } = useApp();
-  const { profile } = useData();
+  const { profile, unreadNotifications } = useData();
   const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
 
   const navLabels: Record<string, string> = {
     home: t.home, movements: t.movements, accounts: t.accounts,
-    budgets: t.budgets, fixed: t.fixed, divisas: t.divisas, reports: t.reports,
+    budgets: t.budgets, goals: t.goals, fixed: t.fixed, divisas: t.divisas, reports: t.reports,
   };
 
   const isActive = (href: string) =>
@@ -164,10 +165,18 @@ function DashInner({ children }: { children: ReactNode }) {
               color: 'var(--text-2)', position: 'relative', flexShrink: 0,
             }} aria-label={t.notifications}>
               <Icon name="bell" size={16} stroke={1.6} />
-              <span style={{
-                position: 'absolute', top: 8, right: 8, width: 6, height: 6,
-                borderRadius: '50%', background: 'var(--expense)', border: '1.5px solid var(--surface)',
-              }} />
+              {unreadNotifications > 0 && (
+                <span style={{
+                  position: 'absolute', top: 4, right: 4,
+                  minWidth: 16, height: 16, borderRadius: 8,
+                  background: 'var(--expense)', border: '1.5px solid var(--surface)',
+                  fontSize: 9, fontWeight: 700, color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  lineHeight: 1, padding: '0 3px',
+                }}>
+                  {unreadNotifications <= 9 ? unreadNotifications : '9+'}
+                </span>
+              )}
             </button>
 
             <button onClick={() => setAddOpen(true)} style={{
