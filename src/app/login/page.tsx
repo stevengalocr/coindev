@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { Icon } from '@/components/ui/Icon';
 
@@ -29,8 +28,13 @@ export default function LoginPage() {
         return;
       }
       router.push('/dashboard');
-    } catch {
-      setError('Ocurrió un error inesperado. Intenta de nuevo.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed')) {
+        setError('No se pudo conectar. Revisa tu conexión e intenta de nuevo.');
+      } else {
+        setError('Ocurrió un error inesperado. Intenta de nuevo.');
+      }
       setLoading(false);
     }
   }
@@ -109,10 +113,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p style={styles.footerText}>
-          ¿No tienes cuenta?{' '}
-          <Link href="/register" style={styles.footerLink}>Registrarse</Link>
-        </p>
       </div>
 
       <p style={styles.tagline}>Tus finanzas, claras como el agua</p>
@@ -267,18 +267,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'var(--font-sans)',
     letterSpacing: '-0.1px',
     marginTop: '2px',
-  },
-  footerText: {
-    fontSize: '13px',
-    color: 'var(--text-2)',
-    textAlign: 'center',
-    fontFamily: 'var(--font-sans)',
-    marginTop: '20px',
-  },
-  footerLink: {
-    color: 'var(--blue)',
-    textDecoration: 'none',
-    fontWeight: 500,
   },
   tagline: {
     fontSize: '13px',
