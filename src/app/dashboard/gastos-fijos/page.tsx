@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
-import { CAT, fmtMoney } from '@/lib/data';
+import { CAT, fmtMoney, type Movement } from '@/lib/data';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { Icon } from '@/components/ui/Icon';
@@ -11,8 +11,11 @@ import { AddMovementModal } from '@/components/screens/AddMovementModal';
 
 export default function GastosFijosPage() {
   const { t, currency, lang } = useApp();
-  const { movements, loading } = useData();
+  const { movements, loading, deleteTransaction } = useData();
   const [addOpen, setAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState<Movement | null>(null);
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const fixedMovs = movements.filter(m => m.type === 'expense' && m.fixed);
   const map: Record<string, typeof fixedMovs[0]> = {};
@@ -25,8 +28,19 @@ export default function GastosFijosPage() {
   const perDay = total / 30;
   const ratioColor = ratio > 0.6 ? 'var(--expense)' : ratio > 0.45 ? 'var(--warn)' : 'var(--income)';
 
+  async function handleDelete(m: Movement) {
+    setMenuId(null);
+    setConfirmDeleteId(null);
+    await deleteTransaction(m.id, m.type, m.amount, m.account);
+  }
+
   return (
     <div style={{ maxWidth: 760 }}>
+      {menuId !== null && (
+        <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.fixedTitle}</h1>
@@ -37,6 +51,11 @@ export default function GastosFijosPage() {
         </button>
       </div>
       <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} initialFixed initialType="expense" />
+      <AddMovementModal
+        open={!!editItem}
+        onClose={() => setEditItem(null)}
+        initialData={editItem ?? undefined}
+      />
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -97,7 +116,7 @@ export default function GastosFijosPage() {
               const now = new Date();
               const nextDay = new Date(now.getFullYear(), now.getMonth() + 1, m.date.getDate());
               return (
-                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color 150ms' }}
+                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color 150ms', position: 'relative' }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
                 >
@@ -115,7 +134,47 @@ export default function GastosFijosPage() {
                     <MoneyText amount={m.amount} currency={currency} size={15} weight={600} />
                     <div className="mono" style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>{fmtMoney(m.amount / 30, currency)}/d</div>
                   </div>
-                  <button style={{ color: 'var(--text-3)', marginLeft: 4, padding: 6 }}><Icon name="more" size={15} /></button>
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); setConfirmDeleteId(null); }}
+                      style={{ color: 'var(--text-3)', marginLeft: 4, padding: 6 }}
+                    >
+                      <Icon name="more" size={15} />
+                    </button>
+                    {menuId === m.id && (
+                      <div style={{
+                        position: 'absolute', top: '100%', right: 0, zIndex: 50,
+                        background: 'var(--surface)', border: '1px solid var(--border)',
+                        borderRadius: 12, boxShadow: 'var(--shadow-pop)',
+                        minWidth: 160, overflow: 'hidden',
+                      }}>
+                        <button onClick={e => { e.stopPropagation(); setEditItem(m); setMenuId(null); }} style={{
+                          width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                          fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left',
+                          background: 'transparent', borderBottom: '1px solid var(--border)',
+                        }}>
+                          <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
+                        </button>
+                        {confirmDeleteId === m.id ? (
+                          <button onClick={e => { e.stopPropagation(); handleDelete(m); }} style={{
+                            width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                            fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left',
+                            background: 'var(--expense-soft)',
+                          }}>
+                            <Icon name="trash" size={15} /> {lang === 'es' ? '¿Confirmar?' : 'Confirm?'}
+                          </button>
+                        ) : (
+                          <button onClick={e => { e.stopPropagation(); setConfirmDeleteId(m.id); }} style={{
+                            width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                            fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left',
+                            background: 'transparent',
+                          }}>
+                            <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

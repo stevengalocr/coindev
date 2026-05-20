@@ -12,11 +12,14 @@ import { AddMovementModal } from '@/components/screens/AddMovementModal';
 
 export default function MovimientosPage() {
   const { t, currency, lang } = useApp();
-  const { movements, accounts, loading } = useData();
+  const { movements, accounts, loading, deleteTransaction } = useData();
   const [period, setPeriod] = useState<Period>('month');
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [query, setQuery] = useState('');
   const [addOpen, setAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState<Movement | null>(null);
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const list = filterMovs(movements, period).filter(m => {
     if (filter !== 'all' && m.type !== filter) return false;
@@ -41,8 +44,19 @@ export default function MovimientosPage() {
     return date.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'short' });
   }
 
+  async function handleDelete(m: Movement) {
+    setMenuId(null);
+    setConfirmDeleteId(null);
+    await deleteTransaction(m.id, m.type, m.amount, m.account);
+  }
+
   return (
     <>
+      {menuId !== null && (
+        <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+      )}
+
       <div style={{ maxWidth: 900 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <div>
@@ -135,6 +149,7 @@ export default function MovimientosPage() {
                           display: 'flex', alignItems: 'center', gap: 14, padding: '11px 14px',
                           borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none',
                           borderRadius: 10, transition: 'background 100ms', cursor: 'default',
+                          position: 'relative',
                         }}>
                           <CategoryGlyph id={m.cat} size={38} />
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -147,6 +162,47 @@ export default function MovimientosPage() {
                             </div>
                           </div>
                           <MoneyText amount={m.amount} currency={currency as any} size={13.5} weight={600} sign type={m.type} />
+                          <div style={{ position: 'relative' }}>
+                            <button
+                              onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); setConfirmDeleteId(null); }}
+                              style={{ color: 'var(--text-3)', padding: 6 }}
+                            >
+                              <Icon name="more" size={15} />
+                            </button>
+                            {menuId === m.id && (
+                              <div style={{
+                                position: 'absolute', top: '100%', right: 0, zIndex: 50,
+                                background: 'var(--surface)', border: '1px solid var(--border)',
+                                borderRadius: 12, boxShadow: 'var(--shadow-pop)',
+                                minWidth: 160, overflow: 'hidden',
+                              }}>
+                                <button onClick={e => { e.stopPropagation(); setEditItem(m); setMenuId(null); }} style={{
+                                  width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                                  fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left',
+                                  background: 'transparent', borderBottom: '1px solid var(--border)',
+                                }}>
+                                  <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
+                                </button>
+                                {confirmDeleteId === m.id ? (
+                                  <button onClick={e => { e.stopPropagation(); handleDelete(m); }} style={{
+                                    width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                                    fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left',
+                                    background: 'var(--expense-soft)',
+                                  }}>
+                                    <Icon name="trash" size={15} /> {lang === 'es' ? '¿Confirmar?' : 'Confirm?'}
+                                  </button>
+                                ) : (
+                                  <button onClick={e => { e.stopPropagation(); setConfirmDeleteId(m.id); }} style={{
+                                    width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                                    fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left',
+                                    background: 'transparent',
+                                  }}>
+                                    <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -159,6 +215,11 @@ export default function MovimientosPage() {
       </div>
 
       <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <AddMovementModal
+        open={!!editItem}
+        onClose={() => setEditItem(null)}
+        initialData={editItem ?? undefined}
+      />
     </>
   );
 }

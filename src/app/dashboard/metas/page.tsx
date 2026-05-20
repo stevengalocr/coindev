@@ -35,8 +35,11 @@ function monthsRemaining(target: Date): number {
 
 export default function MetasPage() {
   const { t, currency, lang } = useApp();
-  const { goals, loading } = useData();
+  const { goals, loading, deleteGoal } = useData();
   const [addOpen, setAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState<SavingsGoal | null>(null);
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const totalTarget  = goals.reduce((s, g) => s + g.target, 0);
   const totalCurrent = goals.reduce((s, g) => s + g.current, 0);
@@ -44,8 +47,19 @@ export default function MetasPage() {
   const activeGoals  = goals.filter(g => g.status === 'active');
   const otherGoals   = goals.filter(g => g.status !== 'active');
 
+  async function handleDelete(g: SavingsGoal) {
+    setMenuId(null);
+    setConfirmDeleteId(null);
+    await deleteGoal(g.id);
+  }
+
   return (
     <div style={{ maxWidth: 1100 }}>
+      {menuId !== null && (
+        <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, gap: 12, flexWrap: 'wrap' }}>
         <div>
@@ -62,6 +76,7 @@ export default function MetasPage() {
         </button>
       </div>
       <AddGoalModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <AddGoalModal open={!!editItem} onClose={() => setEditItem(null)} initialData={editItem ?? undefined} />
 
       {/* States */}
       {loading ? (
@@ -163,7 +178,16 @@ export default function MetasPage() {
                 {lang === 'es' ? `Activas · ${activeGoals.length}` : `Active · ${activeGoals.length}`}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginBottom: 24 }}>
-                {activeGoals.map(g => <GoalCard key={g.id} goal={g} currency={currency} lang={lang} t={t} />)}
+                {activeGoals.map(g => (
+                  <GoalCard
+                    key={g.id} goal={g} currency={currency} lang={lang} t={t}
+                    menuId={menuId} confirmDeleteId={confirmDeleteId}
+                    onMenuToggle={(id) => { setMenuId(menuId === id ? null : id); setConfirmDeleteId(null); }}
+                    onEdit={(goal) => { setEditItem(goal); setMenuId(null); }}
+                    onDeleteConfirm={(id) => setConfirmDeleteId(id)}
+                    onDelete={handleDelete}
+                  />
+                ))}
               </div>
             </>
           )}
@@ -175,7 +199,16 @@ export default function MetasPage() {
                 {lang === 'es' ? `Otras · ${otherGoals.length}` : `Others · ${otherGoals.length}`}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-                {otherGoals.map(g => <GoalCard key={g.id} goal={g} currency={currency} lang={lang} t={t} />)}
+                {otherGoals.map(g => (
+                  <GoalCard
+                    key={g.id} goal={g} currency={currency} lang={lang} t={t}
+                    menuId={menuId} confirmDeleteId={confirmDeleteId}
+                    onMenuToggle={(id) => { setMenuId(menuId === id ? null : id); setConfirmDeleteId(null); }}
+                    onEdit={(goal) => { setEditItem(goal); setMenuId(null); }}
+                    onDeleteConfirm={(id) => setConfirmDeleteId(id)}
+                    onDelete={handleDelete}
+                  />
+                ))}
               </div>
             </>
           )}
@@ -196,9 +229,15 @@ interface CardProps {
   t: { target: string; achieved: string; monthlyNeeded: string; completed: string; paused: string };
   currency: 'CRC' | 'USD';
   lang: string;
+  menuId: string | null;
+  confirmDeleteId: string | null;
+  onMenuToggle: (id: string) => void;
+  onEdit: (goal: SavingsGoal) => void;
+  onDeleteConfirm: (id: string) => void;
+  onDelete: (goal: SavingsGoal) => void;
 }
 
-function GoalCard({ goal, currency, lang, t }: CardProps) {
+function GoalCard({ goal, currency, lang, t, menuId, confirmDeleteId, onMenuToggle, onEdit, onDeleteConfirm, onDelete }: CardProps) {
   const pct = goal.target > 0 ? Math.min(100, Math.round((goal.current / goal.target) * 100)) : 0;
   const remaining = goal.target - goal.current;
   const monthlyNeeded = goal.targetDate && remaining > 0 ? remaining / monthsRemaining(goal.targetDate) : null;
@@ -207,7 +246,7 @@ function GoalCard({ goal, currency, lang, t }: CardProps) {
 
   return (
     <div className="cd-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Top: icon + name + badge */}
+      {/* Top: icon + name + badge + more */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', flexShrink: 0, color: 'var(--text-2)' }}>
           <Icon name={goal.icon} size={20} stroke={1.7} />
@@ -225,6 +264,47 @@ function GoalCard({ goal, currency, lang, t }: CardProps) {
         <span style={{ fontSize: 10, fontWeight: 600, color: sColor, border: `1px solid ${sColor}`, borderRadius: 6, padding: '2px 7px', letterSpacing: '0.04em', flexShrink: 0, opacity: 0.9 }}>
           {statusLabel(goal.status, lang)}
         </span>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <button
+            onClick={e => { e.stopPropagation(); onMenuToggle(goal.id); }}
+            style={{ color: 'var(--text-3)', padding: 4 }}
+          >
+            <Icon name="more" size={15} />
+          </button>
+          {menuId === goal.id && (
+            <div style={{
+              position: 'absolute', top: '100%', right: 0, zIndex: 50,
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 12, boxShadow: 'var(--shadow-pop)',
+              minWidth: 160, overflow: 'hidden',
+            }}>
+              <button onClick={e => { e.stopPropagation(); onEdit(goal); }} style={{
+                width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left',
+                background: 'transparent', borderBottom: '1px solid var(--border)',
+              }}>
+                <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
+              </button>
+              {confirmDeleteId === goal.id ? (
+                <button onClick={e => { e.stopPropagation(); onDelete(goal); }} style={{
+                  width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                  fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left',
+                  background: 'var(--expense-soft)',
+                }}>
+                  <Icon name="trash" size={15} /> {lang === 'es' ? '¿Confirmar?' : 'Confirm?'}
+                </button>
+              ) : (
+                <button onClick={e => { e.stopPropagation(); onDeleteConfirm(goal.id); }} style={{
+                  width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                  fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left',
+                  background: 'transparent',
+                }}>
+                  <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Progress */}

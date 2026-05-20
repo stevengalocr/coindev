@@ -1,25 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { Icon } from '@/components/ui/Icon';
 
 const GOAL_ICONS = ['target','home','car','plane','phone','laptop','graduation','ring','umbrella','dumbbell','paw','guitar'];
 
-interface Props { open: boolean; onClose: () => void }
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  initialData?: import('@/lib/data').SavingsGoal;
+}
 
-export function AddGoalModal({ open, onClose }: Props) {
+export function AddGoalModal({ open, onClose, initialData }: Props) {
   const { lang } = useApp();
-  const { addGoal } = useData();
+  const { addGoal, updateGoal } = useData();
+  const isEditing = !!initialData;
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState('target');
-  const [target, setTarget] = useState('');
-  const [targetDate, setTargetDate] = useState('');
+  const [name, setName] = useState(initialData?.name ?? '');
+  const [description, setDescription] = useState(initialData?.description ?? '');
+  const [icon, setIcon] = useState(initialData?.icon ?? 'target');
+  const [target, setTarget] = useState(initialData?.target.toString() ?? '');
+  const [targetDate, setTargetDate] = useState(
+    initialData?.targetDate ? initialData.targetDate.toISOString().slice(0, 10) : ''
+  );
+  const [status, setStatus] = useState<string>(initialData?.status ?? 'active');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    if (initialData) {
+      setName(initialData.name);
+      setDescription(initialData.description ?? '');
+      setIcon(initialData.icon);
+      setTarget(initialData.target.toString());
+      setTargetDate(initialData.targetDate ? initialData.targetDate.toISOString().slice(0, 10) : '');
+      setStatus(initialData.status);
+    } else {
+      setName('');
+      setDescription('');
+      setIcon('target');
+      setTarget('');
+      setTargetDate('');
+      setStatus('active');
+    }
+    setError('');
+  }, [open, initialData]);
 
   if (!open) return null;
 
@@ -29,21 +57,38 @@ export function AddGoalModal({ open, onClose }: Props) {
     if (!amt || amt <= 0) { setError(lang === 'es' ? 'Ingresa un monto objetivo válido.' : 'Enter a valid target amount.'); return; }
     setSaving(true); setError('');
     try {
-      await addGoal({
-        name: name.trim(),
-        description: description.trim() || undefined,
-        icon,
-        target_amount: amt,
-        target_date: targetDate || undefined,
-      });
+      if (isEditing && initialData) {
+        await updateGoal(initialData.id, {
+          name: name.trim(),
+          description: description.trim() || null,
+          icon,
+          target_amount: amt,
+          target_date: targetDate || null,
+          status,
+        });
+      } else {
+        await addGoal({
+          name: name.trim(),
+          description: description.trim() || undefined,
+          icon,
+          target_amount: amt,
+          target_date: targetDate || undefined,
+        });
+        setName(''); setDescription(''); setIcon('target'); setTarget(''); setTargetDate('');
+      }
       onClose();
-      setName(''); setDescription(''); setIcon('target'); setTarget(''); setTargetDate('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al guardar.');
     } finally {
       setSaving(false);
     }
   }
+
+  const statusOptions = [
+    { id: 'active',    label_es: 'Activa',     label_en: 'Active'    },
+    { id: 'paused',    label_es: 'Pausada',    label_en: 'Paused'    },
+    { id: 'completed', label_es: 'Completada', label_en: 'Completed' },
+  ];
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'flex-end' }}>
@@ -62,7 +107,7 @@ export function AddGoalModal({ open, onClose }: Props) {
         <div style={{ padding: '16px 24px 32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>
-              {lang === 'es' ? 'Nueva meta' : 'New goal'}
+              {isEditing ? (lang === 'es' ? 'Editar meta' : 'Edit goal') : (lang === 'es' ? 'Nueva meta' : 'New goal')}
             </div>
             <button onClick={onClose} style={{ color: 'var(--text-3)', padding: 4 }}><Icon name="x" size={18} /></button>
           </div>
@@ -141,6 +186,26 @@ export function AddGoalModal({ open, onClose }: Props) {
             />
           </GField>
 
+          {/* Status (only when editing) */}
+          {isEditing && (
+            <GField label={lang === 'es' ? 'Estado' : 'Status'}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                {statusOptions.map(s => (
+                  <button key={s.id} onClick={() => setStatus(s.id)} style={{
+                    padding: '10px 8px', borderRadius: 'var(--r-md)',
+                    border: `1.5px solid ${status === s.id ? 'var(--blue)' : 'var(--border)'}`,
+                    background: status === s.id ? 'color-mix(in oklab, var(--blue) 10%, var(--surface))' : 'var(--surface)',
+                    fontSize: 12, fontWeight: status === s.id ? 600 : 400,
+                    color: status === s.id ? 'var(--text)' : 'var(--text-2)',
+                    transition: 'all 140ms', cursor: 'pointer',
+                  }}>
+                    {lang === 'es' ? s.label_es : s.label_en}
+                  </button>
+                ))}
+              </div>
+            </GField>
+          )}
+
           {error && (
             <div style={{ padding: '9px 12px', borderRadius: 10, background: 'var(--expense-soft)', border: '1px solid rgba(255,107,131,0.2)', fontSize: 13, color: 'var(--expense)', marginBottom: 14 }}>
               {error}
@@ -153,7 +218,11 @@ export function AddGoalModal({ open, onClose }: Props) {
             fontSize: 14, fontWeight: 700, border: 0, cursor: saving ? 'not-allowed' : 'pointer',
             opacity: saving ? 0.7 : 1,
           }}>
-            {saving ? (lang === 'es' ? 'Guardando…' : 'Saving…') : (lang === 'es' ? 'Crear meta' : 'Create goal')}
+            {saving
+              ? (lang === 'es' ? 'Guardando…' : 'Saving…')
+              : isEditing
+                ? (lang === 'es' ? 'Guardar cambios' : 'Save changes')
+                : (lang === 'es' ? 'Crear meta' : 'Create goal')}
           </button>
         </div>
       </div>

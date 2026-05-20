@@ -53,32 +53,23 @@ export default function DashboardPage() {
   const { movements, budgets, accounts, yearEvolution, loading } = useData();
   const [period, setPeriod] = useState<Period>('month');
 
+  const now2 = new Date();
+  const dateStr2 = now2.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' });
+  const dateLabel = dateStr2.charAt(0).toUpperCase() + dateStr2.slice(1);
+
   const filtered = filterMovs(movements, period);
   const savingsAcc = accounts.find(a => a.kind === 'savings');
   const { income, expense, net } = aggregate(filtered, savingsAcc?.balance ?? 0);
   const savings = net;
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, color: 'var(--text-3)', fontSize: 14 }}>
-        Cargando datos…
-      </div>
-    );
-  }
-
-  /* ── Donut data ── */
   const byCat: Record<string, number> = {};
-  filtered.filter(m => m.type === 'expense').forEach(m => { byCat[m.cat] = (byCat[m.cat] || 0) + m.amount; });
+  if (!loading) filtered.filter(m => m.type === 'expense').forEach(m => { byCat[m.cat] = (byCat[m.cat] || 0) + m.amount; });
   const donutData = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 5)
     .map(([catId, value]) => ({ value, color: CAT[catId]?.color || '#888', cat: catId }));
 
-  const now2 = new Date();
-  const dateStr2 = now2.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' });
-  const dateLabel = dateStr2.charAt(0).toUpperCase() + dateStr2.slice(1);
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Page header */}
+      {/* Page header — always visible */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>
@@ -91,6 +82,13 @@ export default function DashboardPage() {
         </div>
         <PeriodChips value={period} onChange={setPeriod} t={t} />
       </div>
+
+      {loading && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 260, color: 'var(--text-3)', fontSize: 14 }}>
+          {lang === 'es' ? 'Cargando datos…' : 'Loading data…'}
+        </div>
+      )}
+      {!loading && (<>
 
       {/* Stats grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: 16 }} className="stats-grid">
@@ -383,6 +381,7 @@ export default function DashboardPage() {
           .accounts-grid { grid-template-columns: 1fr 1fr !important; }
         }
       `}</style>
+      </>)}
     </div>
   );
 }

@@ -6,28 +6,55 @@ import { useData } from '@/hooks/useData';
 import { CATEGORIES } from '@/lib/data';
 import { Icon } from '@/components/ui/Icon';
 
-interface Props { open: boolean; onClose: () => void; initialFixed?: boolean; initialType?: 'expense' | 'income' }
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  initialFixed?: boolean;
+  initialType?: 'expense' | 'income';
+  initialData?: import('@/lib/data').Movement;
+}
 
-export function AddMovementModal({ open, onClose, initialFixed = false, initialType = 'expense' }: Props) {
+export function AddMovementModal({ open, onClose, initialFixed = false, initialType = 'expense', initialData }: Props) {
   const { t, currency, lang } = useApp();
-  const { accounts, addTransaction } = useData();
-  const [type, setType] = useState<'expense' | 'income'>(initialType);
-  const [amount, setAmount] = useState('');
-  const [cat, setCat] = useState(initialType === 'income' ? 'salary' : 'food');
-  const [accId, setAccId] = useState('');
-  const [desc, setDesc] = useState('');
-  const [fixed, setFixed] = useState(initialFixed);
+  const { accounts, addTransaction, updateTransaction } = useData();
+  const isEditing = !!initialData;
+
+  const [type, setType] = useState<'expense' | 'income'>(initialData?.type ?? initialType);
+  const [amount, setAmount] = useState(initialData ? String(initialData.amount) : '');
+  const [cat, setCat] = useState(initialData?.cat ?? (initialType === 'income' ? 'salary' : 'food'));
+  const [accId, setAccId] = useState(initialData?.account ?? '');
+  const [desc, setDesc] = useState(initialData?.desc ?? '');
+  const [fixed, setFixed] = useState(initialData?.fixed ?? initialFixed);
+  const [date, setDate] = useState(initialData ? initialData.date.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Default account when accounts load
+  // Default account when accounts load (only in creation mode)
   useEffect(() => {
-    if (accounts.length > 0 && !accId) setAccId(accounts[0].id);
-  }, [accounts, accId]);
+    if (accounts.length > 0 && !accId && !initialData) setAccId(accounts[0].id);
+  }, [accounts, accId, initialData]);
 
+  // Sync state when modal opens or initialData changes
   useEffect(() => {
-    if (!open) { setAmount(''); setDesc(''); setFixed(initialFixed); setCat(initialType === 'income' ? 'salary' : 'food'); setType(initialType); setError(''); }
-  }, [open, initialFixed, initialType]);
+    if (!open) return;
+    if (initialData) {
+      setType(initialData.type);
+      setAmount(String(initialData.amount));
+      setCat(initialData.cat);
+      setAccId(initialData.account);
+      setDesc(initialData.desc);
+      setFixed(initialData.fixed);
+      setDate(initialData.date.toISOString().slice(0, 10));
+    } else {
+      setAmount('');
+      setDesc('');
+      setFixed(initialFixed);
+      setCat(initialType === 'income' ? 'salary' : 'food');
+      setType(initialType);
+      setDate(new Date().toISOString().slice(0, 10));
+    }
+    setError('');
+  }, [open, initialData, initialFixed, initialType]);
 
   useEffect(() => {
     if (!open) return;
@@ -47,15 +74,23 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
     setSaving(true);
     setError('');
     try {
-      await addTransaction({
-        type,
-        cat,
-        amount: parseFloat(amount),
-        account_id: accId,
-        date: new Date().toISOString().slice(0, 10),
-        description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'),
-        is_fixed: fixed,
-      });
+      if (isEditing && initialData) {
+        await updateTransaction(
+          initialData.id,
+          { type, cat, amount: parseFloat(amount), account_id: accId, date, description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'), is_fixed: fixed },
+          { type: initialData.type, amount: initialData.amount, account: initialData.account }
+        );
+      } else {
+        await addTransaction({
+          type,
+          cat,
+          amount: parseFloat(amount),
+          account_id: accId,
+          date,
+          description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'),
+          is_fixed: fixed,
+        });
+      }
       onClose();
     } catch {
       setError(lang === 'es' ? 'Error al guardar. Intenta de nuevo.' : 'Error saving. Try again.');
@@ -82,7 +117,9 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
         <div style={{ padding: '8px 24px 40px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <button onClick={onClose} style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-2)', padding: '4px 0' }}>{t.cancel}</button>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{t.newMovement}</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
+              {isEditing ? (lang === 'es' ? 'Editar movimiento' : 'Edit movement') : t.newMovement}
+            </div>
             <div style={{ width: 60 }} />
           </div>
 
@@ -158,8 +195,12 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0', minHeight: 46 }}>
               <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, width: 90, flexShrink: 0 }}>{t.date}</div>
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
-                <span style={{ fontSize: 13.5, color: 'var(--text)', fontWeight: 500 }}>{t.today}</span>
-                <Icon name="chevron-right" size={14} style={{ color: 'var(--text-3)' }} />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                  style={{ background: 'transparent', border: 0, color: 'var(--text)', fontSize: 13.5, fontWeight: 500, textAlign: 'right', outline: 'none', fontFamily: 'var(--font-sans)', cursor: 'pointer' }}
+                />
               </div>
             </div>
             <div className="cd-divider" />
@@ -189,7 +230,11 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
             opacity: (!amount || amount === '0' || saving) ? 0.5 : 1,
             transition: 'opacity 150ms',
           }}>
-            {saving ? (lang === 'es' ? 'Guardando…' : 'Saving…') : t.save}
+            {saving
+              ? (lang === 'es' ? 'Guardando…' : 'Saving…')
+              : isEditing
+                ? (lang === 'es' ? 'Guardar cambios' : 'Save changes')
+                : t.save}
           </button>
         </div>
       </div>

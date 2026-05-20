@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { Icon } from '@/components/ui/Icon';
+import { APP_TO_DB_ACC } from '@/lib/db';
 
 const COLORS = ['#5B9BFF','#4FE0A9','#9F7BFF','#FF8BB5','#F2C94C','#5BE5D1','#FF6B83','#FF9F43'];
 
@@ -14,39 +15,78 @@ const ACCOUNT_TYPES = [
   { id: 'credit_card', icon: 'card',   label_es: 'Tarjeta crédito', label_en: 'Credit card'  },
 ] as const;
 
-interface Props { open: boolean; onClose: () => void }
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  initialData?: import('@/lib/data').Account;
+}
 
-export function AddAccountModal({ open, onClose }: Props) {
+export function AddAccountModal({ open, onClose, initialData }: Props) {
   const { lang } = useApp();
-  const { addAccount } = useData();
+  const { addAccount, updateAccount } = useData();
+  const isEditing = !!initialData;
 
-  const [type, setType] = useState<'checking'|'savings'|'cash'|'credit_card'>('checking');
-  const [name, setName] = useState('');
+  const [type, setType] = useState<'checking'|'savings'|'cash'|'credit_card'>(
+    initialData ? (APP_TO_DB_ACC[initialData.kind] as 'checking'|'savings'|'cash'|'credit_card') : 'checking'
+  );
+  const [name, setName] = useState(initialData?.name ?? '');
   const [balance, setBalance] = useState('');
-  const [color, setColor] = useState(COLORS[0]);
-  const [creditLimit, setCreditLimit] = useState('');
-  const [lastDigits, setLastDigits] = useState('');
+  const [color, setColor] = useState(initialData?.color ?? COLORS[0]);
+  const [creditLimit, setCreditLimit] = useState(initialData?.limit?.toString() ?? '');
+  const [lastDigits, setLastDigits] = useState(initialData?.tail.replace('••', '') ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Sync when modal opens or initialData changes
+  useEffect(() => {
+    if (!open) return;
+    if (initialData) {
+      setType(APP_TO_DB_ACC[initialData.kind] as 'checking'|'savings'|'cash'|'credit_card');
+      setName(initialData.name);
+      setColor(initialData.color);
+      setCreditLimit(initialData.limit?.toString() ?? '');
+      setLastDigits(initialData.tail.replace('••', ''));
+    } else {
+      setType('checking');
+      setName('');
+      setBalance('');
+      setColor(COLORS[0]);
+      setCreditLimit('');
+      setLastDigits('');
+    }
+    setError('');
+  }, [open, initialData]);
 
   if (!open) return null;
 
   async function handleSave() {
     if (!name.trim()) { setError(lang === 'es' ? 'Escribe un nombre.' : 'Enter a name.'); return; }
-    const bal = parseFloat(balance.replace(/,/g, '')) || 0;
     setSaving(true); setError('');
     try {
-      await addAccount({
-        name: name.trim(),
-        type,
-        initial_balance: bal,
-        color,
-        credit_limit: type === 'credit_card' && creditLimit ? parseFloat(creditLimit.replace(/,/g,'')) : undefined,
-        last_digits: lastDigits.trim() || undefined,
-      });
+      if (isEditing && initialData) {
+        await updateAccount(initialData.id, {
+          name: name.trim(),
+          type,
+          color,
+          credit_limit: type === 'credit_card' && creditLimit ? parseFloat(creditLimit.replace(/,/g,'')) : null,
+          last_digits: lastDigits.trim() || null,
+        });
+      } else {
+        const bal = parseFloat(balance.replace(/,/g, '')) || 0;
+        await addAccount({
+          name: name.trim(),
+          type,
+          initial_balance: bal,
+          color,
+          credit_limit: type === 'credit_card' && creditLimit ? parseFloat(creditLimit.replace(/,/g,'')) : undefined,
+          last_digits: lastDigits.trim() || undefined,
+        });
+      }
       onClose();
-      setName(''); setBalance(''); setCreditLimit(''); setLastDigits('');
-      setType('checking'); setColor(COLORS[0]);
+      if (!isEditing) {
+        setName(''); setBalance(''); setCreditLimit(''); setLastDigits('');
+        setType('checking'); setColor(COLORS[0]);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al guardar.');
     } finally {
@@ -89,7 +129,7 @@ export function AddAccountModal({ open, onClose }: Props) {
         <div style={{ padding: '16px 24px 28px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>
-              {lang === 'es' ? 'Nueva cuenta' : 'New account'}
+              {isEditing ? (lang === 'es' ? 'Editar cuenta' : 'Edit account') : (lang === 'es' ? 'Nueva cuenta' : 'New account')}
             </div>
             <button onClick={onClose} style={{ color: 'var(--text-3)', padding: 4 }}><Icon name="x" size={18} /></button>
           </div>
@@ -101,7 +141,7 @@ export function AddAccountModal({ open, onClose }: Props) {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {ACCOUNT_TYPES.map(t => (
-                <button key={t.id} onClick={() => setType(t.id)} style={{
+                <button key={t.id} onClick={() => !isEditing && setType(t.id)} style={{
                   padding: '12px', borderRadius: 'var(--r-md)',
                   border: `1.5px solid ${type === t.id ? 'var(--blue)' : 'var(--border)'}`,
                   background: type === t.id ? 'color-mix(in oklab, var(--blue) 10%, var(--surface))' : 'var(--surface)',
@@ -109,6 +149,8 @@ export function AddAccountModal({ open, onClose }: Props) {
                   color: type === t.id ? 'var(--text)' : 'var(--text-2)',
                   fontSize: 13, fontWeight: type === t.id ? 600 : 400,
                   transition: 'all 140ms',
+                  cursor: isEditing ? 'default' : 'pointer',
+                  opacity: isEditing && type !== t.id ? 0.5 : 1,
                 }}>
                   <Icon name={t.icon} size={16} stroke={1.7} style={{ color: type === t.id ? 'var(--blue)' : 'var(--text-3)' }} />
                   {lang === 'es' ? t.label_es : t.label_en}
@@ -122,13 +164,15 @@ export function AddAccountModal({ open, onClose }: Props) {
             <input className="cd-sheet-inp" placeholder={lang === 'es' ? 'Ej: BAC Cuenta corriente' : 'e.g. Chase Checking'} value={name} onChange={e => setName(e.target.value)} />
           </Field>
 
-          {/* Balance */}
-          <Field label={lang === 'es' ? (isCredit ? 'Saldo actual (deuda)' : 'Saldo inicial') : (isCredit ? 'Current balance (debt)' : 'Initial balance')}>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>₡</span>
-              <input className="cd-sheet-inp" style={{ paddingLeft: 28 }} placeholder="0" type="number" min="0" value={balance} onChange={e => setBalance(e.target.value)} />
-            </div>
-          </Field>
+          {/* Balance — only in creation mode */}
+          {!isEditing && (
+            <Field label={lang === 'es' ? (isCredit ? 'Saldo actual (deuda)' : 'Saldo inicial') : (isCredit ? 'Current balance (debt)' : 'Initial balance')}>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>₡</span>
+                <input className="cd-sheet-inp" style={{ paddingLeft: 28 }} placeholder="0" type="number" min="0" value={balance} onChange={e => setBalance(e.target.value)} />
+              </div>
+            </Field>
+          )}
 
           {/* Crédito */}
           {isCredit && (
@@ -174,7 +218,11 @@ export function AddAccountModal({ open, onClose }: Props) {
             fontSize: 14, fontWeight: 700, border: 0, cursor: saving ? 'not-allowed' : 'pointer',
             opacity: saving ? 0.7 : 1, transition: 'opacity 150ms',
           }}>
-            {saving ? (lang === 'es' ? 'Guardando…' : 'Saving…') : (lang === 'es' ? 'Crear cuenta' : 'Create account')}
+            {saving
+              ? (lang === 'es' ? 'Guardando…' : 'Saving…')
+              : isEditing
+                ? (lang === 'es' ? 'Guardar cambios' : 'Save changes')
+                : (lang === 'es' ? 'Crear cuenta' : 'Create account')}
           </button>
         </div>
       </div>

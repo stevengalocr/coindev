@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
-import { CAT, fmtMoney } from '@/lib/data';
+import { CAT, fmtMoney, type Budget } from '@/lib/data';
 import { Icon } from '@/components/ui/Icon';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
@@ -11,9 +11,12 @@ import { AddBudgetModal } from '@/components/screens/AddBudgetModal';
 
 export default function PresupuestosPage() {
   const { t, currency, lang } = useApp();
-  const { budgets, loading } = useData();
+  const { budgets, loading, deleteBudget } = useData();
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState<Budget | null>(null);
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const totalLimit = budgets.reduce((s, b) => s + b.limit, 0);
   const totalSpent = budgets.reduce((s, b) => s + b.spent, 0);
@@ -23,8 +26,19 @@ export default function PresupuestosPage() {
   const monthLabel = now.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { month: 'long', year: 'numeric' });
   const monthCap = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 
+  async function handleDelete(b: Budget) {
+    setMenuId(null);
+    setConfirmDeleteId(null);
+    await deleteBudget(b.cat);
+  }
+
   return (
     <div style={{ maxWidth: 840 }}>
+      {menuId !== null && (
+        <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.budgetsTitle}</h1>
@@ -34,6 +48,7 @@ export default function PresupuestosPage() {
           <Icon name="plus" size={15} stroke={2.4} /> {lang === 'es' ? 'Nuevo presupuesto' : 'New budget'}
         </button>
         <AddBudgetModal open={addOpen} onClose={() => setAddOpen(false)} />
+        <AddBudgetModal open={!!editItem} onClose={() => setEditItem(null)} initialData={editItem ?? undefined} />
       </div>
 
       {loading ? (
@@ -102,7 +117,7 @@ export default function PresupuestosPage() {
               const barColor = over ? 'var(--expense)' : danger ? 'var(--warn)' : (c?.color ?? 'var(--income)');
               return (
                 <div key={b.cat} className="cd-card"
-                  style={{ padding: '18px 20px', cursor: 'pointer', transition: 'border-color 150ms', borderColor: hoverId === b.cat ? 'var(--border-strong)' : 'var(--border)' }}
+                  style={{ padding: '18px 20px', cursor: 'pointer', transition: 'border-color 150ms', borderColor: hoverId === b.cat ? 'var(--border-strong)' : 'var(--border)', position: 'relative' }}
                   onMouseEnter={() => setHoverId(b.cat)}
                   onMouseLeave={() => setHoverId(null)}
                 >
@@ -128,7 +143,47 @@ export default function PresupuestosPage() {
                         <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: over ? 'var(--expense)' : danger ? 'var(--warn)' : 'var(--text-3)' }}>{Math.round(pct)}%</span>
                       </div>
                     </div>
-                    <button style={{ color: 'var(--text-3)', marginLeft: 4, padding: 6 }}><Icon name="more" size={16} /></button>
+                    <div style={{ position: 'relative', marginLeft: 4 }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); setMenuId(menuId === b.cat ? null : b.cat); setConfirmDeleteId(null); }}
+                        style={{ color: 'var(--text-3)', padding: 6 }}
+                      >
+                        <Icon name="more" size={16} />
+                      </button>
+                      {menuId === b.cat && (
+                        <div style={{
+                          position: 'absolute', top: '100%', right: 0, zIndex: 50,
+                          background: 'var(--surface)', border: '1px solid var(--border)',
+                          borderRadius: 12, boxShadow: 'var(--shadow-pop)',
+                          minWidth: 160, overflow: 'hidden',
+                        }}>
+                          <button onClick={e => { e.stopPropagation(); setEditItem(b); setMenuId(null); }} style={{
+                            width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                            fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left',
+                            background: 'transparent', borderBottom: '1px solid var(--border)',
+                          }}>
+                            <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
+                          </button>
+                          {confirmDeleteId === b.cat ? (
+                            <button onClick={e => { e.stopPropagation(); handleDelete(b); }} style={{
+                              width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                              fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left',
+                              background: 'var(--expense-soft)',
+                            }}>
+                              <Icon name="trash" size={15} /> {lang === 'es' ? '¿Confirmar?' : 'Confirm?'}
+                            </button>
+                          ) : (
+                            <button onClick={e => { e.stopPropagation(); setConfirmDeleteId(b.cat); }} style={{
+                              width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                              fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left',
+                              background: 'transparent',
+                            }}>
+                              <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

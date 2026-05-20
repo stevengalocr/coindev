@@ -11,13 +11,27 @@ import { AddAccountModal } from '@/components/screens/AddAccountModal';
 
 export default function CuentasPage() {
   const { t, currency, lang } = useApp();
-  const { accounts, movements, loading } = useData();
+  const { accounts, movements, loading, deleteAccount } = useData();
   const [addOpen, setAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState<Account | null>(null);
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const total = accounts.reduce((s, a) => s + a.balance, 0);
 
+  async function handleDelete(acc: Account) {
+    setMenuId(null);
+    setConfirmDeleteId(null);
+    await deleteAccount(acc.id);
+  }
+
   return (
     <div style={{ maxWidth: 1100 }}>
+      {menuId !== null && (
+        <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
@@ -90,6 +104,12 @@ export default function CuentasPage() {
               lang={lang}
               t={t}
               recent={movements.filter(m => m.account === acc.id).slice(0, 3)}
+              menuId={menuId}
+              confirmDeleteId={confirmDeleteId}
+              onMenuToggle={(id) => { setMenuId(menuId === id ? null : id); setConfirmDeleteId(null); }}
+              onEdit={(a) => { setEditItem(a); setMenuId(null); }}
+              onDeleteConfirm={(id) => setConfirmDeleteId(id)}
+              onDelete={handleDelete}
             />
           ))}
           {/* Add card */}
@@ -111,13 +131,20 @@ export default function CuentasPage() {
       )}
 
       <AddAccountModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <AddAccountModal open={!!editItem} onClose={() => setEditItem(null)} initialData={editItem ?? undefined} />
     </div>
   );
 }
 
-function AccountCard({ acc, currency, lang, t, recent }: {
+function AccountCard({ acc, currency, lang, t, recent, menuId, confirmDeleteId, onMenuToggle, onEdit, onDeleteConfirm, onDelete }: {
   acc: Account; currency: string; lang: string; t: any;
   recent: import('@/lib/data').Movement[];
+  menuId: string | null;
+  confirmDeleteId: string | null;
+  onMenuToggle: (id: string) => void;
+  onEdit: (acc: Account) => void;
+  onDeleteConfirm: (id: string) => void;
+  onDelete: (acc: Account) => void;
 }) {
   const isCredit = acc.kind === 'credit';
   const used = isCredit ? Math.abs(acc.balance) : 0;
@@ -144,9 +171,47 @@ function AccountCard({ acc, currency, lang, t, recent }: {
               </div>
             </div>
           </div>
-          <button style={{ color: 'var(--text-3)', padding: 4, flexShrink: 0 }}>
-            <Icon name="more" size={16} />
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={e => { e.stopPropagation(); onMenuToggle(acc.id); }}
+              style={{ color: 'var(--text-3)', padding: 4, flexShrink: 0 }}
+            >
+              <Icon name="more" size={16} />
+            </button>
+            {menuId === acc.id && (
+              <div style={{
+                position: 'absolute', top: '100%', right: 0, zIndex: 50,
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: 12, boxShadow: 'var(--shadow-pop)',
+                minWidth: 160, overflow: 'hidden',
+              }}>
+                <button onClick={e => { e.stopPropagation(); onEdit(acc); }} style={{
+                  width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                  fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left',
+                  background: 'transparent', borderBottom: '1px solid var(--border)',
+                }}>
+                  <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
+                </button>
+                {confirmDeleteId === acc.id ? (
+                  <button onClick={e => { e.stopPropagation(); onDelete(acc); }} style={{
+                    width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                    fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left',
+                    background: 'var(--expense-soft)',
+                  }}>
+                    <Icon name="trash" size={15} /> {lang === 'es' ? '¿Confirmar?' : 'Confirm?'}
+                  </button>
+                ) : (
+                  <button onClick={e => { e.stopPropagation(); onDeleteConfirm(acc.id); }} style={{
+                    width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                    fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left',
+                    background: 'transparent',
+                  }}>
+                    <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Balance */}
