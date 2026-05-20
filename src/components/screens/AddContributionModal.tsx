@@ -103,8 +103,8 @@ export function AddContributionModal({ open, onClose, goal }: Props) {
               <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>₡</span>
               <input
                 style={{ width: '100%', background: 'var(--surface-2)', border: '1.5px solid var(--border)', borderRadius: 'var(--r-md)', padding: '11px 14px 11px 28px', color: 'var(--text)', fontSize: 14, fontFamily: 'var(--font-sans)', outline: 'none', transition: 'border-color 150ms', boxSizing: 'border-box' }}
-                onFocus={e => (e.currentTarget.style.borderColor = 'var(--blue)')}
-                onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                onFocus={e => e.currentTarget.style.borderColor = 'var(--blue)'}
+                onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
                 placeholder="0"
                 type="number" min="1"
                 value={amount}
@@ -151,8 +151,8 @@ export function AddContributionModal({ open, onClose, goal }: Props) {
             </div>
             <input
               style={{ width: '100%', background: 'var(--surface-2)', border: '1.5px solid var(--border)', borderRadius: 'var(--r-md)', padding: '11px 14px', color: 'var(--text)', fontSize: 14, fontFamily: 'var(--font-sans)', outline: 'none', transition: 'border-color 150ms', boxSizing: 'border-box' }}
-              onFocus={e => (e.currentTarget.style.borderColor = 'var(--blue)')}
-              onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+              onFocus={e => e.currentTarget.style.borderColor = 'var(--blue)'}
+              onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
               placeholder={lang === 'es' ? 'Ej: Quincena de mayo…' : 'e.g. May paycheck…'}
               value={note}
               onChange={e => setNote(e.target.value)}

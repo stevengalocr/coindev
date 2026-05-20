@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { fmtMoney, type SavingsGoal } from '@/lib/data';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { AddGoalModal } from '@/components/screens/AddGoalModal';
+import { AddContributionModal } from '@/components/screens/AddContributionModal';
 import { Icon } from '@/components/ui/Icon';
+import { fetchGoalContributions, type DbGoalContribution } from '@/lib/db';
 
 function statusColor(status: SavingsGoal['status']): string {
   switch (status) {
@@ -18,13 +20,12 @@ function statusColor(status: SavingsGoal['status']): string {
 }
 
 function statusLabel(status: SavingsGoal['status'], lang: string): string {
-  const map = {
+  return {
     active:    lang === 'es' ? 'Activa'     : 'Active',
     completed: lang === 'es' ? 'Completada' : 'Completed',
     paused:    lang === 'es' ? 'Pausada'    : 'Paused',
     cancelled: lang === 'es' ? 'Cancelada'  : 'Cancelled',
-  };
-  return map[status];
+  }[status];
 }
 
 function monthsRemaining(target: Date): number {
@@ -35,11 +36,15 @@ function monthsRemaining(target: Date): number {
 
 export default function MetasPage() {
   const { t, currency, lang } = useApp();
-  const { goals, loading, deleteGoal } = useData();
+  const { goals, accounts, loading, deleteGoal } = useData();
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<SavingsGoal | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [contributionGoal, setContributionGoal] = useState<SavingsGoal | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [contributions, setContributions] = useState<Record<string, DbGoalContribution[]>>({});
+  const [loadingContribs, setLoadingContribs] = useState<Record<string, boolean>>({});
 
   const totalTarget  = goals.reduce((s, g) => s + g.target, 0);
   const totalCurrent = goals.reduce((s, g) => s + g.current, 0);
@@ -52,6 +57,27 @@ export default function MetasPage() {
     setConfirmDeleteId(null);
     await deleteGoal(g.id);
   }
+
+  const loadContribs = useCallback(async (goalId: string) => {
+    setLoadingContribs(prev => ({ ...prev, [goalId]: true }));
+    try {
+      const data = await fetchGoalContributions(goalId);
+      setContributions(prev => ({ ...prev, [goalId]: data }));
+    } catch {}
+    setLoadingContribs(prev => ({ ...prev, [goalId]: false }));
+  }, []);
+
+  const handleToggleHistory = useCallback(async (goalId: string) => {
+    if (expandedId === goalId) { setExpandedId(null); return; }
+    setExpandedId(goalId);
+    await loadContribs(goalId);
+  }, [expandedId, loadContribs]);
+
+  const handleContributionClose = useCallback(async () => {
+    const goalId = contributionGoal?.id;
+    setContributionGoal(null);
+    if (goalId && expandedId === goalId) await loadContribs(goalId);
+  }, [contributionGoal, expandedId, loadContribs]);
 
   return (
     <div>
@@ -75,13 +101,13 @@ export default function MetasPage() {
           <Icon name="plus" size={15} stroke={2.4} /> {t.addGoal}
         </button>
       </div>
+
       <AddGoalModal open={addOpen} onClose={() => setAddOpen(false)} />
       <AddGoalModal open={!!editItem} onClose={() => setEditItem(null)} initialData={editItem ?? undefined} />
+      <AddContributionModal open={!!contributionGoal} onClose={handleContributionClose} goal={contributionGoal} />
 
-      {/* States */}
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Skeleton summary */}
           <div className="cd-card" style={{ padding: '22px 24px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
               {[1, 2, 3].map(i => (
@@ -93,7 +119,6 @@ export default function MetasPage() {
             </div>
             <div style={{ marginTop: 16, height: 6, borderRadius: 3, background: 'var(--surface-3)' }} />
           </div>
-          {/* Skeleton cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
             {[1, 2].map(i => (
               <div key={i} className="cd-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -103,15 +128,8 @@ export default function MetasPage() {
                     <div style={{ height: 14, width: '55%', borderRadius: 4, background: 'var(--surface-3)' }} />
                     <div style={{ height: 10, width: '35%', borderRadius: 4, background: 'var(--surface-3)' }} />
                   </div>
-                  <div style={{ height: 20, width: 50, borderRadius: 6, background: 'var(--surface-3)' }} />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ height: 18, width: '40%', borderRadius: 4, background: 'var(--surface-3)' }} />
-                    <div style={{ height: 12, width: '25%', borderRadius: 4, background: 'var(--surface-3)' }} />
-                  </div>
-                  <div style={{ height: 5, borderRadius: 3, background: 'var(--surface-3)' }} />
-                </div>
+                <div style={{ height: 5, borderRadius: 3, background: 'var(--surface-3)' }} />
               </div>
             ))}
           </div>
@@ -125,14 +143,9 @@ export default function MetasPage() {
             {lang === 'es' ? 'Sin metas todavía' : 'No goals yet'}
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-3)', maxWidth: 300, margin: '0 auto 20px' }}>
-            {lang === 'es'
-              ? 'Crea tu primera meta de ahorro para empezar a seguir tu progreso.'
-              : 'Create your first savings goal to start tracking your progress.'}
+            {lang === 'es' ? 'Crea tu primera meta de ahorro para empezar a seguir tu progreso.' : 'Create your first savings goal to start tracking your progress.'}
           </div>
-          <button
-            onClick={() => setAddOpen(true)}
-            style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-          >
+          <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <Icon name="plus" size={14} stroke={2.4} />
             {lang === 'es' ? 'Crear primera meta' : 'Create first goal'}
           </button>
@@ -141,11 +154,7 @@ export default function MetasPage() {
         <>
           {/* Summary card */}
           <div className="cd-card" style={{ padding: '22px 24px', marginBottom: 24, position: 'relative', overflow: 'hidden' }}>
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'radial-gradient(circle at 0% 100%, color-mix(in oklab, var(--blue) 18%, transparent), transparent 60%)',
-              pointerEvents: 'none',
-            }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 0% 100%, color-mix(in oklab, var(--blue) 18%, transparent), transparent 60%)', pointerEvents: 'none' }} />
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }} className="goals-summary">
                 <div>
@@ -171,7 +180,7 @@ export default function MetasPage() {
             </div>
           </div>
 
-          {/* Active goals grid */}
+          {/* Active goals */}
           {activeGoals.length > 0 && (
             <>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
@@ -181,11 +190,17 @@ export default function MetasPage() {
                 {activeGoals.map(g => (
                   <GoalCard
                     key={g.id} goal={g} currency={currency} lang={lang} t={t}
+                    accounts={accounts}
                     menuId={menuId} confirmDeleteId={confirmDeleteId}
+                    expanded={expandedId === g.id}
+                    contribs={contributions[g.id]}
+                    loadingContribs={loadingContribs[g.id] ?? false}
                     onMenuToggle={(id) => { setMenuId(menuId === id ? null : id); setConfirmDeleteId(null); }}
                     onEdit={(goal) => { setEditItem(goal); setMenuId(null); }}
                     onDeleteConfirm={(id) => setConfirmDeleteId(id)}
                     onDelete={handleDelete}
+                    onContribute={(goal) => { setContributionGoal(goal); setMenuId(null); }}
+                    onToggleHistory={() => handleToggleHistory(g.id)}
                   />
                 ))}
               </div>
@@ -202,11 +217,17 @@ export default function MetasPage() {
                 {otherGoals.map(g => (
                   <GoalCard
                     key={g.id} goal={g} currency={currency} lang={lang} t={t}
+                    accounts={accounts}
                     menuId={menuId} confirmDeleteId={confirmDeleteId}
+                    expanded={expandedId === g.id}
+                    contribs={contributions[g.id]}
+                    loadingContribs={loadingContribs[g.id] ?? false}
                     onMenuToggle={(id) => { setMenuId(menuId === id ? null : id); setConfirmDeleteId(null); }}
                     onEdit={(goal) => { setEditItem(goal); setMenuId(null); }}
                     onDeleteConfirm={(id) => setConfirmDeleteId(id)}
                     onDelete={handleDelete}
+                    onContribute={(goal) => { setContributionGoal(goal); setMenuId(null); }}
+                    onToggleHistory={() => handleToggleHistory(g.id)}
                   />
                 ))}
               </div>
@@ -226,18 +247,24 @@ export default function MetasPage() {
 
 interface CardProps {
   goal: SavingsGoal;
-  t: { target: string; achieved: string; monthlyNeeded: string; completed: string; paused: string };
+  t: Record<string, string>;
   currency: 'CRC' | 'USD';
   lang: string;
+  accounts: import('@/lib/data').Account[];
   menuId: string | null;
   confirmDeleteId: string | null;
+  expanded: boolean;
+  contribs: DbGoalContribution[] | undefined;
+  loadingContribs: boolean;
   onMenuToggle: (id: string) => void;
   onEdit: (goal: SavingsGoal) => void;
   onDeleteConfirm: (id: string) => void;
   onDelete: (goal: SavingsGoal) => void;
+  onContribute: (goal: SavingsGoal) => void;
+  onToggleHistory: () => void;
 }
 
-function GoalCard({ goal, currency, lang, t, menuId, confirmDeleteId, onMenuToggle, onEdit, onDeleteConfirm, onDelete }: CardProps) {
+function GoalCard({ goal, currency, lang, t, accounts, menuId, confirmDeleteId, expanded, contribs, loadingContribs, onMenuToggle, onEdit, onDeleteConfirm, onDelete, onContribute, onToggleHistory }: CardProps) {
   const pct = goal.target > 0 ? Math.min(100, Math.round((goal.current / goal.target) * 100)) : 0;
   const remaining = goal.target - goal.current;
   const monthlyNeeded = goal.targetDate && remaining > 0 ? remaining / monthsRemaining(goal.targetDate) : null;
@@ -246,59 +273,35 @@ function GoalCard({ goal, currency, lang, t, menuId, confirmDeleteId, onMenuTogg
 
   return (
     <div className="cd-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Top: icon + name + badge + more */}
+      {/* Top row: icon + name + status badge + menu */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', flexShrink: 0, color: 'var(--text-2)' }}>
           <Icon name={goal.icon} size={20} stroke={1.7} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {goal.name}
-          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.name}</div>
           {goal.description && (
-            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {goal.description}
-            </div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{goal.description}</div>
           )}
         </div>
         <span style={{ fontSize: 10, fontWeight: 600, color: sColor, border: `1px solid ${sColor}`, borderRadius: 6, padding: '2px 7px', letterSpacing: '0.04em', flexShrink: 0, opacity: 0.9 }}>
           {statusLabel(goal.status, lang)}
         </span>
         <div style={{ position: 'relative', flexShrink: 0 }}>
-          <button
-            onClick={e => { e.stopPropagation(); onMenuToggle(goal.id); }}
-            style={{ color: 'var(--text-3)', padding: 4 }}
-          >
+          <button onClick={e => { e.stopPropagation(); onMenuToggle(goal.id); }} style={{ color: 'var(--text-3)', padding: 4 }}>
             <Icon name="more" size={15} />
           </button>
           {menuId === goal.id && (
-            <div style={{
-              position: 'absolute', top: '100%', right: 0, zIndex: 50,
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              borderRadius: 12, boxShadow: 'var(--shadow-pop)',
-              minWidth: 160, overflow: 'hidden',
-            }}>
-              <button onClick={e => { e.stopPropagation(); onEdit(goal); }} style={{
-                width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left',
-                background: 'transparent', borderBottom: '1px solid var(--border)',
-              }}>
+            <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow-pop)', minWidth: 160, overflow: 'hidden' }}>
+              <button onClick={e => { e.stopPropagation(); onEdit(goal); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left', background: 'transparent', borderBottom: '1px solid var(--border)' }}>
                 <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
               </button>
               {confirmDeleteId === goal.id ? (
-                <button onClick={e => { e.stopPropagation(); onDelete(goal); }} style={{
-                  width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                  fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left',
-                  background: 'var(--expense-soft)',
-                }}>
+                <button onClick={e => { e.stopPropagation(); onDelete(goal); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left', background: 'var(--expense-soft)' }}>
                   <Icon name="trash" size={15} /> {lang === 'es' ? '¿Confirmar?' : 'Confirm?'}
                 </button>
               ) : (
-                <button onClick={e => { e.stopPropagation(); onDeleteConfirm(goal.id); }} style={{
-                  width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                  fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left',
-                  background: 'transparent',
-                }}>
+                <button onClick={e => { e.stopPropagation(); onDeleteConfirm(goal.id); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left', background: 'transparent' }}>
                   <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
                 </button>
               )}
@@ -334,6 +337,72 @@ function GoalCard({ goal, currency, lang, t, menuId, confirmDeleteId, onMenuTogg
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 'var(--r-md)', background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{t.monthlyNeeded}</span>
           <MoneyText amount={monthlyNeeded} currency={currency} size={13} weight={700} style={{ color: 'var(--blue)' }} />
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        {goal.status === 'active' && (
+          <button onClick={() => onContribute(goal)} style={{
+            flex: 1, padding: '9px 12px', borderRadius: 'var(--r-md)',
+            background: 'var(--gradient-hero)', color: '#0A0F1C',
+            fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            border: 0, cursor: 'pointer',
+          }}>
+            <Icon name="plus" size={13} stroke={2.5} />
+            {lang === 'es' ? 'Abonar' : 'Deposit'}
+          </button>
+        )}
+        <button onClick={onToggleHistory} style={{
+          padding: '9px 14px', borderRadius: 'var(--r-md)',
+          background: expanded ? 'var(--surface-2)' : 'transparent',
+          border: '1px solid var(--border)',
+          fontSize: 12.5, color: 'var(--text-2)', fontWeight: 500,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+          cursor: 'pointer', transition: 'background 140ms', whiteSpace: 'nowrap',
+        }}>
+          <Icon name="list" size={13} stroke={1.8} />
+          {expanded ? (lang === 'es' ? 'Ocultar' : 'Hide') : (lang === 'es' ? 'Historial' : 'History')}
+        </button>
+      </div>
+
+      {/* Contribution history */}
+      {expanded && (
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+            {lang === 'es' ? 'Historial de aportes' : 'Contribution history'}
+          </div>
+          {loadingContribs ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[1, 2, 3].map(i => <div key={i} style={{ height: 36, borderRadius: 8, background: 'var(--surface-3)' }} />)}
+            </div>
+          ) : !contribs || contribs.length === 0 ? (
+            <div style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: '16px 0' }}>
+              {lang === 'es' ? 'Aún no hay aportes registrados.' : 'No contributions yet.'}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {contribs.map((c, i) => {
+                const acc = accounts.find(a => a.id === c.account_id);
+                return (
+                  <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: i < contribs.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: acc?.color ?? 'var(--surface-2)', flexShrink: 0, opacity: 0.85 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {c.note || acc?.name || (lang === 'es' ? 'Abono' : 'Deposit')}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
+                        {acc?.name}{c.note && acc?.name ? ` · ` : ''}{new Date(c.created_at).toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </div>
+                    </div>
+                    <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: 'var(--income)', flexShrink: 0 }}>
+                      +{fmtMoney(Number(c.amount), currency)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
