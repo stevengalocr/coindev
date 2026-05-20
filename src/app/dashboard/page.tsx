@@ -68,6 +68,29 @@ export default function DashboardPage() {
     .map(([catId, value]) => ({ value, color: CAT[catId]?.color || '#888', cat: catId }));
 
   return (
+    <>
+    <style>{`
+      .stats-grid {
+        grid-template-areas: 'hero hero income expense savings' !important;
+        grid-template-columns: 1.5fr 1fr 1fr 1fr !important;
+      }
+      .stats-grid > *:first-child { grid-area: hero; }
+      @media (max-width: 1100px) {
+        .stats-grid {
+          grid-template-columns: 1fr 1fr !important;
+          grid-template-areas: 'hero hero' 'income expense' 'savings savings' !important;
+        }
+        .body-row { grid-template-columns: 1fr !important; }
+        .accounts-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      }
+      @media (max-width: 640px) {
+        .stats-grid {
+          grid-template-columns: 1fr 1fr !important;
+          grid-template-areas: 'hero hero' 'income expense' 'savings savings' !important;
+        }
+        .accounts-grid { grid-template-columns: 1fr 1fr !important; }
+      }
+    `}</style>
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       {/* Page header — always visible */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
@@ -359,29 +382,8 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <style>{`
-        .stats-grid {
-          grid-template-areas: 'hero hero income expense savings' !important;
-          grid-template-columns: 1.5fr 1fr 1fr 1fr !important;
-        }
-        .stats-grid > *:first-child { grid-area: hero; }
-        @media (max-width: 1100px) {
-          .stats-grid {
-            grid-template-columns: 1fr 1fr !important;
-            grid-template-areas: 'hero hero' 'income expense' 'savings savings' !important;
-          }
-          .body-row { grid-template-columns: 1fr !important; }
-          .accounts-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (max-width: 640px) {
-          .stats-grid {
-            grid-template-columns: 1fr 1fr !important;
-            grid-template-areas: 'hero hero' 'income expense' 'savings savings' !important;
-          }
-          .accounts-grid { grid-template-columns: 1fr 1fr !important; }
-        }
-      `}</style>
       </>)}
     </div>
+    </>
   );
 }

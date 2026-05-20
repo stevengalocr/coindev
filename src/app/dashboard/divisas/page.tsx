@@ -73,13 +73,11 @@ export default function DivisasPage() {
   })();
 
   return (
-    <>
+    <div>
       <style>{`
         @keyframes cd-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @media (max-width: 600px) { .fx-sparkline { display: none !important; } }
       `}</style>
-
-      <div>
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
@@ -301,8 +299,7 @@ export default function DivisasPage() {
           </div>
 
         </div>
-      </div>
-    </>
+    </div>
   );
 }
 

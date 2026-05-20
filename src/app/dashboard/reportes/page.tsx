@@ -42,6 +42,16 @@ export default function ReportesPage() {
 
   return (
     <div>
+      <style>{`
+        @media (max-width: 640px) {
+          .rep-summary { grid-template-columns: 1fr !important; }
+          .rep-grid { grid-template-columns: 1fr !important; }
+          .rep-health { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 900px) {
+          .rep-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.reportsTitle}</h1>
@@ -224,16 +234,6 @@ export default function ReportesPage() {
         </>
       )}
 
-      <style>{`
-        @media (max-width: 640px) {
-          .rep-summary { grid-template-columns: 1fr !important; }
-          .rep-grid { grid-template-columns: 1fr !important; }
-          .rep-health { grid-template-columns: 1fr !important; }
-        }
-        @media (max-width: 900px) {
-          .rep-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </div>
   );
 }
