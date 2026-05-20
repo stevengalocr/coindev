@@ -5,7 +5,20 @@ import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { Icon } from '@/components/ui/Icon';
 
-const GOAL_ICONS = ['target','home','car','plane','phone','laptop','graduation','ring','umbrella','dumbbell','paw','guitar'];
+const GOAL_ICONS = [
+  { id: 'target',     label_es: 'Meta',        label_en: 'Goal',       color: '#3B82F6' },
+  { id: 'home',       label_es: 'Vivienda',    label_en: 'Home',       color: '#EF4444' },
+  { id: 'car',        label_es: 'Auto',        label_en: 'Car',        color: '#EAB308' },
+  { id: 'plane',      label_es: 'Viaje',       label_en: 'Travel',     color: '#0D9488' },
+  { id: 'phone',      label_es: 'Teléfono',    label_en: 'Phone',      color: '#0EA5E9' },
+  { id: 'laptop',     label_es: 'Tecnología',  label_en: 'Tech',       color: '#8B5CF6' },
+  { id: 'graduation', label_es: 'Educación',   label_en: 'Education',  color: '#06B6D4' },
+  { id: 'ring',       label_es: 'Joyería',     label_en: 'Jewelry',    color: '#F472B6' },
+  { id: 'umbrella',   label_es: 'Emergencia',  label_en: 'Emergency',  color: '#64748B' },
+  { id: 'dumbbell',   label_es: 'Gimnasio',    label_en: 'Gym',        color: '#F97316' },
+  { id: 'paw',        label_es: 'Mascota',     label_en: 'Pet',        color: '#84CC16' },
+  { id: 'guitar',     label_es: 'Hobby',       label_en: 'Hobby',      color: '#A855F7' },
+];
 
 interface Props {
   open: boolean;
@@ -117,19 +130,32 @@ export function AddGoalModal({ open, onClose, initialData }: Props) {
             <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {lang === 'es' ? 'Ícono' : 'Icon'}
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {GOAL_ICONS.map(ic => (
-                <button key={ic} onClick={() => setIcon(ic)} style={{
-                  width: 44, height: 44, borderRadius: 12,
-                  border: `1.5px solid ${icon === ic ? 'var(--blue)' : 'var(--border)'}`,
-                  background: icon === ic ? 'color-mix(in oklab, var(--blue) 10%, var(--surface))' : 'var(--surface)',
-                  display: 'grid', placeItems: 'center', cursor: 'pointer',
-                  color: icon === ic ? 'var(--blue)' : 'var(--text-3)',
-                  transition: 'all 120ms',
-                }}>
-                  <Icon name={ic} size={18} stroke={1.7} />
-                </button>
-              ))}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {GOAL_ICONS.map(ic => {
+                const selected = icon === ic.id;
+                return (
+                  <button key={ic.id} onClick={() => setIcon(ic.id)} style={{
+                    padding: '12px 8px 10px',
+                    borderRadius: 'var(--r-md)',
+                    border: `1.5px solid ${selected ? ic.color : 'var(--border)'}`,
+                    background: selected ? `color-mix(in oklab, ${ic.color} 12%, var(--surface))` : 'var(--surface)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                    cursor: 'pointer', transition: 'all 140ms',
+                  }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: '50%',
+                      background: `color-mix(in oklab, ${ic.color} 18%, var(--surface-2))`,
+                      display: 'grid', placeItems: 'center',
+                      color: ic.color,
+                    }}>
+                      <Icon name={ic.id} size={18} stroke={1.7} />
+                    </div>
+                    <span style={{ fontSize: 11, color: selected ? 'var(--text)' : 'var(--text-2)', fontWeight: selected ? 600 : 400, lineHeight: 1.2, textAlign: 'center' }}>
+                      {lang === 'es' ? ic.label_es : ic.label_en}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
