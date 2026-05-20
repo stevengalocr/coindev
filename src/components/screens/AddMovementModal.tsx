@@ -14,6 +14,13 @@ interface Props {
   initialData?: import('@/lib/data').Movement;
 }
 
+function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export function AddMovementModal({ open, onClose, initialFixed = false, initialType = 'expense', initialData }: Props) {
   const { t, currency, lang } = useApp();
   const { accounts, addTransaction, updateTransaction } = useData();
@@ -25,7 +32,7 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
   const [accId, setAccId] = useState(initialData?.account ?? '');
   const [desc, setDesc] = useState(initialData?.desc ?? '');
   const [fixed, setFixed] = useState(initialData?.fixed ?? initialFixed);
-  const [date, setDate] = useState(initialData ? initialData.date.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(initialData ? toLocalDateStr(initialData.date) : toLocalDateStr(new Date()));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -44,14 +51,14 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
       setAccId(initialData.account);
       setDesc(initialData.desc);
       setFixed(initialData.fixed);
-      setDate(initialData.date.toISOString().slice(0, 10));
+      setDate(toLocalDateStr(initialData.date));
     } else {
       setAmount('');
       setDesc('');
       setFixed(initialFixed);
       setCat(initialType === 'income' ? 'salary' : 'food');
       setType(initialType);
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(toLocalDateStr(new Date()));
     }
     setError('');
   }, [open, initialData, initialFixed, initialType]);

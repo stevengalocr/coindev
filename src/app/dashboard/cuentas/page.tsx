@@ -167,7 +167,7 @@ function AccountCard({ acc, currency, lang, t, recent, menuId, confirmDeleteId, 
             <div>
               <div style={{ fontSize: 14.5, color: 'var(--text)', fontWeight: 600 }}>{acc.name}</div>
               <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
-                {(t as any)[acc.kind] || acc.kind}{acc.tail ? ` · ···${acc.tail}` : ''}
+                {(t as any)[acc.kind] || acc.kind}{acc.tail ? ` · ${acc.tail}` : ''}
               </div>
             </div>
           </div>

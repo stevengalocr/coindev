@@ -386,12 +386,18 @@ export type Period = 'week' | 'month' | 'quarter' | 'year';
 
 export function getRange(period: Period) {
   const today = new Date();
-  const start = new Date(today);
-  if (period === 'week') start.setDate(today.getDate() - 7);
-  else if (period === 'month') start.setDate(1);
-  else if (period === 'quarter') start.setMonth(today.getMonth() - 2);
-  else if (period === 'year') start.setMonth(0, 1);
-  return { start, end: today };
+  const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+  let start: Date;
+  if (period === 'week') {
+    start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6, 0, 0, 0, 0);
+  } else if (period === 'month') {
+    start = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
+  } else if (period === 'quarter') {
+    start = new Date(today.getFullYear(), today.getMonth() - 2, 1, 0, 0, 0, 0);
+  } else {
+    start = new Date(today.getFullYear(), 0, 1, 0, 0, 0, 0);
+  }
+  return { start, end };
 }
 
 export function filterMovs(movs: Movement[], period: Period) {

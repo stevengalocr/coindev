@@ -34,11 +34,16 @@ export default function MovimientosPage() {
   });
 
   const total = list.reduce((s, m) => s + (m.type === 'expense' ? -m.amount : m.amount), 0);
-  const today = new Date();
+  const todayMidnight = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+
+  function daysAgo(d: Date): number {
+    const local = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return Math.round((todayMidnight.getTime() - local.getTime()) / 86400000);
+  }
 
   function dayLabel(dateStr: string) {
     const date = new Date(dateStr);
-    const diff = Math.floor((today.getTime() - date.getTime()) / 86400000);
+    const diff = daysAgo(date);
     if (diff === 0) return t.today;
     if (diff === 1) return t.yesterday;
     return date.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'short' });
@@ -141,7 +146,7 @@ export default function MovimientosPage() {
                     {items.map((m, i) => {
                       const c = CAT[m.cat];
                       const acc = accounts.find(a => a.id === m.account);
-                      const diff = Math.floor((today.getTime() - m.date.getTime()) / 86400000);
+                      const diff = daysAgo(m.date);
                       const when = diff === 0 ? t.today : diff === 1 ? t.yesterday :
                         m.date.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short' });
                       return (
