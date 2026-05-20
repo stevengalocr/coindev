@@ -3,28 +3,50 @@ import type { Account, Movement, Budget, SavingsGoal } from './data';
 
 // ── Category slug ↔ DB UUID mapping ────────────────────────────────
 export const CAT_TO_DB: Record<string, string> = {
-  salary:    '6c782625-6722-43d5-91b3-b97343d96c40',
-  freelance: 'fd9e3747-7e4b-4ca1-be28-e651a24abbff',
-  rent:      'c30706ec-5bbc-4918-9dd6-2378785371da',
-  groceries: 'ad5f772f-99eb-437f-9cbf-5e73b763c4af',
-  food:      'ad5f772f-99eb-437f-9cbf-5e73b763c4af',
-  transport: '6880e3d5-6343-4dce-87d0-39dc1e45a706',
-  health:    '1d18a93f-4e6d-4872-9bfb-f9bab1d5005b',
-  fun:       '6a997c6e-6c5d-480e-b2f4-3bca174c40d6',
-  subs:      '7eb9598a-aed6-4314-98f2-9a8be1133369',
-  utilities: '13df4afe-312c-487d-84f6-71c89204637c',
+  // Income
+  salary:       '6c782625-6722-43d5-91b3-b97343d96c40',
+  freelance:    'fd9e3747-7e4b-4ca1-be28-e651a24abbff',
+  investments:  '71e681aa-f271-43f9-9528-dc2e126f59a5',
+  bonuses:      '6fb5ba99-dab3-4a32-bf92-c5bddbcb3adf',
+  other_income: 'cb5f3407-7bdd-4998-b384-1be8d63079fc',
+  // Expense
+  rent:         'c30706ec-5bbc-4918-9dd6-2378785371da',
+  groceries:    'ad5f772f-99eb-437f-9cbf-5e73b763c4af',
+  food:         'ad5f772f-99eb-437f-9cbf-5e73b763c4af',
+  transport:    '6880e3d5-6343-4dce-87d0-39dc1e45a706',
+  health:       '1d18a93f-4e6d-4872-9bfb-f9bab1d5005b',
+  education:    '0e75fd81-348d-4aab-a0a2-3b44b1f69ce9',
+  fun:          '6a997c6e-6c5d-480e-b2f4-3bca174c40d6',
+  subs:         '7eb9598a-aed6-4314-98f2-9a8be1133369',
+  clothing:     '21614e3c-a003-41fd-8352-3b9289f85b84',
+  tech:         'e6fe52d4-2bb5-4436-b328-862028472b60',
+  utilities:    '13df4afe-312c-487d-84f6-71c89204637c',
+  credit_card:  '83a3850e-6214-43e3-9ae3-35d9d307c8fe',
+  pets:         'b6a88898-29d9-4908-91df-faaa9bfd2f29',
+  travel:       'f6ff4b8a-169e-45d8-877b-6a434949fccd',
+  other:        'bd686c70-e04d-4c4a-8e71-c1bebb4a2e4b',
 };
 
 const DB_TO_CAT: Record<string, string> = {
   '6c782625-6722-43d5-91b3-b97343d96c40': 'salary',
   'fd9e3747-7e4b-4ca1-be28-e651a24abbff': 'freelance',
+  '71e681aa-f271-43f9-9528-dc2e126f59a5': 'investments',
+  '6fb5ba99-dab3-4a32-bf92-c5bddbcb3adf': 'bonuses',
+  'cb5f3407-7bdd-4998-b384-1be8d63079fc': 'other_income',
   'c30706ec-5bbc-4918-9dd6-2378785371da': 'rent',
   'ad5f772f-99eb-437f-9cbf-5e73b763c4af': 'groceries',
   '6880e3d5-6343-4dce-87d0-39dc1e45a706': 'transport',
   '1d18a93f-4e6d-4872-9bfb-f9bab1d5005b': 'health',
+  '0e75fd81-348d-4aab-a0a2-3b44b1f69ce9': 'education',
   '6a997c6e-6c5d-480e-b2f4-3bca174c40d6': 'fun',
   '7eb9598a-aed6-4314-98f2-9a8be1133369': 'subs',
+  '21614e3c-a003-41fd-8352-3b9289f85b84': 'clothing',
+  'e6fe52d4-2bb5-4436-b328-862028472b60': 'tech',
   '13df4afe-312c-487d-84f6-71c89204637c': 'utilities',
+  '83a3850e-6214-43e3-9ae3-35d9d307c8fe': 'credit_card',
+  'b6a88898-29d9-4908-91df-faaa9bfd2f29': 'pets',
+  'f6ff4b8a-169e-45d8-877b-6a434949fccd': 'travel',
+  'bd686c70-e04d-4c4a-8e71-c1bebb4a2e4b': 'other',
 };
 
 // ── Account type mapping ────────────────────────────────────────────

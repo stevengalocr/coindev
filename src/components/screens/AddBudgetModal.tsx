@@ -13,7 +13,7 @@ interface Props {
   initialData?: import('@/lib/data').Budget;
 }
 
-const EXPENSE_CATS = CATEGORIES.filter(c => !['salary','freelance'].includes(c.id));
+const EXPENSE_CATS = CATEGORIES.filter(c => c.type === 'expense');
 
 export function AddBudgetModal({ open, onClose, initialData }: Props) {
   const { lang } = useApp();

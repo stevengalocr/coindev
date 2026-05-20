@@ -28,7 +28,7 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
 
   const [type, setType] = useState<'expense' | 'income'>(initialData?.type ?? initialType);
   const [amount, setAmount] = useState(initialData ? String(initialData.amount) : '');
-  const [cat, setCat] = useState(initialData?.cat ?? (initialType === 'income' ? 'salary' : 'food'));
+  const [cat, setCat] = useState(initialData?.cat ?? (initialType === 'income' ? 'salary' : 'groceries'));
   const [accId, setAccId] = useState(initialData?.account ?? '');
   const [desc, setDesc] = useState(initialData?.desc ?? '');
   const [fixed, setFixed] = useState(initialData?.fixed ?? initialFixed);
@@ -56,7 +56,7 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
       setAmount('');
       setDesc('');
       setFixed(initialFixed);
-      setCat(initialType === 'income' ? 'salary' : 'food');
+      setCat(initialType === 'income' ? 'salary' : 'groceries');
       setType(initialType);
       setDate(toLocalDateStr(new Date()));
     }
@@ -70,9 +70,7 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
     return () => window.removeEventListener('keydown', h);
   }, [open, onClose]);
 
-  const cats = CATEGORIES.filter(c =>
-    type === 'income' ? ['salary', 'freelance'].includes(c.id) : !['salary', 'freelance'].includes(c.id)
-  );
+  const cats = CATEGORIES.filter(c => c.type === type);
   const symbol = currency === 'USD' ? '$' : '₡';
 
   async function handleSave() {
@@ -133,7 +131,7 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
           {/* Type toggle */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, background: 'var(--surface-2)', borderRadius: 14, padding: 4, marginBottom: 20, border: '1px solid var(--border)' }}>
             {([{ id: 'expense', label: t.expenseType, color: 'var(--expense)' }, { id: 'income', label: t.incomeType, color: 'var(--income)' }] as const).map(opt => (
-              <button key={opt.id} onClick={() => { setType(opt.id); setCat(opt.id === 'income' ? 'salary' : 'food'); }}
+              <button key={opt.id} onClick={() => { setType(opt.id); setCat(opt.id === 'income' ? 'salary' : 'groceries'); }}
                 style={{ padding: '11px 12px', borderRadius: 10, fontSize: 14, fontWeight: 600, color: type === opt.id ? '#0A0F1C' : 'var(--text-2)', background: type === opt.id ? opt.color : 'transparent', transition: 'all 150ms' }}>
                 {opt.label}
               </button>

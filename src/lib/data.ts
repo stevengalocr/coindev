@@ -222,6 +222,7 @@ export function fmtMoney(
 
 export interface Category {
   id: string;
+  type: 'income' | 'expense';
   label_es: string;
   label_en: string;
   color: string;
@@ -229,16 +230,27 @@ export interface Category {
 }
 
 export const CATEGORIES: Category[] = [
-  { id: 'rent',      label_es: 'Alquiler',      label_en: 'Rent',          color: '#9F7BFF', glyph: 'home'   },
-  { id: 'groceries', label_es: 'Supermercado',  label_en: 'Groceries',     color: '#4FE0A9', glyph: 'cart'   },
-  { id: 'transport', label_es: 'Transporte',    label_en: 'Transport',     color: '#5B9BFF', glyph: 'car'    },
-  { id: 'food',      label_es: 'Comida fuera',  label_en: 'Eating out',    color: '#FF8BB5', glyph: 'fork'   },
-  { id: 'subs',      label_es: 'Suscripciones', label_en: 'Subscriptions', color: '#5BE5D1', glyph: 'play'   },
-  { id: 'utilities', label_es: 'Servicios',     label_en: 'Utilities',     color: '#F2C94C', glyph: 'bolt'   },
-  { id: 'health',    label_es: 'Salud',         label_en: 'Health',        color: '#FF6B83', glyph: 'pulse'  },
-  { id: 'fun',       label_es: 'Ocio',          label_en: 'Leisure',       color: '#C77DFF', glyph: 'spark'  },
-  { id: 'salary',    label_es: 'Salario',       label_en: 'Salary',        color: '#4FE0A9', glyph: 'wallet' },
-  { id: 'freelance', label_es: 'Freelance',     label_en: 'Freelance',     color: '#5BE5D1', glyph: 'laptop' },
+  // Income
+  { id: 'salary',       type: 'income',  label_es: 'Salario',         label_en: 'Salary',          color: '#10B981', glyph: 'wallet'     },
+  { id: 'freelance',    type: 'income',  label_es: 'Freelance',       label_en: 'Freelance',       color: '#3B82F6', glyph: 'laptop'     },
+  { id: 'investments',  type: 'income',  label_es: 'Inversiones',     label_en: 'Investments',     color: '#8B5CF6', glyph: 'chart'      },
+  { id: 'bonuses',      type: 'income',  label_es: 'Bonos',           label_en: 'Bonuses',         color: '#F59E0B', glyph: 'spark'      },
+  { id: 'other_income', type: 'income',  label_es: 'Otros ingresos',  label_en: 'Other income',    color: '#6EE7B7', glyph: 'plus'       },
+  // Expense
+  { id: 'rent',         type: 'expense', label_es: 'Vivienda',        label_en: 'Housing',         color: '#EF4444', glyph: 'home'       },
+  { id: 'groceries',    type: 'expense', label_es: 'Alimentación',    label_en: 'Food',            color: '#F97316', glyph: 'cart'       },
+  { id: 'transport',    type: 'expense', label_es: 'Transporte',      label_en: 'Transport',       color: '#EAB308', glyph: 'car'        },
+  { id: 'health',       type: 'expense', label_es: 'Salud',           label_en: 'Health',          color: '#EC4899', glyph: 'pulse'      },
+  { id: 'education',    type: 'expense', label_es: 'Educación',       label_en: 'Education',       color: '#06B6D4', glyph: 'graduation' },
+  { id: 'fun',          type: 'expense', label_es: 'Ocio',            label_en: 'Entertainment',   color: '#A855F7', glyph: 'spark'      },
+  { id: 'subs',         type: 'expense', label_es: 'Suscripciones',   label_en: 'Subscriptions',   color: '#64748B', glyph: 'play'       },
+  { id: 'clothing',     type: 'expense', label_es: 'Ropa',            label_en: 'Clothing',        color: '#F472B6', glyph: 'card'       },
+  { id: 'tech',         type: 'expense', label_es: 'Tecnología',      label_en: 'Technology',      color: '#0EA5E9', glyph: 'phone'      },
+  { id: 'utilities',    type: 'expense', label_es: 'Servicios',       label_en: 'Utilities',       color: '#FCD34D', glyph: 'bolt'       },
+  { id: 'credit_card',  type: 'expense', label_es: 'Tarjeta crédito', label_en: 'Credit card',     color: '#DC2626', glyph: 'card'       },
+  { id: 'pets',         type: 'expense', label_es: 'Mascotas',        label_en: 'Pets',            color: '#84CC16', glyph: 'paw'        },
+  { id: 'travel',       type: 'expense', label_es: 'Viajes',          label_en: 'Travel',          color: '#0D9488', glyph: 'plane'      },
+  { id: 'other',        type: 'expense', label_es: 'Otros gastos',    label_en: 'Other expenses',  color: '#9CA3AF', glyph: 'more'       },
 ];
 
 export const CAT = Object.fromEntries(CATEGORIES.map(c => [c.id, c])) as Record<string, Category>;
