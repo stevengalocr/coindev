@@ -68,7 +68,7 @@ export default function DashboardPage() {
     .map(([catId, value]) => ({ value, color: CAT[catId]?.color || '#888', cat: catId }));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       {/* Page header — always visible */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>

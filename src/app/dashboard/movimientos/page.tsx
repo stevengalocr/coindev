@@ -57,7 +57,7 @@ export default function MovimientosPage() {
           style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
       )}
 
-      <div style={{ maxWidth: 900 }}>
+      <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.movements}</h1>

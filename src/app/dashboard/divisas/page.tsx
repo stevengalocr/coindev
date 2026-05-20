@@ -79,10 +79,10 @@ export default function DivisasPage() {
         @media (max-width: 600px) { .fx-sparkline { display: none !important; } }
       `}</style>
 
-      <div style={{ maxWidth: 760 }}>
+      <div>
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>
               {t.divisas}

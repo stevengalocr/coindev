@@ -33,7 +33,7 @@ export default function PresupuestosPage() {
   }
 
   return (
-    <div style={{ maxWidth: 840 }}>
+    <div>
       {menuId !== null && (
         <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
           style={{ position: 'fixed', inset: 0, zIndex: 49 }} />

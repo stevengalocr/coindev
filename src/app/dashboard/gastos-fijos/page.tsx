@@ -35,7 +35,7 @@ export default function GastosFijosPage() {
   }
 
   return (
-    <div style={{ maxWidth: 760 }}>
+    <div>
       {menuId !== null && (
         <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
           style={{ position: 'fixed', inset: 0, zIndex: 49 }} />

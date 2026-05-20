@@ -26,7 +26,7 @@ export default function CuentasPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1100 }}>
+    <div>
       {menuId !== null && (
         <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
           style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
