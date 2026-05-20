@@ -358,6 +358,29 @@ export async function fetchUnreadNotificationsCount(): Promise<number> {
   return count ?? 0;
 }
 
+export async function fetchNotifications(): Promise<DbNotification[]> {
+  const sb = createClient();
+  const { data, error } = await sb
+    .from('notifications')
+    .select('id, type, title, body, is_read, created_at')
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  return (data ?? []) as DbNotification[];
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.from('notifications').update({ is_read: true }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.from('notifications').update({ is_read: true }).eq('is_read', false);
+  if (error) throw error;
+}
+
 // ── Update / Delete ─────────────────────────────────────────────────
 
 export async function updateTransaction(id: string, data: {

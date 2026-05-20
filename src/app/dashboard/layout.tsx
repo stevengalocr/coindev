@@ -1,14 +1,15 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AppProvider, useApp } from '@/hooks/useApp';
 import { DataProvider, useData } from '@/hooks/useData';
 import { Icon } from '@/components/ui/Icon';
-import { greet } from '@/lib/data';
+import { greet, fmtMoney } from '@/lib/data';
 import { SettingsPanel } from '@/components/screens/SettingsPanel';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
+import { fetchNotifications, markNotificationRead, markAllNotificationsRead, type DbNotification } from '@/lib/db';
 
 const NAV_ITEMS = [
   { href: '/dashboard',              icon: 'home',   key: 'home'      },
@@ -37,12 +38,56 @@ const MOBILE_MORE = [
 ] as const;
 
 function DashInner({ children }: { children: ReactNode }) {
-  const { t, lang } = useApp();
-  const { profile, unreadNotifications } = useData();
+  const { t, lang, currency } = useApp();
+  const { profile, unreadNotifications, movements, accounts } = useData();
   const pathname = usePathname();
+  const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<DbNotification[]>([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const openNotif = useCallback(async () => {
+    setNotifOpen(v => !v);
+    if (!notifOpen) {
+      setNotifLoading(true);
+      try { setNotifications(await fetchNotifications()); } catch {}
+      setNotifLoading(false);
+    }
+  }, [notifOpen]);
+
+  const handleMarkRead = useCallback(async (id: string) => {
+    await markNotificationRead(id).catch(() => {});
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+  }, []);
+
+  const handleMarkAll = useCallback(async () => {
+    await markAllNotificationsRead().catch(() => {});
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  }, []);
+
+  const q = searchQuery.trim().toLowerCase();
+  const searchMovements = q.length >= 2
+    ? movements.filter(m => m.desc.toLowerCase().includes(q)).slice(0, 5)
+    : [];
+  const searchAccounts = q.length >= 2
+    ? accounts.filter(a => a.name.toLowerCase().includes(q)).slice(0, 4)
+    : [];
 
   const navLabels: Record<string, string> = {
     home: t.home, movements: t.movements, accounts: t.accounts,
@@ -133,18 +178,155 @@ function DashInner({ children }: { children: ReactNode }) {
             <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{dateCapitalized}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '0 12px', width: 280, height: 36 }}>
-              <Icon name="search" size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-              <input placeholder={t.searchPlaceholder} style={{ flex: 1, fontSize: 12.5, color: 'var(--text)', background: 'transparent', outline: 'none', border: 'none' }} />
-            </div>
-            <button style={{ width: 36, height: 36, borderRadius: 'var(--r-md)', border: '1px solid var(--border)', background: 'var(--surface)', display: 'grid', placeItems: 'center', color: 'var(--text-2)', position: 'relative', flexShrink: 0 }} aria-label={t.notifications}>
-              <Icon name="bell" size={16} stroke={1.6} />
-              {unreadNotifications > 0 && (
-                <span style={{ position: 'absolute', top: 4, right: 4, minWidth: 16, height: 16, borderRadius: 8, background: 'var(--expense)', border: '1.5px solid var(--surface)', fontSize: 9, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, padding: '0 3px' }}>
-                  {unreadNotifications <= 9 ? unreadNotifications : '9+'}
-                </span>
+            {/* Search */}
+            <div ref={searchRef} style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: `1px solid ${searchOpen ? 'var(--blue)' : 'var(--border)'}`, borderRadius: 'var(--r-md)', padding: '0 12px', width: 280, height: 36, transition: 'border-color 150ms' }}>
+                <Icon name="search" size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+                <input
+                  placeholder={t.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true); }}
+                  onFocus={() => setSearchOpen(true)}
+                  style={{ flex: 1, fontSize: 12.5, color: 'var(--text)', background: 'transparent', outline: 'none', border: 'none' }}
+                />
+                {searchQuery && (
+                  <button onClick={() => { setSearchQuery(''); setSearchOpen(false); }} style={{ color: 'var(--text-3)', flexShrink: 0, lineHeight: 0 }}>
+                    <Icon name="x" size={12} />
+                  </button>
+                )}
+              </div>
+              {searchOpen && q.length >= 2 && (searchMovements.length > 0 || searchAccounts.length > 0) && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', left: 0, width: '100%', minWidth: 280,
+                  background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 14,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)', zIndex: 60, overflow: 'hidden',
+                }}>
+                  {searchAccounts.length > 0 && (
+                    <div>
+                      <div style={{ padding: '8px 14px 4px', fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                        {lang === 'es' ? 'Cuentas' : 'Accounts'}
+                      </div>
+                      {searchAccounts.map(a => (
+                        <button key={a.id} onClick={() => { router.push('/dashboard/cuentas'); setSearchOpen(false); setSearchQuery(''); }} style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px',
+                          background: 'transparent', border: 0, textAlign: 'left', cursor: 'pointer',
+                          transition: 'background 100ms',
+                        }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <div style={{ width: 28, height: 28, borderRadius: 8, background: a.color, flexShrink: 0 }} />
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{fmtMoney(a.balance, currency)}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searchMovements.length > 0 && (
+                    <div>
+                      <div style={{ padding: '8px 14px 4px', fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                        {lang === 'es' ? 'Movimientos' : 'Movements'}
+                      </div>
+                      {searchMovements.map(m => (
+                        <button key={m.id} onClick={() => { router.push('/dashboard/movimientos'); setSearchOpen(false); setSearchQuery(''); }} style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px',
+                          background: 'transparent', border: 0, textAlign: 'left', cursor: 'pointer',
+                          transition: 'background 100ms',
+                        }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <div style={{ width: 28, height: 28, borderRadius: 8, background: m.type === 'income' ? 'var(--income-soft)' : 'var(--expense-soft)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                            <Icon name={m.type === 'income' ? 'arrow-up' : 'arrow-down'} size={13} stroke={2} style={{ color: m.type === 'income' ? 'var(--income)' : 'var(--expense)' }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.desc}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{fmtMoney(m.amount, currency)} · {m.date.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short' })}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ height: 6 }} />
+                </div>
               )}
-            </button>
+              {searchOpen && q.length >= 2 && searchMovements.length === 0 && searchAccounts.length === 0 && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', left: 0, width: '100%',
+                  background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 14,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)', zIndex: 60,
+                  padding: '16px 14px', fontSize: 13, color: 'var(--text-3)', textAlign: 'center',
+                }}>
+                  {lang === 'es' ? 'Sin resultados' : 'No results'}
+                </div>
+              )}
+            </div>
+
+            {/* Notifications */}
+            <div ref={notifRef} style={{ position: 'relative' }}>
+              <button onClick={openNotif} style={{ width: 36, height: 36, borderRadius: 'var(--r-md)', border: `1px solid ${notifOpen ? 'var(--blue)' : 'var(--border)'}`, background: notifOpen ? 'color-mix(in oklab, var(--blue) 8%, var(--surface))' : 'var(--surface)', display: 'grid', placeItems: 'center', color: 'var(--text-2)', position: 'relative', flexShrink: 0, transition: 'all 140ms' }} aria-label={t.notifications}>
+                <Icon name="bell" size={16} stroke={1.6} />
+                {unreadNotifications > 0 && (
+                  <span style={{ position: 'absolute', top: 4, right: 4, minWidth: 16, height: 16, borderRadius: 8, background: 'var(--expense)', border: '1.5px solid var(--surface)', fontSize: 9, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, padding: '0 3px' }}>
+                    {unreadNotifications <= 9 ? unreadNotifications : '9+'}
+                  </span>
+                )}
+              </button>
+              {notifOpen && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 320,
+                  background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 16,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)', zIndex: 60, overflow: 'hidden',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px', borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+                      {lang === 'es' ? 'Notificaciones' : 'Notifications'}
+                    </div>
+                    {notifications.some(n => !n.is_read) && (
+                      <button onClick={handleMarkAll} style={{ fontSize: 11, color: 'var(--blue)', fontWeight: 600, background: 'none', border: 0, cursor: 'pointer' }}>
+                        {lang === 'es' ? 'Marcar todas' : 'Mark all read'}
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ maxHeight: 360, overflowY: 'auto' }} className="no-scrollbar">
+                    {notifLoading ? (
+                      <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
+                        {lang === 'es' ? 'Cargando…' : 'Loading…'}
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
+                        {lang === 'es' ? 'Sin notificaciones' : 'No notifications'}
+                      </div>
+                    ) : (
+                      notifications.map(n => (
+                        <button key={n.id} onClick={() => handleMarkRead(n.id)} style={{
+                          width: '100%', display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 16px',
+                          background: n.is_read ? 'transparent' : 'color-mix(in oklab, var(--blue) 5%, var(--surface))',
+                          border: 0, borderBottom: '1px solid var(--border)', textAlign: 'left', cursor: 'pointer',
+                          transition: 'background 100ms',
+                        }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = n.is_read ? 'transparent' : 'color-mix(in oklab, var(--blue) 5%, var(--surface))')}
+                        >
+                          {!n.is_read && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--blue)', flexShrink: 0, marginTop: 5 }} />}
+                          {n.is_read && <div style={{ width: 6, flexShrink: 0 }} />}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: n.is_read ? 400 : 600, color: 'var(--text)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.body}</div>
+                            <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>
+                              {new Date(n.created_at).toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button onClick={() => setAddOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 36, borderRadius: 'var(--r-md)', background: 'var(--gradient-hero)', color: '#0C0E14', fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em', whiteSpace: 'nowrap', flexShrink: 0 }}>
               <Icon name="plus" size={15} stroke={2.5} />
               + {t.newMovement}
