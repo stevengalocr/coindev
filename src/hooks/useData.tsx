@@ -10,6 +10,7 @@ import {
   updateAccount, deleteAccount,
   updateBudgetByCategory, deleteBudgetByCategory,
   updateSavingsGoal, deleteSavingsGoalById,
+  addGoalContribution,
   toAccount, toMovement, toBudget, toGoal,
   type DbProfile, type NewTransaction, type NewAccount, type NewBudget, type NewSavingsGoal,
 } from '@/lib/db';
@@ -61,6 +62,7 @@ interface DataState {
   deleteBudget: (cat: string) => Promise<void>;
   updateGoal: (id: string, data: { name?: string; description?: string | null; icon?: string; target_amount?: number; target_date?: string | null; status?: string }) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
+  addContribution: (goalId: string, accountId: string, amount: number, note?: string) => Promise<void>;
 }
 
 const DataCtx = createContext<DataState | null>(null);
@@ -170,6 +172,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await load();
   }, [load]);
 
+  const addContribution = useCallback(async (goalId: string, accountId: string, amount: number, note?: string) => {
+    await addGoalContribution(goalId, accountId, amount, note);
+    await load();
+  }, [load]);
+
   const saveProfile = useCallback(async (
     patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme'>>
   ) => {
@@ -191,6 +198,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       deleteBudget: deleteBudget2,
       updateGoal: updateGoal2,
       deleteGoal: deleteGoal2,
+      addContribution,
     }}>
       {children}
     </DataCtx.Provider>

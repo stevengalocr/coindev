@@ -349,6 +349,65 @@ export async function fetchSavingsGoals(): Promise<DbSavingsGoal[]> {
   return (data ?? []) as DbSavingsGoal[];
 }
 
+export interface DbGoalContribution {
+  id: string;
+  goal_id: string;
+  account_id: string;
+  amount: number;
+  note: string | null;
+  created_at: string;
+}
+
+export async function fetchGoalContributions(goalId: string): Promise<DbGoalContribution[]> {
+  const sb = createClient();
+  const { data, error } = await sb
+    .from('goal_contributions')
+    .select('id, goal_id, account_id, amount, note, created_at')
+    .eq('goal_id', goalId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return (data ?? []) as DbGoalContribution[];
+}
+
+export async function addGoalContribution(
+  goalId: string,
+  accountId: string,
+  amount: number,
+  note?: string
+): Promise<void> {
+  const sb = createClient();
+  // Insert contribution record
+  const { error: contribErr } = await sb
+    .from('goal_contributions')
+    .insert({ goal_id: goalId, account_id: accountId, amount, note: note ?? null });
+  if (contribErr) throw contribErr;
+  // Increase goal current_amount
+  const { data: goal, error: goalErr } = await sb
+    .from('savings_goals')
+    .select('current_amount')
+    .eq('id', goalId)
+    .single();
+  if (goalErr) throw goalErr;
+  const { error: updateGoalErr } = await sb
+    .from('savings_goals')
+    .update({ current_amount: Number(goal.current_amount) + amount })
+    .eq('id', goalId);
+  if (updateGoalErr) throw updateGoalErr;
+  // Decrease account balance
+  const { data: acc, error: accErr } = await sb
+    .from('accounts')
+    .select('current_balance')
+    .eq('id', accountId)
+    .single();
+  if (accErr) throw accErr;
+  const { error: updateAccErr } = await sb
+    .from('accounts')
+    .update({ current_balance: Number(acc.current_balance) - amount })
+    .eq('id', accountId);
+  if (updateAccErr) throw updateAccErr;
+}
+
 export async function fetchUnreadNotificationsCount(): Promise<number> {
   const sb = createClient();
   const { count } = await sb
