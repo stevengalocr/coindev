@@ -61,6 +61,7 @@ export default function DashboardPage() {
   const savingsAcc = accounts.find(a => a.kind === 'savings');
   const { income, expense, net } = aggregate(filtered, savingsAcc?.balance ?? 0);
   const savings = net;
+  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
 
   const byCat: Record<string, number> = {};
   if (!loading) filtered.filter(m => m.type === 'expense').forEach(m => { byCat[m.cat] = (byCat[m.cat] || 0) + m.amount; });
@@ -123,10 +124,15 @@ export default function DashboardPage() {
               {t.netBalance}
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
-              <MoneyText amount={net} currency={currency} size={36} weight={700} />
-              <DeltaBadge text={`${pct(savings, income)}% ${t.ofIncome}`} positive={savings >= 0} />
+              <MoneyText amount={totalBalance} currency={currency} size={36} weight={700} />
+              <DeltaBadge text={`${net >= 0 ? '+' : ''}${pct(net, income)}% ${t.ofIncome}`} positive={net >= 0} />
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 6 }}>{t.vsLastMonth}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 6 }}>
+              {lang === 'es' ? `${accounts.length} cuenta${accounts.length !== 1 ? 's' : ''} · Flujo del período: ` : `${accounts.length} account${accounts.length !== 1 ? 's' : ''} · Period flow: `}
+              <span style={{ fontWeight: 600, color: net >= 0 ? 'var(--income)' : 'var(--expense)' }}>
+                {net >= 0 ? '+' : ''}{fmtMoney(net, currency)}
+              </span>
+            </div>
             <div style={{ display: 'flex', gap: 20, marginTop: 18 }}>
               <div>
                 <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 3 }}>{t.income}</div>
