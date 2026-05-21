@@ -272,6 +272,8 @@ export const ACCOUNTS: Account[] = [
   { id: 'credomatic', name: 'Credomatic Visa',       kind: 'credit',  balance: -287400,  color: '#9F7BFF', tail: '••1108', limit: 1500000 },
 ];
 
+export type RecurrenceType = 'monthly' | 'weekly' | 'custom';
+
 export interface Movement {
   id: string;
   type: 'income' | 'expense';
@@ -281,6 +283,7 @@ export interface Movement {
   date: Date;
   desc: string;
   fixed: boolean;
+  recurrence?: { type: RecurrenceType; value: number } | null;
 }
 
 export interface SavingsGoal {

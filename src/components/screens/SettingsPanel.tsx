@@ -134,14 +134,34 @@ export function SettingsPanel({ open, onClose }: Props) {
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, marginBottom: 5 }}>{lang === 'es' ? 'Plan' : 'Plan'}</div>
-                  <div style={{ padding: '10px 12px', background: 'var(--surface-2)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', fontSize: 13.5, color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>{profile?.plan === 'pro' ? 'Pro' : 'Free'}</span>
-                    {profile?.plan !== 'pro' && (
-                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--blue)', background: 'color-mix(in oklab, var(--blue) 12%, transparent)', padding: '2px 8px', borderRadius: 99 }}>
-                        {lang === 'es' ? 'Mejorar' : 'Upgrade'}
-                      </span>
-                    )}
-                  </div>
+                  {(() => {
+                    const status = profile?.plan_status ?? 'trial';
+                    const isPro = profile?.plan === 'pro' || status === 'active';
+                    const statusLabel: Record<string, string> = {
+                      trial: lang === 'es' ? 'Prueba gratuita' : 'Free trial',
+                      active: lang === 'es' ? 'Activo' : 'Active',
+                      pending_payment: lang === 'es' ? 'Pago pendiente' : 'Payment pending',
+                      blocked: lang === 'es' ? 'Suspendido' : 'Suspended',
+                    };
+                    const statusColor: Record<string, string> = {
+                      trial: 'var(--blue)', active: 'var(--income)', pending_payment: '#F59E0B', blocked: 'var(--expense)',
+                    };
+                    return (
+                      <div style={{ padding: '10px 12px', background: 'var(--surface-2)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', fontSize: 13.5, color: 'var(--text-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <div>
+                          <span style={{ fontWeight: 500 }}>{isPro ? 'Pro' : 'Free'}</span>
+                          <span style={{ fontSize: 11, marginLeft: 8, color: statusColor[status] ?? 'var(--text-3)' }}>
+                            {statusLabel[status] ?? status}
+                          </span>
+                        </div>
+                        {!isPro && (
+                          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--blue)', background: 'color-mix(in oklab, var(--blue) 12%, transparent)', padding: '2px 8px', borderRadius: 99, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                            {lang === 'es' ? 'Mejorar' : 'Upgrade'}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <button
                   onClick={handleSaveProfile}

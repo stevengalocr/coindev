@@ -220,11 +220,29 @@ export default function LoginPage() {
       const sb = createClient();
       const { error: err } = await sb.auth.signInWithPassword({ email, password });
       if (err) {
-        setError(err.message.includes('Invalid login credentials')
-          ? 'Correo o contraseña incorrectos.'
-          : err.message);
+        if (err.message.includes('Invalid login credentials')) {
+          setError('Correo o contraseña incorrectos.');
+        } else if (err.message.includes('Email not confirmed')) {
+          setError('Confirma tu correo electrónico antes de iniciar sesión.');
+        } else {
+          setError(err.message);
+        }
         return;
       }
+
+      // Check plan_status before entering dashboard
+      const { data: profileData } = await sb
+        .from('profiles')
+        .select('plan_status, full_name')
+        .single();
+
+      const status = (profileData as { plan_status?: string } | null)?.plan_status;
+      if (status === 'blocked') {
+        await sb.auth.signOut();
+        setError('Tu período de prueba ha expirado y tu cuenta está suspendida. Contacta con stevengalocr@gmail.com para reactivarla.');
+        return;
+      }
+
       router.push('/dashboard');
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
@@ -321,6 +339,11 @@ export default function LoginPage() {
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>Ingresa a tu cuenta</p>
             </div>
 
+            <div style={{ marginBottom: 4, textAlign: 'center', fontSize: 13.5, color: 'rgba(255,255,255,0.3)' }}>
+              ¿No tienes cuenta?{' '}
+              <a href="/register" style={{ color: 'rgba(91,155,255,0.85)', fontWeight: 500, textDecoration: 'none' }}>Regístrate gratis</a>
+            </div>
+
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }} noValidate>
 
               {/* Email */}
@@ -355,14 +378,31 @@ export default function LoginPage() {
 
               {/* Error */}
               {error && (
-                <div style={{
-                  padding: '10px 13px', borderRadius: 10,
-                  background: 'rgba(255,107,131,0.08)',
-                  border: '1px solid rgba(255,107,131,0.2)',
-                  fontSize: 13, color: '#FF6B83', lineHeight: 1.4,
-                }}>
-                  {error}
-                </div>
+                error.includes('período de prueba') || error.includes('suspendida')
+                  ? (
+                    <div style={{
+                      padding: '14px 16px', borderRadius: 12,
+                      background: 'rgba(239,68,68,0.06)',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                      lineHeight: 1.5,
+                    }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: '#EF4444', marginBottom: 4 }}>
+                        Acceso suspendido
+                      </div>
+                      <div style={{ fontSize: 12.5, color: 'rgba(239,68,68,0.8)' }}>
+                        {error}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{
+                      padding: '10px 13px', borderRadius: 10,
+                      background: 'rgba(255,107,131,0.08)',
+                      border: '1px solid rgba(255,107,131,0.2)',
+                      fontSize: 13, color: '#FF6B83', lineHeight: 1.4,
+                    }}>
+                      {error}
+                    </div>
+                  )
               )}
 
               <button type="submit" disabled={loading} className="login-btn-primary" style={{ marginTop: 6 }}>

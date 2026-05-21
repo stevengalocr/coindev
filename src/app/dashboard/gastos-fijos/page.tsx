@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
-import { CAT, fmtMoney, type Movement } from '@/lib/data';
+import { CAT, fmtMoney, type Movement, type RecurrenceType } from '@/lib/data';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { Icon } from '@/components/ui/Icon';
@@ -16,6 +16,23 @@ export default function GastosFijosPage() {
   const [editItem, setEditItem] = useState<Movement | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  function recurrenceLabel(m: Movement, lang: string): string {
+    const r = m.recurrence;
+    if (!r) {
+      const nextDay = new Date(new Date().getFullYear(), new Date().getMonth() + 1, m.date.getDate());
+      return (lang === 'es' ? 'Próximo pago' : 'Next due') + ' ' + nextDay.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short' });
+    }
+    if (r.type === 'monthly') return lang === 'es' ? `Cada mes, día ${r.value}` : `Monthly, day ${r.value}`;
+    if (r.type === 'custom') return lang === 'es' ? `Cada ${r.value} días` : `Every ${r.value} days`;
+    if (r.type === 'weekly') {
+      const days_es = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      const days_en = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const d = lang === 'es' ? days_es[r.value] : days_en[r.value];
+      return lang === 'es' ? `Cada ${d}` : `Every ${d}`;
+    }
+    return '';
+  }
 
   const fixedMovs = movements.filter(m => m.type === 'expense' && m.fixed);
   const map: Record<string, typeof fixedMovs[0]> = {};
@@ -113,8 +130,6 @@ export default function GastosFijosPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {items.map(m => {
               const c = CAT[m.cat];
-              const now = new Date();
-              const nextDay = new Date(now.getFullYear(), now.getMonth() + 1, m.date.getDate());
               return (
                 <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color 150ms', position: 'relative' }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
@@ -124,9 +139,9 @@ export default function GastosFijosPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>{m.desc}</div>
                     <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 3 }}>
-                      {c?.[`label_${lang}` as 'label_es']} · {t.nextDue}{' '}
+                      {c?.[`label_${lang}` as 'label_es']} ·{' '}
                       <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>
-                        {nextDay.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short' })}
+                        {recurrenceLabel(m, lang)}
                       </span>
                     </div>
                   </div>
