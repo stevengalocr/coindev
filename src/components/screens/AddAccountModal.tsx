@@ -18,10 +18,11 @@ const ACCOUNT_TYPES = [
 interface Props {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   initialData?: import('@/lib/data').Account;
 }
 
-export function AddAccountModal({ open, onClose, initialData }: Props) {
+export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props) {
   const { lang } = useApp();
   const { addAccount, updateAccount } = useData();
   const isEditing = !!initialData;
@@ -83,6 +84,7 @@ export function AddAccountModal({ open, onClose, initialData }: Props) {
         });
       }
       onClose();
+      onSuccess?.();
       if (!isEditing) {
         setName(''); setBalance(''); setCreditLimit(''); setLastDigits('');
         setType('checking'); setColor(COLORS[0]);

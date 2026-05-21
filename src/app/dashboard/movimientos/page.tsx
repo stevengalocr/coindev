@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { CAT, filterMovs, fmtMoney, type Period, type Movement } from '@/lib/data';
@@ -9,23 +10,53 @@ import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { PeriodChips } from '@/components/shell/PeriodChips';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { useToast } from '@/components/ui/Toast';
+
+type SortKey = 'date' | 'amount_desc' | 'amount_asc';
 
 export default function MovimientosPage() {
+  return (
+    <Suspense>
+      <MovimientosInner />
+    </Suspense>
+  );
+}
+
+function MovimientosInner() {
   const { t, currency, lang } = useApp();
   const { movements, accounts, loading, deleteTransaction } = useData();
+  const toast = useToast();
+  const searchParams = useSearchParams();
+
   const [period, setPeriod] = useState<Period>('month');
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<SortKey>('date');
+  const [compact, setCompact] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<Movement | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const list = filterMovs(movements, period).filter(m => {
+  // Pick up ?q= or ?account= from URL (unified search / account deep-link)
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) setQuery(q);
+    const acc = searchParams.get('account');
+    if (acc) {/* account filter could be added here – for now prefills search with account name */}
+  }, [searchParams]);
+
+  let list = filterMovs(movements, period).filter(m => {
     if (filter !== 'all' && m.type !== filter) return false;
     if (query && !m.desc.toLowerCase().includes(query.toLowerCase())) return false;
     return true;
   });
+
+  if (sort === 'amount_desc') list = [...list].sort((a, b) => b.amount - a.amount);
+  else if (sort === 'amount_asc') list = [...list].sort((a, b) => a.amount - b.amount);
+  // 'date' keeps default (already sorted by date from filterMovs)
 
   const groups: Record<string, Movement[]> = {};
   list.forEach(m => {
@@ -49,18 +80,35 @@ export default function MovimientosPage() {
     return date.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'short' });
   }
 
-  async function handleDelete(m: Movement) {
-    setMenuId(null);
-    setConfirmDeleteId(null);
-    await deleteTransaction(m.id, m.type, m.amount, m.account);
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteTransaction(deleteTarget.id, deleteTarget.type, deleteTarget.amount, deleteTarget.account);
+      toast(lang === 'es' ? 'Movimiento eliminado' : 'Transaction deleted', 'info');
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
     <>
       {menuId !== null && (
-        <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
-          style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
       )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title={lang === 'es' ? 'Eliminar movimiento' : 'Delete transaction'}
+        message={lang === 'es'
+          ? `¿Eliminar "${deleteTarget?.desc}"? Esta acción no se puede deshacer.`
+          : `Delete "${deleteTarget?.desc}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+        lang={lang}
+      />
 
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
@@ -70,16 +118,28 @@ export default function MovimientosPage() {
               {list.length} {t.transactions} · <span className="mono">{fmtMoney(total, currency, { sign: true })}</span>
             </div>
           </div>
-          <button
-            onClick={() => setAddOpen(true)}
-            style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-          >
-            <Icon name="plus" size={15} stroke={2.4} /> {t.newMovement}
-          </button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {/* Compact toggle — mobile only */}
+            <button
+              onClick={() => setCompact(v => !v)}
+              title={compact ? (lang === 'es' ? 'Vista normal' : 'Normal view') : (lang === 'es' ? 'Vista compacta' : 'Compact view')}
+              style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--border)', background: compact ? 'var(--surface-3)' : 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-2)' }}
+              className="mobile-only"
+            >
+              <Icon name={compact ? 'list' : 'filter'} size={15} stroke={1.8} />
+            </button>
+            <button
+              onClick={() => setAddOpen(true)}
+              style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <Icon name="plus" size={15} stroke={2.4} /> {t.newMovement}
+            </button>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', flex: 1, minWidth: 200, maxWidth: 360, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
+        {/* Filters row */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', flex: 1, minWidth: 180, maxWidth: 360, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
             <Icon name="search" size={15} style={{ color: 'var(--text-3)' }} />
             <input value={query} onChange={e => setQuery(e.target.value)} placeholder={t.searchMov} style={{ flex: 1, background: 'transparent', border: 0, outline: 'none', color: 'var(--text)', fontSize: 13.5 }} />
             {query && <button onClick={() => setQuery('')} style={{ color: 'var(--text-3)' }}><Icon name="x" size={14} /></button>}
@@ -97,6 +157,16 @@ export default function MovimientosPage() {
               </button>
             ))}
           </div>
+          {/* Sort */}
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value as SortKey)}
+            style={{ padding: '8px 12px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12.5, cursor: 'pointer' }}
+          >
+            <option value="date">{lang === 'es' ? 'Fecha' : 'Date'}</option>
+            <option value="amount_desc">{lang === 'es' ? 'Mayor monto' : 'Highest amount'}</option>
+            <option value="amount_asc">{lang === 'es' ? 'Menor monto' : 'Lowest amount'}</option>
+          </select>
         </div>
 
         {loading ? (
@@ -138,11 +208,13 @@ export default function MovimientosPage() {
               const daySum = items.reduce((s, m) => s + (m.type === 'expense' ? -m.amount : m.amount), 0);
               return (
                 <div key={day}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px 8px', alignItems: 'baseline' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>{dayLabel(day)}</span>
-                    <span className="mono" style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>{fmtMoney(daySum, currency, { sign: true })}</span>
-                  </div>
-                  <div className="cd-card" style={{ padding: 4 }}>
+                  {sort === 'date' && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px 8px', alignItems: 'baseline' }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>{dayLabel(day)}</span>
+                      <span className="mono" style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>{fmtMoney(daySum, currency, { sign: true })}</span>
+                    </div>
+                  )}
+                  <div className="cd-card" style={{ padding: compact ? 2 : 4 }}>
                     {items.map((m, i) => {
                       const c = CAT[m.cat];
                       const acc = accounts.find(a => a.id === m.account);
@@ -151,25 +223,28 @@ export default function MovimientosPage() {
                         m.date.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short' });
                       return (
                         <div key={m.id} style={{
-                          display: 'flex', alignItems: 'center', gap: 14, padding: '11px 14px',
+                          display: 'flex', alignItems: 'center', gap: compact ? 10 : 14,
+                          padding: compact ? '8px 12px' : '11px 14px',
                           borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none',
                           borderRadius: 10, transition: 'background 100ms', cursor: 'default',
                           position: 'relative',
                         }}>
-                          <CategoryGlyph id={m.cat} size={38} />
+                          <CategoryGlyph id={m.cat} size={compact ? 30 : 38} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontSize: 13.5, color: 'var(--text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.desc}</span>
+                              <span style={{ fontSize: compact ? 12.5 : 13.5, color: 'var(--text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.desc}</span>
                               {m.fixed && <span style={{ width: 5, height: 5, borderRadius: 999, background: 'var(--violet)', flexShrink: 0 }} />}
                             </div>
-                            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
-                              {c?.[`label_${lang}` as 'label_es']} · {acc?.name ?? '—'} · {when}
-                            </div>
+                            {!compact && (
+                              <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
+                                {c?.[`label_${lang}` as 'label_es']} · {acc?.name ?? '—'} · {when}
+                              </div>
+                            )}
                           </div>
-                          <MoneyText amount={m.amount} currency={currency as any} size={13.5} weight={600} sign type={m.type} />
+                          <MoneyText amount={m.amount} currency={currency as any} size={compact ? 12.5 : 13.5} weight={600} sign type={m.type} />
                           <div style={{ position: 'relative' }}>
                             <button
-                              onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); setConfirmDeleteId(null); }}
+                              onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); }}
                               style={{ color: 'var(--text-3)', padding: 6 }}
                             >
                               <Icon name="more" size={15} />
@@ -188,23 +263,13 @@ export default function MovimientosPage() {
                                 }}>
                                   <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
                                 </button>
-                                {confirmDeleteId === m.id ? (
-                                  <button onClick={e => { e.stopPropagation(); handleDelete(m); }} style={{
-                                    width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                                    fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left',
-                                    background: 'var(--expense-soft)',
-                                  }}>
-                                    <Icon name="trash" size={15} /> {lang === 'es' ? '¿Confirmar?' : 'Confirm?'}
-                                  </button>
-                                ) : (
-                                  <button onClick={e => { e.stopPropagation(); setConfirmDeleteId(m.id); }} style={{
-                                    width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                                    fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left',
-                                    background: 'transparent',
-                                  }}>
-                                    <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
-                                  </button>
-                                )}
+                                <button onClick={e => { e.stopPropagation(); setDeleteTarget(m); setMenuId(null); }} style={{
+                                  width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                                  fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left',
+                                  background: 'transparent',
+                                }}>
+                                  <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+                                </button>
                               </div>
                             )}
                           </div>
@@ -219,12 +284,19 @@ export default function MovimientosPage() {
         )}
       </div>
 
-      <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <AddMovementModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={() => toast(lang === 'es' ? 'Movimiento guardado' : 'Transaction saved')}
+      />
       <AddMovementModal
         open={!!editItem}
         onClose={() => setEditItem(null)}
+        onSuccess={() => toast(lang === 'es' ? 'Movimiento actualizado' : 'Transaction updated')}
         initialData={editItem ?? undefined}
       />
+
+      <style>{`.mobile-only { display: none; } @media (max-width: 768px) { .mobile-only { display: flex !important; } }`}</style>
     </>
   );
 }

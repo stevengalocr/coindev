@@ -9,6 +9,7 @@ import { Icon } from '@/components/ui/Icon';
 interface Props {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   initialFixed?: boolean;
   initialType?: 'expense' | 'income';
   initialData?: import('@/lib/data').Movement;
@@ -21,7 +22,7 @@ function toLocalDateStr(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-export function AddMovementModal({ open, onClose, initialFixed = false, initialType = 'expense', initialData }: Props) {
+export function AddMovementModal({ open, onClose, onSuccess, initialFixed = false, initialType = 'expense', initialData }: Props) {
   const { t, currency, lang } = useApp();
   const { accounts, addTransaction, updateTransaction } = useData();
   const isEditing = !!initialData;
@@ -105,6 +106,7 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
         });
       }
       onClose();
+      onSuccess?.();
     } catch {
       setError(lang === 'es' ? 'Error al guardar. Intenta de nuevo.' : 'Error saving. Try again.');
     } finally {

@@ -3,19 +3,38 @@
 import { useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
-import { CAT, fmtMoney, type Movement, type RecurrenceType } from '@/lib/data';
+import { CAT, fmtMoney, type Movement } from '@/lib/data';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { Icon } from '@/components/ui/Icon';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { useToast } from '@/components/ui/Toast';
+
+type SortKey = 'amount_desc' | 'amount_asc' | 'name' | 'next_due';
 
 export default function GastosFijosPage() {
   const { t, currency, lang } = useApp();
   const { movements, loading, deleteTransaction } = useData();
+  const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<Movement | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [sort, setSort] = useState<SortKey>('amount_desc');
+
+  function nextDueDate(m: Movement): Date {
+    const r = m.recurrence;
+    const now = new Date();
+    if (!r) return new Date(now.getFullYear(), now.getMonth() + 1, m.date.getDate());
+    if (r.type === 'monthly') {
+      const d = new Date(now.getFullYear(), now.getMonth(), r.value);
+      if (d <= now) d.setMonth(d.getMonth() + 1);
+      return d;
+    }
+    return new Date(now.getTime() + (r.type === 'custom' ? r.value : 7) * 86400000);
+  }
 
   function recurrenceLabel(m: Movement, lang: string): string {
     const r = m.recurrence;
@@ -37,7 +56,12 @@ export default function GastosFijosPage() {
   const fixedMovs = movements.filter(m => m.type === 'expense' && m.fixed);
   const map: Record<string, typeof fixedMovs[0]> = {};
   fixedMovs.forEach(m => { if (!map[m.desc]) map[m.desc] = m; });
-  const items = Object.values(map).sort((a, b) => b.amount - a.amount);
+  let items = Object.values(map);
+
+  if (sort === 'amount_desc') items = items.sort((a, b) => b.amount - a.amount);
+  else if (sort === 'amount_asc') items = items.sort((a, b) => a.amount - b.amount);
+  else if (sort === 'name') items = items.sort((a, b) => a.desc.localeCompare(b.desc));
+  else if (sort === 'next_due') items = items.sort((a, b) => nextDueDate(a).getTime() - nextDueDate(b).getTime());
 
   const total = items.reduce((s, m) => s + m.amount, 0);
   const income = movements.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0);
@@ -45,32 +69,66 @@ export default function GastosFijosPage() {
   const perDay = total / 30;
   const ratioColor = ratio > 0.6 ? 'var(--expense)' : ratio > 0.45 ? 'var(--warn)' : 'var(--income)';
 
-  async function handleDelete(m: Movement) {
-    setMenuId(null);
-    setConfirmDeleteId(null);
-    await deleteTransaction(m.id, m.type, m.amount, m.account);
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteTransaction(deleteTarget.id, deleteTarget.type, deleteTarget.amount, deleteTarget.account);
+      toast(lang === 'es' ? 'Gasto fijo eliminado' : 'Fixed expense deleted', 'info');
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
     <div>
       {menuId !== null && (
-        <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
-          style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
       )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title={lang === 'es' ? 'Eliminar gasto fijo' : 'Delete fixed expense'}
+        message={lang === 'es'
+          ? `¿Eliminar "${deleteTarget?.desc}"? Esta acción no se puede deshacer.`
+          : `Delete "${deleteTarget?.desc}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+        lang={lang}
+      />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.fixedTitle}</h1>
           <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{t.fixedSubtitle}</div>
         </div>
-        <button onClick={() => setAddOpen(true)} style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <Icon name="plus" size={15} stroke={2.4} /> {lang === 'es' ? 'Nuevo gasto fijo' : 'New fixed expense'}
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {items.length >= 3 && (
+            <select value={sort} onChange={e => setSort(e.target.value as SortKey)} style={{ padding: '8px 12px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 12.5 }}>
+              <option value="amount_desc">{lang === 'es' ? 'Mayor monto' : 'Highest amount'}</option>
+              <option value="amount_asc">{lang === 'es' ? 'Menor monto' : 'Lowest amount'}</option>
+              <option value="name">{lang === 'es' ? 'Nombre A–Z' : 'Name A–Z'}</option>
+              <option value="next_due">{lang === 'es' ? 'Próximo pago' : 'Next due'}</option>
+            </select>
+          )}
+          <button onClick={() => setAddOpen(true)} style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="plus" size={15} stroke={2.4} /> {lang === 'es' ? 'Nuevo gasto fijo' : 'New fixed expense'}
+          </button>
+        </div>
       </div>
-      <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} initialFixed initialType="expense" />
+
+      <AddMovementModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={() => toast(lang === 'es' ? 'Gasto fijo guardado' : 'Fixed expense saved')}
+        initialFixed initialType="expense"
+      />
       <AddMovementModal
         open={!!editItem}
         onClose={() => setEditItem(null)}
+        onSuccess={() => toast(lang === 'es' ? 'Gasto fijo actualizado' : 'Fixed expense updated')}
         initialData={editItem ?? undefined}
       />
 
@@ -151,42 +209,19 @@ export default function GastosFijosPage() {
                   </div>
                   <div style={{ position: 'relative' }}>
                     <button
-                      onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); setConfirmDeleteId(null); }}
+                      onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); }}
                       style={{ color: 'var(--text-3)', marginLeft: 4, padding: 6 }}
                     >
                       <Icon name="more" size={15} />
                     </button>
                     {menuId === m.id && (
-                      <div style={{
-                        position: 'absolute', top: '100%', right: 0, zIndex: 50,
-                        background: 'var(--surface)', border: '1px solid var(--border)',
-                        borderRadius: 12, boxShadow: 'var(--shadow-pop)',
-                        minWidth: 160, overflow: 'hidden',
-                      }}>
-                        <button onClick={e => { e.stopPropagation(); setEditItem(m); setMenuId(null); }} style={{
-                          width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                          fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left',
-                          background: 'transparent', borderBottom: '1px solid var(--border)',
-                        }}>
+                      <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow-pop)', minWidth: 160, overflow: 'hidden' }}>
+                        <button onClick={e => { e.stopPropagation(); setEditItem(m); setMenuId(null); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left', background: 'transparent', borderBottom: '1px solid var(--border)' }}>
                           <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
                         </button>
-                        {confirmDeleteId === m.id ? (
-                          <button onClick={e => { e.stopPropagation(); handleDelete(m); }} style={{
-                            width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                            fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left',
-                            background: 'var(--expense-soft)',
-                          }}>
-                            <Icon name="trash" size={15} /> {lang === 'es' ? '¿Confirmar?' : 'Confirm?'}
-                          </button>
-                        ) : (
-                          <button onClick={e => { e.stopPropagation(); setConfirmDeleteId(m.id); }} style={{
-                            width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                            fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left',
-                            background: 'transparent',
-                          }}>
-                            <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
-                          </button>
-                        )}
+                        <button onClick={e => { e.stopPropagation(); setDeleteTarget(m); setMenuId(null); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left', background: 'transparent' }}>
+                          <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+                        </button>
                       </div>
                     )}
                   </div>

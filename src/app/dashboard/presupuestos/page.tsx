@@ -8,15 +8,19 @@ import { Icon } from '@/components/ui/Icon';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { AddBudgetModal } from '@/components/screens/AddBudgetModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { useToast } from '@/components/ui/Toast';
 
 export default function PresupuestosPage() {
   const { t, currency, lang } = useApp();
   const { budgets, loading, deleteBudget } = useData();
+  const toast = useToast();
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<Budget | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const totalLimit = budgets.reduce((s, b) => s + b.limit, 0);
   const totalSpent = budgets.reduce((s, b) => s + b.spent, 0);
@@ -26,18 +30,35 @@ export default function PresupuestosPage() {
   const monthLabel = now.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { month: 'long', year: 'numeric' });
   const monthCap = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 
-  async function handleDelete(b: Budget) {
-    setMenuId(null);
-    setConfirmDeleteId(null);
-    await deleteBudget(b.cat);
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteBudget(deleteTarget.cat);
+      toast(lang === 'es' ? 'Presupuesto eliminado' : 'Budget deleted', 'info');
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
     <div>
       {menuId !== null && (
-        <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
-          style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
       )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title={lang === 'es' ? 'Eliminar presupuesto' : 'Delete budget'}
+        message={lang === 'es'
+          ? `¿Eliminar el presupuesto de "${CAT[deleteTarget?.cat ?? '']?.[`label_${lang}` as 'label_es'] ?? deleteTarget?.cat}"?`
+          : `Delete the budget for "${CAT[deleteTarget?.cat ?? '']?.[`label_en`] ?? deleteTarget?.cat}"?`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+        lang={lang}
+      />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
@@ -47,9 +68,19 @@ export default function PresupuestosPage() {
         <button onClick={() => setAddOpen(true)} style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <Icon name="plus" size={15} stroke={2.4} /> {lang === 'es' ? 'Nuevo presupuesto' : 'New budget'}
         </button>
-        <AddBudgetModal open={addOpen} onClose={() => setAddOpen(false)} />
-        <AddBudgetModal open={!!editItem} onClose={() => setEditItem(null)} initialData={editItem ?? undefined} />
       </div>
+
+      <AddBudgetModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={() => toast(lang === 'es' ? 'Presupuesto creado' : 'Budget created')}
+      />
+      <AddBudgetModal
+        open={!!editItem}
+        onClose={() => setEditItem(null)}
+        onSuccess={() => toast(lang === 'es' ? 'Presupuesto actualizado' : 'Budget updated')}
+        initialData={editItem ?? undefined}
+      />
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -145,42 +176,19 @@ export default function PresupuestosPage() {
                     </div>
                     <div style={{ position: 'relative', marginLeft: 4 }}>
                       <button
-                        onClick={e => { e.stopPropagation(); setMenuId(menuId === b.cat ? null : b.cat); setConfirmDeleteId(null); }}
+                        onClick={e => { e.stopPropagation(); setMenuId(menuId === b.cat ? null : b.cat); }}
                         style={{ color: 'var(--text-3)', padding: 6 }}
                       >
                         <Icon name="more" size={16} />
                       </button>
                       {menuId === b.cat && (
-                        <div style={{
-                          position: 'absolute', top: '100%', right: 0, zIndex: 50,
-                          background: 'var(--surface)', border: '1px solid var(--border)',
-                          borderRadius: 12, boxShadow: 'var(--shadow-pop)',
-                          minWidth: 160, overflow: 'hidden',
-                        }}>
-                          <button onClick={e => { e.stopPropagation(); setEditItem(b); setMenuId(null); }} style={{
-                            width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                            fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left',
-                            background: 'transparent', borderBottom: '1px solid var(--border)',
-                          }}>
+                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow-pop)', minWidth: 160, overflow: 'hidden' }}>
+                          <button onClick={e => { e.stopPropagation(); setEditItem(b); setMenuId(null); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left', background: 'transparent', borderBottom: '1px solid var(--border)' }}>
                             <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
                           </button>
-                          {confirmDeleteId === b.cat ? (
-                            <button onClick={e => { e.stopPropagation(); handleDelete(b); }} style={{
-                              width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                              fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left',
-                              background: 'var(--expense-soft)',
-                            }}>
-                              <Icon name="trash" size={15} /> {lang === 'es' ? '¿Confirmar?' : 'Confirm?'}
-                            </button>
-                          ) : (
-                            <button onClick={e => { e.stopPropagation(); setConfirmDeleteId(b.cat); }} style={{
-                              width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10,
-                              fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left',
-                              background: 'transparent',
-                            }}>
-                              <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
-                            </button>
-                          )}
+                          <button onClick={e => { e.stopPropagation(); setDeleteTarget(b); setMenuId(null); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left', background: 'transparent' }}>
+                            <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+                          </button>
                         </div>
                       )}
                     </div>

@@ -23,10 +23,11 @@ const GOAL_ICONS = [
 interface Props {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   initialData?: import('@/lib/data').SavingsGoal;
 }
 
-export function AddGoalModal({ open, onClose, initialData }: Props) {
+export function AddGoalModal({ open, onClose, onSuccess, initialData }: Props) {
   const { lang } = useApp();
   const { addGoal, updateGoal } = useData();
   const isEditing = !!initialData;
@@ -90,6 +91,7 @@ export function AddGoalModal({ open, onClose, initialData }: Props) {
         setName(''); setDescription(''); setIcon('target'); setTarget(''); setTargetDate('');
       }
       onClose();
+      onSuccess?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al guardar.');
     } finally {

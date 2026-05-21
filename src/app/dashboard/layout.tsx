@@ -11,6 +11,7 @@ import { SettingsPanel } from '@/components/screens/SettingsPanel';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead, type DbNotification } from '@/lib/db';
 import { TrialBanner } from '@/components/shell/TrialBanner';
+import { ToastProvider } from '@/components/ui/Toast';
 
 const ADMIN_EMAIL = 'stevengalocr@gmail.com';
 
@@ -518,7 +519,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <AppProvider>
       <DataProvider>
-        <DashInner>{children}</DashInner>
+        <ToastProvider>
+          <DashInner>{children}</DashInner>
+        </ToastProvider>
       </DataProvider>
     </AppProvider>
   );

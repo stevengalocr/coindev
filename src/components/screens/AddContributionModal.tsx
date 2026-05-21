@@ -10,10 +10,11 @@ import { AccountGlyph } from '@/components/shell/CategoryGlyph';
 interface Props {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   goal: SavingsGoal | null;
 }
 
-export function AddContributionModal({ open, onClose, goal }: Props) {
+export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) {
   const { lang, currency } = useApp();
   const { accounts, addContribution } = useData();
   const [amount, setAmount] = useState('');
@@ -58,6 +59,7 @@ export function AddContributionModal({ open, onClose, goal }: Props) {
     try {
       await addContribution(goal.id, accountId, amt, note.trim() || undefined);
       onClose();
+      onSuccess?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al guardar.');
     } finally {

@@ -8,6 +8,8 @@ import { MoneyText } from '@/components/shell/MoneyText';
 import { AddGoalModal } from '@/components/screens/AddGoalModal';
 import { AddContributionModal } from '@/components/screens/AddContributionModal';
 import { Icon } from '@/components/ui/Icon';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { useToast } from '@/components/ui/Toast';
 import { fetchGoalContributions, type DbGoalContribution } from '@/lib/db';
 
 function statusColor(status: SavingsGoal['status']): string {
@@ -37,10 +39,12 @@ function monthsRemaining(target: Date): number {
 export default function MetasPage() {
   const { t, currency, lang } = useApp();
   const { goals, accounts, loading, deleteGoal } = useData();
+  const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<SavingsGoal | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SavingsGoal | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [contributionGoal, setContributionGoal] = useState<SavingsGoal | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [contributions, setContributions] = useState<Record<string, DbGoalContribution[]>>({});
@@ -52,10 +56,16 @@ export default function MetasPage() {
   const activeGoals  = goals.filter(g => g.status === 'active');
   const otherGoals   = goals.filter(g => g.status !== 'active');
 
-  async function handleDelete(g: SavingsGoal) {
-    setMenuId(null);
-    setConfirmDeleteId(null);
-    await deleteGoal(g.id);
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteGoal(deleteTarget.id);
+      toast(lang === 'es' ? 'Meta eliminada' : 'Goal deleted', 'info');
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const loadContribs = useCallback(async (goalId: string) => {
@@ -82,9 +92,20 @@ export default function MetasPage() {
   return (
     <div>
       {menuId !== null && (
-        <div onClick={() => { setMenuId(null); setConfirmDeleteId(null); }}
-          style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
       )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title={lang === 'es' ? 'Eliminar meta' : 'Delete goal'}
+        message={lang === 'es'
+          ? `¿Eliminar la meta "${deleteTarget?.name}"? Se perderá todo su historial de aportes.`
+          : `Delete goal "${deleteTarget?.name}"? All contribution history will be lost.`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+        lang={lang}
+      />
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
@@ -102,9 +123,23 @@ export default function MetasPage() {
         </button>
       </div>
 
-      <AddGoalModal open={addOpen} onClose={() => setAddOpen(false)} />
-      <AddGoalModal open={!!editItem} onClose={() => setEditItem(null)} initialData={editItem ?? undefined} />
-      <AddContributionModal open={!!contributionGoal} onClose={handleContributionClose} goal={contributionGoal} />
+      <AddGoalModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={() => toast(lang === 'es' ? 'Meta creada' : 'Goal created')}
+      />
+      <AddGoalModal
+        open={!!editItem}
+        onClose={() => setEditItem(null)}
+        onSuccess={() => toast(lang === 'es' ? 'Meta actualizada' : 'Goal updated')}
+        initialData={editItem ?? undefined}
+      />
+      <AddContributionModal
+        open={!!contributionGoal}
+        onClose={handleContributionClose}
+        onSuccess={() => toast(lang === 'es' ? 'Aporte registrado' : 'Contribution added')}
+        goal={contributionGoal}
+      />
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -191,14 +226,13 @@ export default function MetasPage() {
                   <GoalCard
                     key={g.id} goal={g} currency={currency} lang={lang} t={t}
                     accounts={accounts}
-                    menuId={menuId} confirmDeleteId={confirmDeleteId}
+                    menuId={menuId}
                     expanded={expandedId === g.id}
                     contribs={contributions[g.id]}
                     loadingContribs={loadingContribs[g.id] ?? false}
-                    onMenuToggle={(id) => { setMenuId(menuId === id ? null : id); setConfirmDeleteId(null); }}
+                    onMenuToggle={(id) => setMenuId(menuId === id ? null : id)}
                     onEdit={(goal) => { setEditItem(goal); setMenuId(null); }}
-                    onDeleteConfirm={(id) => setConfirmDeleteId(id)}
-                    onDelete={handleDelete}
+                    onDelete={(goal) => { setDeleteTarget(goal); setMenuId(null); }}
                     onContribute={(goal) => { setContributionGoal(goal); setMenuId(null); }}
                     onToggleHistory={() => handleToggleHistory(g.id)}
                   />
@@ -218,14 +252,13 @@ export default function MetasPage() {
                   <GoalCard
                     key={g.id} goal={g} currency={currency} lang={lang} t={t}
                     accounts={accounts}
-                    menuId={menuId} confirmDeleteId={confirmDeleteId}
+                    menuId={menuId}
                     expanded={expandedId === g.id}
                     contribs={contributions[g.id]}
                     loadingContribs={loadingContribs[g.id] ?? false}
-                    onMenuToggle={(id) => { setMenuId(menuId === id ? null : id); setConfirmDeleteId(null); }}
+                    onMenuToggle={(id) => setMenuId(menuId === id ? null : id)}
                     onEdit={(goal) => { setEditItem(goal); setMenuId(null); }}
-                    onDeleteConfirm={(id) => setConfirmDeleteId(id)}
-                    onDelete={handleDelete}
+                    onDelete={(goal) => { setDeleteTarget(goal); setMenuId(null); }}
                     onContribute={(goal) => { setContributionGoal(goal); setMenuId(null); }}
                     onToggleHistory={() => handleToggleHistory(g.id)}
                   />
@@ -252,24 +285,23 @@ interface CardProps {
   lang: string;
   accounts: import('@/lib/data').Account[];
   menuId: string | null;
-  confirmDeleteId: string | null;
   expanded: boolean;
   contribs: DbGoalContribution[] | undefined;
   loadingContribs: boolean;
   onMenuToggle: (id: string) => void;
   onEdit: (goal: SavingsGoal) => void;
-  onDeleteConfirm: (id: string) => void;
   onDelete: (goal: SavingsGoal) => void;
   onContribute: (goal: SavingsGoal) => void;
   onToggleHistory: () => void;
 }
 
-function GoalCard({ goal, currency, lang, t, accounts, menuId, confirmDeleteId, expanded, contribs, loadingContribs, onMenuToggle, onEdit, onDeleteConfirm, onDelete, onContribute, onToggleHistory }: CardProps) {
+function GoalCard({ goal, currency, lang, t, accounts, menuId, expanded, contribs, loadingContribs, onMenuToggle, onEdit, onDelete, onContribute, onToggleHistory }: CardProps) {
   const pct = goal.target > 0 ? Math.min(100, Math.round((goal.current / goal.target) * 100)) : 0;
   const remaining = goal.target - goal.current;
   const monthlyNeeded = goal.targetDate && remaining > 0 ? remaining / monthsRemaining(goal.targetDate) : null;
   const barColor = goal.status === 'completed' ? 'var(--income)' : goal.status === 'paused' ? 'var(--text-3)' : 'var(--blue)';
   const sColor = statusColor(goal.status);
+  const hasContribs = goal.current > 0;
 
   return (
     <div className="cd-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -296,15 +328,9 @@ function GoalCard({ goal, currency, lang, t, accounts, menuId, confirmDeleteId, 
               <button onClick={e => { e.stopPropagation(); onEdit(goal); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left', background: 'transparent', borderBottom: '1px solid var(--border)' }}>
                 <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
               </button>
-              {confirmDeleteId === goal.id ? (
-                <button onClick={e => { e.stopPropagation(); onDelete(goal); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--expense)', fontWeight: 600, textAlign: 'left', background: 'var(--expense-soft)' }}>
-                  <Icon name="trash" size={15} /> {lang === 'es' ? '¿Confirmar?' : 'Confirm?'}
-                </button>
-              ) : (
-                <button onClick={e => { e.stopPropagation(); onDeleteConfirm(goal.id); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left', background: 'transparent' }}>
-                  <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
-                </button>
-              )}
+              <button onClick={e => { e.stopPropagation(); onDelete(goal); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left', background: 'transparent' }}>
+                <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+              </button>
             </div>
           )}
         </div>
@@ -343,26 +369,17 @@ function GoalCard({ goal, currency, lang, t, accounts, menuId, confirmDeleteId, 
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: 8 }}>
         {goal.status === 'active' && (
-          <button onClick={() => onContribute(goal)} style={{
-            flex: 1, padding: '9px 12px', borderRadius: 'var(--r-md)',
-            background: 'var(--gradient-hero)', color: '#0A0F1C',
-            fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            border: 0, cursor: 'pointer',
-          }}>
+          <button onClick={() => onContribute(goal)} style={{ flex: 1, padding: '9px 12px', borderRadius: 'var(--r-md)', background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, border: 0, cursor: 'pointer' }}>
             <Icon name="plus" size={13} stroke={2.5} />
             {lang === 'es' ? 'Abonar' : 'Deposit'}
           </button>
         )}
-        <button onClick={onToggleHistory} style={{
-          padding: '9px 14px', borderRadius: 'var(--r-md)',
-          background: expanded ? 'var(--surface-2)' : 'transparent',
-          border: '1px solid var(--border)',
-          fontSize: 12.5, color: 'var(--text-2)', fontWeight: 500,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-          cursor: 'pointer', transition: 'background 140ms', whiteSpace: 'nowrap',
-        }}>
+        <button onClick={onToggleHistory} style={{ padding: '9px 14px', borderRadius: 'var(--r-md)', background: expanded ? 'var(--surface-2)' : 'transparent', border: `1px solid ${hasContribs && !expanded ? 'var(--blue)' : 'var(--border)'}`, fontSize: 12.5, color: expanded ? 'var(--text-2)' : hasContribs ? 'var(--blue)' : 'var(--text-2)', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, cursor: 'pointer', transition: 'all 140ms', whiteSpace: 'nowrap' }}>
           <Icon name="list" size={13} stroke={1.8} />
           {expanded ? (lang === 'es' ? 'Ocultar' : 'Hide') : (lang === 'es' ? 'Historial' : 'History')}
+          {hasContribs && !expanded && (
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--blue)', flexShrink: 0 }} />
+          )}
         </button>
       </div>
 

@@ -10,12 +10,13 @@ import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 interface Props {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   initialData?: import('@/lib/data').Budget;
 }
 
 const EXPENSE_CATS = CATEGORIES.filter(c => c.type === 'expense');
 
-export function AddBudgetModal({ open, onClose, initialData }: Props) {
+export function AddBudgetModal({ open, onClose, onSuccess, initialData }: Props) {
   const { lang } = useApp();
   const { budgets, addBudget, updateBudget } = useData();
   const isEditing = !!initialData;
@@ -55,6 +56,7 @@ export function AddBudgetModal({ open, onClose, initialData }: Props) {
         setLimit(''); setCat(available[0]?.id ?? '');
       }
       onClose();
+      onSuccess?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al guardar.');
     } finally {
