@@ -52,6 +52,7 @@ export default function AdminPage() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [fbReply, setFbReply] = useState<Record<string, string>>({});
   const [fbReplyOpen, setFbReplyOpen] = useState<string | null>(null);
+  const [fbFilter, setFbFilter] = useState<'pendiente' | 'resuelto'>('pendiente');
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -319,17 +320,37 @@ export default function AdminPage() {
       )}
       </>)}
 
-      {tab === 'feedback' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {tab === 'feedback' && (() => {
+        const pendientes = feedbacks.filter(f => f.status !== 'resuelto');
+        const resueltos  = feedbacks.filter(f => f.status === 'resuelto');
+        const visible    = fbFilter === 'pendiente' ? pendientes : resueltos;
+        return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Filter pills */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            {([
+              { id: 'pendiente', label: `Pendientes (${pendientes.length})` },
+              { id: 'resuelto',  label: `Resueltos (${resueltos.length})`  },
+            ] as const).map(f => (
+              <button key={f.id} onClick={() => setFbFilter(f.id)} style={{
+                padding: '7px 16px', borderRadius: 999, fontSize: 13, fontWeight: fbFilter === f.id ? 700 : 500,
+                background: fbFilter === f.id ? (f.id === 'resuelto' ? 'var(--income-soft)' : 'rgba(91,155,255,0.12)') : 'var(--surface)',
+                border: `1px solid ${fbFilter === f.id ? (f.id === 'resuelto' ? 'rgba(16,185,129,0.3)' : 'rgba(91,155,255,0.3)') : 'var(--border)'}`,
+                color: fbFilter === f.id ? (f.id === 'resuelto' ? 'var(--income)' : 'var(--blue)') : 'var(--text-3)',
+                transition: 'all 140ms',
+              }}>{f.label}</button>
+            ))}
+          </div>
+
           {loading ? (
             [1,2,3].map(i => (
               <div key={i} className="cd-card" style={{ padding: '16px 20px', height: 80, background: 'var(--surface-3)' }} />
             ))
-          ) : feedbacks.length === 0 ? (
+          ) : visible.length === 0 ? (
             <div className="cd-card" style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-3)', fontSize: 14 }}>
-              No hay reportes aún.
+              {fbFilter === 'pendiente' ? 'No hay reportes pendientes.' : 'No hay reportes resueltos.'}
             </div>
-          ) : feedbacks.map(fb => {
+          ) : visible.map(fb => {
             const typeColor = FEEDBACK_COLORS[fb.type] ?? '#9CA3AF';
             const sFb = STATUS_FB[fb.status] ?? STATUS_FB.nuevo;
             const date = new Date(fb.created_at).toLocaleDateString('es-CR', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -399,7 +420,8 @@ export default function AdminPage() {
             );
           })}
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

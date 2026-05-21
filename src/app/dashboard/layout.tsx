@@ -210,21 +210,23 @@ function DashInner({ children }: { children: ReactNode }) {
           })()}
         </nav>
 
-        {/* Feedback + User card */}
-        <div style={{ padding: '8px 14px 4px' }}>
-          <button onClick={() => setFeedbackOpen(true)} style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: 9,
-            padding: '9px 12px', borderRadius: 10, background: 'transparent',
-            border: '1px solid transparent', color: 'var(--text-3)',
-            fontSize: 12.5, fontWeight: 500, transition: 'all 140ms',
-          }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--text-3)'; }}
-          >
-            <Icon name="edit" size={14} stroke={1.7} />
-            {lang === 'es' ? 'Reportar problema / Sugerencia' : 'Report issue / Suggestion'}
-          </button>
-        </div>
+        {/* Feedback — hidden for admin */}
+        {user?.email !== ADMIN_EMAIL && (
+          <div style={{ padding: '8px 14px 4px' }}>
+            <button onClick={() => setFeedbackOpen(true)} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 9,
+              padding: '9px 12px', borderRadius: 10, background: 'transparent',
+              border: '1px solid transparent', color: 'var(--text-3)',
+              fontSize: 12.5, fontWeight: 500, transition: 'all 140ms',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--text-3)'; }}
+            >
+              <Icon name="edit" size={14} stroke={1.7} />
+              {lang === 'es' ? 'Reportar problema / Sugerencia' : 'Report issue / Suggestion'}
+            </button>
+          </div>
+        )}
 
         <div style={{ padding: '4px 14px 16px', borderTop: '1px solid var(--border)' }}>
           <div style={{
@@ -415,17 +417,19 @@ function DashInner({ children }: { children: ReactNode }) {
                 </Link>
               )}
 
-              <button onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }} style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                padding: '13px 16px', borderRadius: 14, background: 'var(--surface)',
-                border: '1px solid var(--border)', color: 'var(--text-2)',
-                fontSize: 13, fontWeight: 500,
-              }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in oklab, var(--violet) 10%, var(--surface-3))', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                  <Icon name="edit" size={18} stroke={1.6} style={{ color: 'var(--violet)' }} />
-                </div>
-                {lang === 'es' ? 'Reportar / Sugerir' : 'Report / Suggest'}
-              </button>
+              {user?.email !== ADMIN_EMAIL && (
+                <button onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }} style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '13px 16px', borderRadius: 14, background: 'var(--surface)',
+                  border: '1px solid var(--border)', color: 'var(--text-2)',
+                  fontSize: 13, fontWeight: 500,
+                }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in oklab, var(--violet) 10%, var(--surface-3))', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <Icon name="edit" size={18} stroke={1.6} style={{ color: 'var(--violet)' }} />
+                  </div>
+                  {lang === 'es' ? 'Reportar / Sugerir' : 'Report / Suggest'}
+                </button>
+              )}
 
               <button onClick={() => { setMoreOpen(false); setSettingsOpen(true); }} style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: 12,
