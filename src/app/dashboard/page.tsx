@@ -77,14 +77,14 @@ export default function DashboardPage() {
     <>
     <style>{`
       .stats-grid {
-        grid-template-areas: 'hero hero income expense savings' !important;
-        grid-template-columns: 1.5fr 1fr 1fr 1fr !important;
+        grid-template-areas: 'hero hero income expense' !important;
+        grid-template-columns: 1.5fr 1fr 1fr !important;
       }
       .stats-grid > *:first-child { grid-area: hero; }
       @media (max-width: 1100px) {
         .stats-grid {
           grid-template-columns: 1fr 1fr !important;
-          grid-template-areas: 'hero hero' 'income expense' 'savings savings' !important;
+          grid-template-areas: 'hero hero' 'income expense' !important;
         }
         .body-row { grid-template-columns: 1fr !important; }
         .accounts-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -92,7 +92,7 @@ export default function DashboardPage() {
       @media (max-width: 640px) {
         .stats-grid {
           grid-template-columns: 1fr 1fr !important;
-          grid-template-areas: 'hero hero' 'income expense' 'savings savings' !important;
+          grid-template-areas: 'hero hero' 'income expense' !important;
         }
         .accounts-grid { grid-template-columns: 1fr 1fr !important; }
       }
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       {!loading && (<>
 
       {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: 16 }} className="stats-grid">
+      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: 16 }} className="stats-grid">
         {/* Hero */}
         <div className="cd-card" style={{ padding: '20px 22px', position: 'relative', overflow: 'hidden', gridArea: 'hero' }}>
           <HeroSwoosh opacity={0.9} />
@@ -178,19 +178,6 @@ export default function DashboardPage() {
           <div style={{ marginTop: 8 }}><DeltaBadge text={`${filtered.filter(m => m.type === 'expense').length} mov.`} positive={false} /></div>
         </div>
 
-        {/* Savings */}
-        <div className="cd-card" style={{ padding: '20px 22px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(91,229,209,0.15)', color: 'var(--cyan)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-              <Icon name="piggy" size={18} stroke={1.8} />
-            </div>
-            <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-2)' }}>{t.savings}</span>
-          </div>
-          <MoneyText amount={savings} currency={currency} size={24} weight={700} />
-          <div style={{ marginTop: 8 }}>
-            <DeltaBadge text={`${pct(savings, income)}% ${t.ofIncome}`} positive={savings >= 0} />
-          </div>
-        </div>
       </div>
 
       {/* Year + Budgets */}
