@@ -126,7 +126,7 @@ function DashInner({ children }: { children: ReactNode }) {
         background: 'var(--bg-2)', display: 'flex', flexDirection: 'column',
         height: '100vh', position: 'sticky', top: 0,
       }} className="hidden-mobile">
-        <div style={{ padding: '22px 20px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 11 }}>
+        <div style={{ padding: '22px 20px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 11, height: 84, boxSizing: 'border-box' }}>
           <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
             <Icon name="logo" size={22} />
           </div>
