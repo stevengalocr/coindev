@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import {
   fetchProfile, fetchAccounts, fetchTransactions, fetchBudgets,
@@ -70,6 +71,7 @@ interface DataState {
 const DataCtx = createContext<DataState | null>(null);
 
 export function DataProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [profile, setProfile] = useState<DbProfile | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -127,6 +129,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Keep session alive: re-load on token refresh, redirect on sign-out
+  useEffect(() => {
+    const sb = createClient();
+    const { data: { subscription } } = sb.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setProfile(null);
+        setAccounts([]);
+        setMovements([]);
+        router.push('/login');
+      } else if (event === 'TOKEN_REFRESHED') {
+        load();
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [load, router]);
 
   const addTransaction = useCallback(async (tx: NewTransaction) => {
     await insertTransaction(tx);

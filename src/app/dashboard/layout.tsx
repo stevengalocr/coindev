@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AppProvider, useApp } from '@/hooks/useApp';
@@ -11,6 +11,7 @@ import { SettingsPanel } from '@/components/screens/SettingsPanel';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
 import { TrialBanner } from '@/components/shell/TrialBanner';
 import { ToastProvider } from '@/components/ui/Toast';
+import { FeedbackModal } from '@/components/screens/FeedbackModal';
 
 const ADMIN_EMAIL = 'stevengalocr@gmail.com';
 
@@ -73,6 +74,22 @@ function DashInner({ children }: { children: ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  // Triple-click on Inicio → open Add Movement modal
+  const homeClickCount = useRef(0);
+  const homeClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function handleHomeClick(e: React.MouseEvent) {
+    homeClickCount.current += 1;
+    if (homeClickTimer.current) clearTimeout(homeClickTimer.current);
+    if (homeClickCount.current >= 3) {
+      e.preventDefault();
+      homeClickCount.current = 0;
+      setAddOpen(true);
+      return;
+    }
+    homeClickTimer.current = setTimeout(() => { homeClickCount.current = 0; }, 500);
+  }
 
   const navLabels: Record<string, string> = {
     home: t.home, movements: t.movements, accounts: t.accounts,
@@ -144,7 +161,9 @@ function DashInner({ children }: { children: ReactNode }) {
               {section.items.map(item => {
                 const active = isActive(item.href);
                 return (
-                  <Link key={item.key} href={item.href} style={{
+                  <Link key={item.key} href={item.href}
+                    onClick={item.key === 'home' ? handleHomeClick : undefined}
+                    style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '9px 10px 9px 12px',
                     borderRadius: 10, marginBottom: 1, textDecoration: 'none',
@@ -191,8 +210,23 @@ function DashInner({ children }: { children: ReactNode }) {
           })()}
         </nav>
 
-        {/* User card */}
-        <div style={{ padding: '12px 14px 16px', borderTop: '1px solid var(--border)' }}>
+        {/* Feedback + User card */}
+        <div style={{ padding: '8px 14px 4px' }}>
+          <button onClick={() => setFeedbackOpen(true)} style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 9,
+            padding: '9px 12px', borderRadius: 10, background: 'transparent',
+            border: '1px solid transparent', color: 'var(--text-3)',
+            fontSize: 12.5, fontWeight: 500, transition: 'all 140ms',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--text-3)'; }}
+          >
+            <Icon name="edit" size={14} stroke={1.7} />
+            {lang === 'es' ? 'Reportar problema / Sugerencia' : 'Report issue / Suggestion'}
+          </button>
+        </div>
+
+        <div style={{ padding: '4px 14px 16px', borderTop: '1px solid var(--border)' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
             padding: '10px 12px', borderRadius: 12,
@@ -263,8 +297,8 @@ function DashInner({ children }: { children: ReactNode }) {
             );
           })}
 
-          {/* Center: Inicio FAB — perfectly round, elevated */}
-          <Link href="/dashboard" style={{
+          {/* Center: Inicio FAB — triple-click opens Add Movement */}
+          <Link href="/dashboard" onClick={handleHomeClick} style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             gap: 5, height: '100%', textDecoration: 'none',
             transform: 'translateY(-10px)',
@@ -364,17 +398,47 @@ function DashInner({ children }: { children: ReactNode }) {
 
             <div style={{ height: 1, background: 'var(--border)', margin: '10px 2px' }} />
 
-            <button onClick={() => { setMoreOpen(false); setSettingsOpen(true); }} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-              padding: '13px 16px', borderRadius: 14, background: 'var(--surface)',
-              border: '1px solid var(--border)', color: 'var(--text-2)',
-              fontSize: 13, fontWeight: 500,
-            }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--surface-3)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                <Icon name="settings" size={18} stroke={1.6} />
-              </div>
-              {lang === 'es' ? 'Configuración' : 'Settings'}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {user?.email === ADMIN_EMAIL && (
+                <Link href="/dashboard/admin" onClick={() => setMoreOpen(false)} style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '13px 16px', borderRadius: 14, textDecoration: 'none',
+                  background: isActive('/dashboard/admin') ? 'color-mix(in oklab, var(--blue) 10%, var(--surface))' : 'var(--surface)',
+                  border: `1px solid ${isActive('/dashboard/admin') ? 'color-mix(in oklab, var(--blue) 25%, var(--border))' : 'var(--border)'}`,
+                  color: isActive('/dashboard/admin') ? 'var(--blue)' : 'var(--text-2)',
+                  fontSize: 13, fontWeight: 500,
+                }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in oklab, var(--blue) 10%, var(--surface-3))', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <Icon name="lock" size={18} stroke={1.6} style={{ color: 'var(--blue)' }} />
+                  </div>
+                  {lang === 'es' ? 'Administración' : 'Admin'}
+                </Link>
+              )}
+
+              <button onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }} style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                padding: '13px 16px', borderRadius: 14, background: 'var(--surface)',
+                border: '1px solid var(--border)', color: 'var(--text-2)',
+                fontSize: 13, fontWeight: 500,
+              }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in oklab, var(--violet) 10%, var(--surface-3))', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Icon name="edit" size={18} stroke={1.6} style={{ color: 'var(--violet)' }} />
+                </div>
+                {lang === 'es' ? 'Reportar / Sugerir' : 'Report / Suggest'}
+              </button>
+
+              <button onClick={() => { setMoreOpen(false); setSettingsOpen(true); }} style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                padding: '13px 16px', borderRadius: 14, background: 'var(--surface)',
+                border: '1px solid var(--border)', color: 'var(--text-2)',
+                fontSize: 13, fontWeight: 500,
+              }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--surface-3)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Icon name="settings" size={18} stroke={1.6} />
+                </div>
+                {lang === 'es' ? 'Configuración' : 'Settings'}
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -389,6 +453,7 @@ function DashInner({ children }: { children: ReactNode }) {
 
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   );
 }

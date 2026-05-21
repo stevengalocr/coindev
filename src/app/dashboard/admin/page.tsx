@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useData } from '@/hooks/useData';
 import { useApp } from '@/hooks/useApp';
 import { Icon } from '@/components/ui/Icon';
-import { fetchAllProfiles, updateUserPlanStatus, adminDeleteUser, type DbProfile } from '@/lib/db';
+import { fetchAllProfiles, updateUserPlanStatus, adminDeleteUser, fetchAllFeedback, updateFeedbackStatus, type DbProfile, type DbFeedback } from '@/lib/db';
 
 const ADMIN_EMAIL = 'stevengalocr@gmail.com';
 const TRIAL_DAYS = 7;
@@ -31,26 +31,42 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+const FEEDBACK_COLORS: Record<string, string> = { bug: '#EF4444', mejora: '#5B9BFF', consulta: '#10B981' };
+const FEEDBACK_LABELS: Record<string, string> = { bug: 'Bug', mejora: 'Sugerencia', consulta: 'Consulta' };
+const STATUS_FB: Record<string, { label: string; color: string; bg: string }> = {
+  nuevo:       { label: 'Nuevo',       color: '#5B9BFF', bg: 'rgba(91,155,255,0.1)' },
+  en_revision: { label: 'En revisión', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)' },
+  resuelto:    { label: 'Resuelto',    color: '#10B981', bg: 'rgba(16,185,129,0.1)'  },
+};
+
 export default function AdminPage() {
   const { user } = useData();
   const { lang } = useApp();
+  const [tab, setTab] = useState<'users' | 'feedback'>('users');
   const [profiles, setProfiles] = useState<DbProfile[]>([]);
+  const [feedbacks, setFeedbacks] = useState<DbFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState<Record<string, string>>({});
   const [notesOpen, setNotesOpen] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [fbReply, setFbReply] = useState<Record<string, string>>({});
+  const [fbReplyOpen, setFbReplyOpen] = useState<string | null>(null);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchAllProfiles();
+      const [data, fb] = await Promise.all([fetchAllProfiles(), fetchAllFeedback()]);
       setProfiles(data);
+      setFeedbacks(fb);
       const notes: Record<string, string> = {};
       data.forEach(p => { notes[p.id] = p.admin_notes ?? ''; });
       setEditNotes(notes);
+      const replies: Record<string, string> = {};
+      fb.forEach(f => { replies[f.id] = f.admin_reply ?? ''; });
+      setFbReply(replies);
     } catch (e) {
       console.error(e);
     } finally {
@@ -108,10 +124,10 @@ export default function AdminPage() {
         @media (max-width: 640px) { .admin-stats { grid-template-columns: repeat(2, 1fr) !important; } .admin-table-row { flex-direction: column !important; align-items: flex-start !important; } }
       `}</style>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>Administración</h1>
-          <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>Control de acceso de usuarios</div>
+          <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>Panel de control</div>
         </div>
         <button onClick={load} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
           <Icon name="swap" size={14} stroke={2} />
@@ -119,6 +135,23 @@ export default function AdminPage() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'var(--surface-2)', borderRadius: 12, padding: 4, border: '1px solid var(--border)' }}>
+        {([
+          { id: 'users',    label: `Usuarios (${profiles.length})` },
+          { id: 'feedback', label: `Reportes (${feedbacks.filter(f => f.status === 'nuevo').length} nuevos)` },
+        ] as const).map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
+            flex: 1, padding: '9px 12px', borderRadius: 9, fontSize: 13, fontWeight: tab === t.id ? 700 : 500,
+            background: tab === t.id ? 'var(--surface)' : 'transparent',
+            border: tab === t.id ? '1px solid var(--border)' : '1px solid transparent',
+            color: tab === t.id ? 'var(--text)' : 'var(--text-3)',
+            transition: 'all 140ms',
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {tab === 'users' && (<>
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }} className="admin-stats">
         {[
@@ -274,6 +307,89 @@ export default function AdminPage() {
                         onClick={() => setNotesOpen(null)}
                         style={{ padding: '7px 16px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 12.5, cursor: 'pointer' }}
                       >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      </>)}
+
+      {tab === 'feedback' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {loading ? (
+            [1,2,3].map(i => (
+              <div key={i} className="cd-card" style={{ padding: '16px 20px', height: 80, background: 'var(--surface-3)' }} />
+            ))
+          ) : feedbacks.length === 0 ? (
+            <div className="cd-card" style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-3)', fontSize: 14 }}>
+              No hay reportes aún.
+            </div>
+          ) : feedbacks.map(fb => {
+            const typeColor = FEEDBACK_COLORS[fb.type] ?? '#9CA3AF';
+            const sFb = STATUS_FB[fb.status] ?? STATUS_FB.nuevo;
+            const date = new Date(fb.created_at).toLocaleDateString('es-CR', { day: 'numeric', month: 'short', year: 'numeric' });
+            return (
+              <div key={fb.id} className="cd-card" style={{ padding: '16px 20px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: `color-mix(in oklab, ${typeColor} 12%, var(--surface-3))`, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: typeColor }}>{FEEDBACK_LABELS[fb.type]?.slice(0,3).toUpperCase()}</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{fb.title}</span>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: sFb.color, background: sFb.bg, padding: '2px 8px', borderRadius: 999 }}>{sFb.label}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)' }}>{fb.email} · {date}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 6, whiteSpace: 'pre-wrap' }}>{fb.description}</div>
+                    {fb.admin_reply && (
+                      <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'var(--income-soft)', border: '1px solid rgba(16,185,129,0.2)', fontSize: 12, color: 'var(--income)' }}>
+                        ↩ {fb.admin_reply}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <select value={fb.status} onChange={async e => {
+                      const s = e.target.value as DbFeedback['status'];
+                      await updateFeedbackStatus(fb.id, s);
+                      setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, status: s } : f));
+                    }} style={{ appearance: 'none', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 28px 6px 10px', fontSize: 12, color: 'var(--text)', fontFamily: 'var(--font-sans)', cursor: 'pointer', outline: 'none' }}>
+                      <option value="nuevo">Nuevo</option>
+                      <option value="en_revision">En revisión</option>
+                      <option value="resuelto">Resuelto</option>
+                    </select>
+                    <button onClick={() => setFbReplyOpen(fbReplyOpen === fb.id ? null : fb.id)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text-2)', cursor: 'pointer' }}>
+                      <Icon name="edit" size={12} stroke={1.7} />
+                      Responder
+                    </button>
+                  </div>
+                </div>
+                {fbReplyOpen === fb.id && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+                    <textarea
+                      value={fbReply[fb.id] ?? ''}
+                      onChange={e => setFbReply(prev => ({ ...prev, [fb.id]: e.target.value }))}
+                      placeholder="Respuesta al usuario…"
+                      rows={2}
+                      style={{ width: '100%', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 13, fontFamily: 'var(--font-sans)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+                    />
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <button onClick={async () => {
+                        setSaving(fb.id + '_reply');
+                        try {
+                          await updateFeedbackStatus(fb.id, fb.status, fbReply[fb.id]);
+                          setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, admin_reply: fbReply[fb.id] } : f));
+                          setFbReplyOpen(null);
+                        } catch(e) { console.error(e); }
+                        finally { setSaving(null); }
+                      }} disabled={saving === fb.id + '_reply'} style={{ padding: '7px 16px', borderRadius: 8, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 12.5, fontWeight: 700, border: 0, cursor: 'pointer' }}>
+                        {saving === fb.id + '_reply' ? 'Guardando…' : 'Guardar respuesta'}
+                      </button>
+                      <button onClick={() => setFbReplyOpen(null)} style={{ padding: '7px 16px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 12.5, cursor: 'pointer' }}>
                         Cancelar
                       </button>
                     </div>

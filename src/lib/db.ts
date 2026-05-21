@@ -622,3 +622,60 @@ export async function fetchLatestExchangeRate(currency: string): Promise<number 
   return data?.rate ?? null;
 }
 
+
+// ── Feedback / Bug Reports ────────────────────────────────────────────────────
+
+export type FeedbackType = 'bug' | 'mejora' | 'consulta';
+
+export interface DbFeedback {
+  id: string;
+  user_id: string;
+  email: string;
+  type: FeedbackType;
+  title: string;
+  description: string;
+  status: 'nuevo' | 'en_revision' | 'resuelto';
+  admin_reply: string | null;
+  created_at: string;
+}
+
+export async function submitFeedback(data: {
+  type: FeedbackType;
+  title: string;
+  description: string;
+}): Promise<void> {
+  const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  const { error } = await sb.from('feedback').insert({
+    user_id: user.id,
+    email: user.email,
+    type: data.type,
+    title: data.title,
+    description: data.description,
+    status: 'nuevo',
+  });
+  if (error) throw error;
+}
+
+export async function fetchAllFeedback(): Promise<DbFeedback[]> {
+  const sb = createClient();
+  const { data, error } = await sb
+    .from('feedback')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as DbFeedback[];
+}
+
+export async function updateFeedbackStatus(
+  id: string,
+  status: DbFeedback['status'],
+  admin_reply?: string
+): Promise<void> {
+  const sb = createClient();
+  const patch: Record<string, unknown> = { status };
+  if (admin_reply !== undefined) patch.admin_reply = admin_reply;
+  const { error } = await sb.from('feedback').update(patch).eq('id', id);
+  if (error) throw error;
+}
