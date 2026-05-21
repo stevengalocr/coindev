@@ -26,19 +26,21 @@ const NAV_ITEMS = [
   { href: '/dashboard/reportes',     icon: 'chart',  key: 'reports'   },
 ] as const;
 
-/* Bottom 4 + FAB + Más */
-const MOBILE_MAIN = [
-  { href: '/dashboard',             icon: 'home',  key: 'home'      },
-  { href: '/dashboard/movimientos', icon: 'list',  key: 'movements' },
-  { href: '/dashboard/cuentas',     icon: 'bank',  key: 'accounts'  },
-  { href: '/dashboard/presupuestos',icon: 'flag',  key: 'budgets'   },
+/* Bottom nav: [Metas] [Movimientos] [INICIO★] [Divisas] [Más] */
+const MOBILE_LEFT = [
+  { href: '/dashboard/metas',        icon: 'spark', key: 'goals'     },
+  { href: '/dashboard/movimientos',  icon: 'list',  key: 'movements' },
+] as const;
+
+const MOBILE_RIGHT = [
+  { href: '/dashboard/divisas', icon: 'swap', key: 'divisas' },
 ] as const;
 
 const MOBILE_MORE = [
-  { href: '/dashboard/metas',        icon: 'spark',  key: 'goals'   },
-  { href: '/dashboard/gastos-fijos', icon: 'shield', key: 'fixed'   },
-  { href: '/dashboard/divisas',      icon: 'swap',   key: 'divisas' },
-  { href: '/dashboard/reportes',     icon: 'chart',  key: 'reports' },
+  { href: '/dashboard/cuentas',      icon: 'bank',   key: 'accounts' },
+  { href: '/dashboard/presupuestos', icon: 'flag',   key: 'budgets'  },
+  { href: '/dashboard/gastos-fijos', icon: 'shield', key: 'fixed'    },
+  { href: '/dashboard/reportes',     icon: 'chart',  key: 'reports'  },
 ] as const;
 
 function DashInner({ children }: { children: ReactNode }) {
@@ -117,6 +119,7 @@ function DashInner({ children }: { children: ReactNode }) {
   const initials = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   const moreActive = MOBILE_MORE.some(item => isActive(item.href));
+  const isHome = pathname === '/dashboard';
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
@@ -366,36 +369,6 @@ function DashInner({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        {/* Mobile header */}
-        <header style={{
-          position: 'sticky', top: 0, zIndex: 40,
-          backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
-          background: 'color-mix(in oklab, var(--bg) 88%, transparent)',
-          borderBottom: '1px solid var(--border)',
-          padding: '0 16px', height: 56,
-          display: 'none', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-        }} className="mobile-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-              <Icon name="logo" size={18} />
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>CoinDev</div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', display: 'grid', placeItems: 'center', color: 'var(--text-2)', position: 'relative' }}>
-              <Icon name="bell" size={16} stroke={1.6} />
-              {unreadNotifications > 0 && <span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, borderRadius: '50%', background: 'var(--expense)', border: '1.5px solid var(--surface)' }} />}
-            </button>
-            <button onClick={() => setSettingsOpen(true)} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', display: 'grid', placeItems: 'center', color: 'var(--text-2)' }}>
-              <Icon name="settings" size={16} stroke={1.6} />
-            </button>
-            <button onClick={() => setAddOpen(true)} style={{ height: 34, padding: '0 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0C0E14', fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Icon name="plus" size={13} stroke={2.5} />
-              {lang === 'es' ? 'Nuevo' : 'New'}
-            </button>
-          </div>
-        </header>
-
         <TrialBanner />
 
         <main style={{ flex: 1, padding: '44px 36px 100px', minWidth: 0 }} className="main-pad">
@@ -408,21 +381,22 @@ function DashInner({ children }: { children: ReactNode }) {
       {/* ── Mobile Bottom Nav ────────────────────────────────────────────── */}
       <nav style={{
         display: 'none', position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-        background: 'color-mix(in oklab, var(--bg-2) 95%, transparent)',
+        background: 'color-mix(in oklab, var(--bg-2) 96%, transparent)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid var(--border)',
-        padding: '6px 8px calc(6px + env(safe-area-inset-bottom, 0px))',
+        padding: '0 4px calc(env(safe-area-inset-bottom, 0px))',
+        height: 'calc(62px + env(safe-area-inset-bottom, 0px))',
       }} className="mobile-nav">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', alignItems: 'center', maxWidth: 500, margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', alignItems: 'flex-end', maxWidth: 500, margin: '0 auto', height: 62 }}>
 
-          {/* Main nav items */}
-          {MOBILE_MAIN.map(item => {
+          {/* Left: Metas + Movimientos */}
+          {MOBILE_LEFT.map(item => {
             const active = isActive(item.href);
-            const labels: Record<string, string> = { home: t.home, movements: t.movements, accounts: t.accounts, budgets: t.budgets };
+            const labels: Record<string, string> = { goals: t.goals, movements: t.movements };
             return (
               <Link key={item.key} href={item.href} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                padding: '7px 0', textDecoration: 'none',
+                padding: '8px 0 10px', textDecoration: 'none',
                 color: active ? 'var(--blue)' : 'var(--text-3)',
                 transition: 'color 120ms',
               }}>
@@ -434,18 +408,63 @@ function DashInner({ children }: { children: ReactNode }) {
             );
           })}
 
-          {/* Más button */}
+          {/* Center: Inicio FAB */}
+          {(() => {
+            return (
+              <Link href="/dashboard" style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                textDecoration: 'none', transform: 'translateY(-10px)', padding: '0 0 4px',
+              }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: 16,
+                  background: 'var(--gradient-hero)',
+                  display: 'grid', placeItems: 'center',
+                  boxShadow: isHome
+                    ? '0 0 0 3px color-mix(in oklab, var(--cyan) 35%, transparent), 0 6px 24px color-mix(in oklab, var(--cyan) 45%, transparent)'
+                    : '0 4px 18px rgba(0,0,0,0.5)',
+                  opacity: isHome ? 1 : 0.82,
+                  transition: 'box-shadow 200ms, opacity 200ms',
+                }}>
+                  <Icon name="home" size={26} stroke={2.2} style={{ color: '#0C0E14' }} />
+                </div>
+                <span style={{ fontSize: 9.5, fontWeight: 700, color: isHome ? 'var(--text)' : 'var(--text-3)', lineHeight: 1 }}>
+                  {lang === 'es' ? 'Inicio' : 'Home'}
+                </span>
+              </Link>
+            );
+          })()}
+
+          {/* Right: Divisas */}
+          {MOBILE_RIGHT.map(item => {
+            const active = isActive(item.href);
+            const labels: Record<string, string> = { divisas: t.divisas };
+            return (
+              <Link key={item.key} href={item.href} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                padding: '8px 0 10px', textDecoration: 'none',
+                color: active ? 'var(--blue)' : 'var(--text-3)',
+                transition: 'color 120ms',
+              }}>
+                <Icon name={item.icon} size={22} stroke={active ? 2.2 : 1.6} />
+                <span style={{ fontSize: 9.5, fontWeight: active ? 700 : 400, letterSpacing: '0.01em', lineHeight: 1 }}>
+                  {labels[item.key]}
+                </span>
+              </Link>
+            );
+          })}
+
+          {/* Más */}
           <button
             onClick={() => setMoreOpen(v => !v)}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-              padding: '7px 0', background: 'transparent', border: 0,
+              padding: '8px 0 10px', background: 'transparent', border: 0,
               color: moreActive ? 'var(--blue)' : moreOpen ? 'var(--text)' : 'var(--text-3)',
               transition: 'color 120ms',
             }}
           >
-            <Icon name="more" size={22} stroke={1.6} />
-            <span style={{ fontSize: 9.5, fontWeight: moreOpen ? 700 : 400, letterSpacing: '0.01em', lineHeight: 1 }}>
+            <Icon name="more" size={22} stroke={moreOpen ? 2.2 : 1.6} />
+            <span style={{ fontSize: 9.5, fontWeight: moreOpen || moreActive ? 700 : 400, letterSpacing: '0.01em', lineHeight: 1 }}>
               {lang === 'es' ? 'Más' : 'More'}
             </span>
           </button>
@@ -455,45 +474,53 @@ function DashInner({ children }: { children: ReactNode }) {
       {/* ── Mobile "Más" popup ───────────────────────────────────────────── */}
       {moreOpen && (
         <>
-          <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 48, background: 'rgba(3,6,15,0.5)', backdropFilter: 'blur(4px)' }} />
+          <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 48, background: 'rgba(3,6,15,0.55)', backdropFilter: 'blur(4px)' }} />
           <div style={{
-            position: 'fixed', bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))', left: '50%',
+            position: 'fixed', bottom: 'calc(66px + env(safe-area-inset-bottom, 0px))', left: '50%',
             transform: 'translateX(-50%)', zIndex: 49,
             background: 'var(--bg-2)', border: '1px solid var(--border)',
-            borderRadius: 20, padding: '8px', width: 'calc(100% - 32px)', maxWidth: 360,
-            boxShadow: '0 -8px 32px rgba(0,0,0,0.4)',
+            borderRadius: 22, padding: '10px', width: 'calc(100% - 28px)', maxWidth: 360,
+            boxShadow: '0 -8px 40px rgba(0,0,0,0.45)',
             animation: 'cd-slide-up 200ms cubic-bezier(0.2,0.8,0.2,1)',
           }}>
             <style>{`@keyframes cd-slide-up { from { transform: translateX(-50%) translateY(20px); opacity:0 } to { transform: translateX(-50%) translateY(0); opacity:1 } }`}</style>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+
+            {/* 2×2 grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
               {MOBILE_MORE.map(item => {
                 const active = isActive(item.href);
-                const moreLabels: Record<string, string> = { goals: t.goals, fixed: t.fixed, divisas: t.divisas, reports: t.reports };
+                const moreLabels: Record<string, string> = { accounts: t.accounts, budgets: t.budgets, fixed: t.fixed, reports: t.reports };
                 return (
                   <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                    padding: '14px 8px', borderRadius: 12, textDecoration: 'none',
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '14px 16px', borderRadius: 14, textDecoration: 'none',
                     background: active ? 'color-mix(in oklab, var(--blue) 12%, var(--surface))' : 'var(--surface)',
                     border: `1px solid ${active ? 'var(--blue)' : 'var(--border)'}`,
                     color: active ? 'var(--blue)' : 'var(--text-2)',
                     transition: 'all 140ms',
                   }}>
-                    <Icon name={item.icon} size={20} stroke={active ? 2.2 : 1.6} />
-                    <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, textAlign: 'center', lineHeight: 1.2 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: active ? 'color-mix(in oklab, var(--blue) 18%, var(--surface-3))' : 'var(--surface-3)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                      <Icon name={item.icon} size={18} stroke={active ? 2.2 : 1.6} />
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, lineHeight: 1.2 }}>
                       {moreLabels[item.key]}
                     </span>
                   </Link>
                 );
               })}
             </div>
-            <div style={{ height: 1, background: 'var(--border)', margin: '8px 4px' }} />
+
+            <div style={{ height: 1, background: 'var(--border)', margin: '10px 2px' }} />
+
             <button onClick={() => { setMoreOpen(false); setSettingsOpen(true); }} style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-              padding: '12px 12px', borderRadius: 12, background: 'var(--surface)',
+              padding: '13px 16px', borderRadius: 14, background: 'var(--surface)',
               border: '1px solid var(--border)', color: 'var(--text-2)',
               fontSize: 13, fontWeight: 500,
             }}>
-              <Icon name="settings" size={18} stroke={1.6} />
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--surface-3)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <Icon name="settings" size={18} stroke={1.6} />
+              </div>
               {lang === 'es' ? 'Configuración' : 'Settings'}
             </button>
           </div>
@@ -503,9 +530,8 @@ function DashInner({ children }: { children: ReactNode }) {
       <style>{`
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
-          .mobile-header { display: flex !important; }
           .mobile-nav { display: block !important; }
-          .main-pad { padding: 28px 16px 110px !important; }
+          .main-pad { padding: 20px 16px 100px !important; }
         }
       `}</style>
 
