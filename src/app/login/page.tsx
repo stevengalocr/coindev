@@ -308,14 +308,82 @@ export default function LoginPage() {
         background: '#0C0E14',
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* Glow suave de fondo */}
-        <div style={{
-          position: 'absolute', top: '30%', right: '-5%',
-          width: 360, height: 360, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(91,155,255,0.06) 0%, transparent 70%)',
-          filter: 'blur(40px)', pointerEvents: 'none',
-        }} />
 
+        {/* ── Fondo visual ── */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+          {/* Grid sutil */}
+          <svg style={{ position: 'absolute', inset: 0, opacity: 0.022, width: '100%', height: '100%' }}>
+            <defs>
+              <pattern id="grid-r" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse">
+                <path d="M 36 0 L 0 0 0 36" fill="none" stroke="white" strokeWidth="0.6"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid-r)"/>
+          </svg>
+
+          {/* Orbs */}
+          <div style={{ position: 'absolute', top: '-8%', right: '-10%', width: 440, height: 440, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,155,255,0.09) 0%, transparent 65%)', filter: 'blur(50px)' }} />
+          <div style={{ position: 'absolute', bottom: '-5%', left: '-8%',  width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(159,123,255,0.08) 0%, transparent 65%)', filter: 'blur(40px)' }} />
+          <div style={{ position: 'absolute', top: '55%',  right: '15%',  width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(91,229,209,0.06) 0%, transparent 70%)', filter: 'blur(30px)' }} />
+
+          {/* Tarjeta flotante — balance */}
+          <div style={{
+            position: 'absolute', top: '9%', right: '6%',
+            padding: '14px 18px', borderRadius: 16,
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            transform: 'rotate(4deg)',
+            backdropFilter: 'blur(8px)',
+            minWidth: 160,
+          }}>
+            <div style={{ fontSize: 9, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.25)', marginBottom: 6, textTransform: 'uppercase' }}>Balance total</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,0.55)', fontFamily: 'var(--font-mono)', letterSpacing: '-0.03em' }}>₡2,450,000</div>
+            <div style={{ fontSize: 11, color: 'rgba(91,229,209,0.55)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span>↑</span><span>+12.4% este mes</span>
+            </div>
+          </div>
+
+          {/* Mini bar chart — bottom left */}
+          <div style={{
+            position: 'absolute', bottom: '12%', left: '4%',
+            padding: '14px 16px', borderRadius: 16,
+            background: 'rgba(255,255,255,0.025)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            transform: 'rotate(-3deg)',
+          }}>
+            <div style={{ fontSize: 9, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.22)', marginBottom: 10, textTransform: 'uppercase' }}>Gastos del mes</div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 36 }}>
+              {[40, 65, 45, 80, 55, 90, 60].map((h, i) => (
+                <div key={i} style={{
+                  width: 8, height: `${h}%`, borderRadius: 3,
+                  background: i === 5
+                    ? 'rgba(91,229,209,0.5)'
+                    : 'rgba(255,255,255,0.12)',
+                }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Tarjeta flotante — meta */}
+          <div style={{
+            position: 'absolute', bottom: '18%', right: '4%',
+            padding: '12px 16px', borderRadius: 14,
+            background: 'rgba(255,255,255,0.025)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            transform: 'rotate(-2deg)',
+            minWidth: 140,
+          }}>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.22)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Meta · Vacaciones</div>
+            <div style={{ height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 999, overflow: 'hidden', marginBottom: 6 }}>
+              <div style={{ height: '100%', width: '68%', background: 'linear-gradient(90deg, rgba(91,229,209,0.6), rgba(91,155,255,0.5))', borderRadius: 999 }} />
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', display: 'flex', justifyContent: 'space-between' }}>
+              <span>68%</span><span>₡340k</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Contenido ── */}
         <div style={{ width: '100%', maxWidth: 400, position: 'relative' }}>
 
           {/* Logo mobile */}
@@ -337,11 +405,6 @@ export default function LoginPage() {
             <div style={{ marginBottom: 28 }}>
               <h1 style={{ fontSize: 26, fontWeight: 700, color: '#EDF0F7', letterSpacing: '-0.03em', marginBottom: 6 }}>Bienvenido de vuelta</h1>
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>Ingresa a tu cuenta</p>
-            </div>
-
-            <div style={{ marginBottom: 4, textAlign: 'center', fontSize: 13.5, color: 'rgba(255,255,255,0.3)' }}>
-              ¿No tienes cuenta?{' '}
-              <a href="/register" style={{ color: 'rgba(91,155,255,0.85)', fontWeight: 500, textDecoration: 'none' }}>Regístrate gratis</a>
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }} noValidate>
@@ -380,36 +443,26 @@ export default function LoginPage() {
               {error && (
                 error.includes('período de prueba') || error.includes('suspendida')
                   ? (
-                    <div style={{
-                      padding: '14px 16px', borderRadius: 12,
-                      background: 'rgba(239,68,68,0.06)',
-                      border: '1px solid rgba(239,68,68,0.2)',
-                      lineHeight: 1.5,
-                    }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: '#EF4444', marginBottom: 4 }}>
-                        Acceso suspendido
-                      </div>
-                      <div style={{ fontSize: 12.5, color: 'rgba(239,68,68,0.8)' }}>
-                        {error}
-                      </div>
+                    <div style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', lineHeight: 1.5 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: '#EF4444', marginBottom: 4 }}>Acceso suspendido</div>
+                      <div style={{ fontSize: 12.5, color: 'rgba(239,68,68,0.8)' }}>{error}</div>
                     </div>
                   ) : (
-                    <div style={{
-                      padding: '10px 13px', borderRadius: 10,
-                      background: 'rgba(255,107,131,0.08)',
-                      border: '1px solid rgba(255,107,131,0.2)',
-                      fontSize: 13, color: '#FF6B83', lineHeight: 1.4,
-                    }}>
+                    <div style={{ padding: '10px 13px', borderRadius: 10, background: 'rgba(255,107,131,0.08)', border: '1px solid rgba(255,107,131,0.2)', fontSize: 13, color: '#FF6B83', lineHeight: 1.4 }}>
                       {error}
                     </div>
                   )
               )}
 
               <button type="submit" disabled={loading} className="login-btn-primary" style={{ marginTop: 6 }}>
-                {loading ? <SpinnerIcon /> : (
-                  <>Iniciar sesión<ArrowRightIcon /></>
-                )}
+                {loading ? <SpinnerIcon /> : (<>Iniciar sesión<ArrowRightIcon /></>)}
               </button>
+
+              {/* Registro — debajo del botón */}
+              <div style={{ textAlign: 'center', fontSize: 13.5, color: 'rgba(255,255,255,0.28)', paddingTop: 4 }}>
+                ¿No tienes cuenta?{' '}
+                <a href="/register" style={{ color: 'rgba(91,155,255,0.85)', fontWeight: 600, textDecoration: 'none' }}>Regístrate gratis</a>
+              </div>
             </form>
           </div>
         </div>
