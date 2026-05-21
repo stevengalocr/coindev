@@ -9,7 +9,7 @@ import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph, AccountGlyph } from '@/components/shell/CategoryGlyph';
 import { PeriodChips } from '@/components/shell/PeriodChips';
 import { Donut, YearChart, HeroSwoosh } from '@/components/shell/Charts';
-import { CAT, filterMovs, aggregate, fmtMoney, type Period, type Account } from '@/lib/data';
+import { CAT, filterMovs, aggregate, fmtMoney, FX, type Period, type Account } from '@/lib/data';
 
 function clamp(v: number, lo = 0, hi = 1) { return Math.max(lo, Math.min(hi, v)); }
 function pct(n: number, d: number) { return d ? Math.round((n / d) * 100) : 0; }
@@ -61,7 +61,11 @@ export default function DashboardPage() {
   const savingsAcc = accounts.find(a => a.kind === 'savings');
   const { income, expense, net } = aggregate(filtered, savingsAcc?.balance ?? 0);
   const savings = net;
-  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
+  // Convert each account balance to CRC before summing (handles USD accounts)
+  const totalBalance = accounts.reduce((s, a) => {
+    const balanceCRC = a.currency === 'USD' ? a.balance / FX.USD : a.balance;
+    return s + balanceCRC;
+  }, 0);
 
   const byCat: Record<string, number> = {};
   if (!loading) filtered.filter(m => m.type === 'expense').forEach(m => { byCat[m.cat] = (byCat[m.cat] || 0) + m.amount; });

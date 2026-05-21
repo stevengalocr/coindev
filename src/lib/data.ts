@@ -263,6 +263,7 @@ export interface Account {
   color: string;
   tail: string;
   limit?: number;
+  currency?: string;
 }
 
 export const ACCOUNTS: Account[] = [

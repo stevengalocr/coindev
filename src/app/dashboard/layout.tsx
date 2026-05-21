@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { AppProvider, useApp } from '@/hooks/useApp';
 import { DataProvider, useData } from '@/hooks/useData';
 import { Icon } from '@/components/ui/Icon';
-import { greet, fmtMoney } from '@/lib/data';
+import { greet, fmtMoney, type Lang, type Currency } from '@/lib/data';
 import { SettingsPanel } from '@/components/screens/SettingsPanel';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead, type DbNotification } from '@/lib/db';
@@ -41,8 +41,16 @@ const MOBILE_MORE = [
 ] as const;
 
 function DashInner({ children }: { children: ReactNode }) {
-  const { t, lang, currency } = useApp();
+  const { t, lang, currency, setLang, setCurrency, setTheme } = useApp();
   const { user, profile, unreadNotifications, movements, accounts } = useData();
+
+  // Sync profile preferences (language, currency, theme) to app state on load
+  useEffect(() => {
+    if (!profile) return;
+    if (profile.language) setLang(profile.language as Lang);
+    if (profile.default_currency) setCurrency(profile.default_currency as Currency);
+    if (profile.theme) setTheme(profile.theme as 'dark' | 'light');
+  }, [profile, setLang, setCurrency, setTheme]);
   const pathname = usePathname();
   const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);

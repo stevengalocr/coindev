@@ -15,6 +15,7 @@ import {
   type DbProfile, type NewTransaction, type NewAccount, type NewBudget, type NewSavingsGoal,
 } from '@/lib/db';
 import type { Account, Movement, Budget, SavingsGoal } from '@/lib/data';
+import { FX } from '@/lib/data';
 
 export interface YearPoint { m: string; income: number; expense: number; future: boolean }
 
@@ -47,6 +48,7 @@ interface DataState {
   goals: SavingsGoal[];
   yearEvolution: YearPoint[];
   unreadNotifications: number;
+  liveUsdRate: number;
   loading: boolean;
   addTransaction: (tx: NewTransaction) => Promise<void>;
   addAccount: (data: NewAccount) => Promise<void>;
@@ -76,6 +78,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [yearEvolution, setYearEvolution] = useState<YearPoint[]>([]);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [liveUsdRate, setLiveUsdRate] = useState(510);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -105,6 +108,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setUnreadNotifications(unreadCount);
       setProfile(dbProfile);
       setYearEvolution(buildYearEvolution(movs, lang));
+
+      // Fetch live USD/CRC rate and update global FX for all fmtMoney calls
+      try {
+        const fxRes = await fetch('/api/fx');
+        if (fxRes.ok) {
+          const { rates } = await fxRes.json();
+          const usd = (rates as { code: string; crc: number }[]).find(r => r.code === 'USD');
+          if (usd?.crc) {
+            FX.USD = 1 / usd.crc;
+            setLiveUsdRate(usd.crc);
+          }
+        }
+      } catch { /* keep static fallback */ }
     } finally {
       setLoading(false);
     }
@@ -187,7 +203,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   return (
     <DataCtx.Provider value={{
       user, profile, accounts, movements, budgets, goals, yearEvolution,
-      unreadNotifications, loading,
+      unreadNotifications, liveUsdRate, loading,
       addTransaction, addAccount, addBudget, addGoal,
       saveProfile, refetch: load,
       updateTransaction: updateTx,

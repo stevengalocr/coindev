@@ -3,16 +3,26 @@
 import { useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
-import { CAT, filterMovs, fmtMoney, aggregate, type Period } from '@/lib/data';
+import { CAT, filterMovs, fmtMoney, aggregate, FX, type Period } from '@/lib/data';
 import { PeriodChips } from '@/components/shell/PeriodChips';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { Donut, YearChart } from '@/components/shell/Charts';
 import { MoneyText } from '@/components/shell/MoneyText';
+import { Icon } from '@/components/ui/Icon';
+
+function periodLabel(period: Period, lang: string): string {
+  const now = new Date();
+  if (period === 'month') return now.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { month: 'long', year: 'numeric' });
+  if (period === 'week') return lang === 'es' ? 'Última semana' : 'Last week';
+  if (period === 'quarter') return lang === 'es' ? 'Últimos 3 meses' : 'Last 3 months';
+  return now.getFullYear().toString();
+}
 
 export default function ReportesPage() {
   const { t, currency, lang } = useApp();
-  const { movements, accounts, yearEvolution, loading } = useData();
+  const { movements, accounts, yearEvolution, loading, liveUsdRate } = useData();
   const [period, setPeriod] = useState<Period>('month');
+  const [exporting, setExporting] = useState<'csv' | 'pdf' | null>(null);
 
   const movs = filterMovs(movements, period);
   const expByCat: Record<string, number> = {};
@@ -30,7 +40,6 @@ export default function ReportesPage() {
   const savings = income - totalExp;
   const savingsRate = income > 0 ? (savings / income) * 100 : 0;
 
-  // Financial health metrics
   const savingsBalance = accounts.find(a => a.kind === 'savings')?.balance ?? 0;
   const health = aggregate(movs, savingsBalance);
   const healthSavingsRate = health.savingsRate * 100;
@@ -39,6 +48,194 @@ export default function ReportesPage() {
 
   const now = new Date();
   const yearLabel = now.getFullYear().toString();
+  const pLabel = periodLabel(period, lang);
+  const exportDate = now.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // ── CSV Export ──────────────────────────────────────────────────────
+  function handleExportCSV() {
+    setExporting('csv');
+    const fmt = (n: number) => fmtMoney(n, currency);
+    const rows: string[][] = [
+      ['CoinDev - ' + (lang === 'es' ? 'Reporte Financiero' : 'Financial Report')],
+      [lang === 'es' ? 'Período' : 'Period', pLabel],
+      [lang === 'es' ? 'Generado' : 'Generated', exportDate],
+      [lang === 'es' ? 'Tipo de cambio USD' : 'USD exchange rate', `1 USD = ${liveUsdRate} CRC`],
+      [],
+      [lang === 'es' ? '=== RESUMEN DEL PERÍODO ===' : '=== PERIOD SUMMARY ==='],
+      [lang === 'es' ? 'Ingresos' : 'Income', lang === 'es' ? 'Gastos' : 'Expenses', lang === 'es' ? 'Ahorro' : 'Savings', lang === 'es' ? 'Tasa de ahorro' : 'Savings rate'],
+      [fmt(income), fmt(totalExp), fmt(savings), Math.round(savingsRate) + '%'],
+      [],
+      [lang === 'es' ? '=== SALUD FINANCIERA ===' : '=== FINANCIAL HEALTH ==='],
+      [lang === 'es' ? 'Tasa de ahorro' : 'Savings rate', lang === 'es' ? 'Gastos fijos / Ingresos' : 'Fixed costs / Income', lang === 'es' ? 'Días de cobertura' : 'Coverage days'],
+      [Math.round(healthSavingsRate) + '%', Math.round(healthFixedRatio) + '%', String(healthEmergencyDays)],
+      [],
+      [lang === 'es' ? '=== DISTRIBUCIÓN POR CATEGORÍA ===' : '=== CATEGORY BREAKDOWN ==='],
+      [lang === 'es' ? 'Categoría' : 'Category', lang === 'es' ? 'Monto' : 'Amount', lang === 'es' ? '% del total' : '% of total'],
+      ...donutData.map(d => [
+        CAT[d.cat]?.[`label_${lang}` as 'label_es'] ?? d.cat,
+        fmt(d.value),
+        totalExp > 0 ? Math.round((d.value / totalExp) * 100) + '%' : '0%',
+      ]),
+      [],
+      [lang === 'es' ? '=== DONDE MÁS GASTAS ===' : '=== TOP MERCHANTS ==='],
+      [lang === 'es' ? 'Comercio / Descripción' : 'Merchant / Description', lang === 'es' ? 'Monto' : 'Amount'],
+      ...topMerchants.map(([desc, amt]) => [desc, fmt(amt)]),
+      [],
+      [lang === 'es' ? '=== EVOLUCIÓN ANUAL ===' : '=== YEAR EVOLUTION ==='],
+      [lang === 'es' ? 'Mes' : 'Month', lang === 'es' ? 'Ingresos' : 'Income', lang === 'es' ? 'Gastos' : 'Expenses', lang === 'es' ? 'Balance' : 'Balance'],
+      ...yearEvolution.filter(p => !p.future).map(p => [p.m, fmt(p.income), fmt(p.expense), fmt(p.income - p.expense)]),
+    ];
+
+    const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `coindev-reporte-${pLabel.replace(/\s/g, '-').toLowerCase()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setExporting(null);
+  }
+
+  // ── PDF Export ──────────────────────────────────────────────────────
+  async function handleExportPDF() {
+    setExporting('pdf');
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const fmt = (n: number) => fmtMoney(n, currency);
+      const pageW = doc.internal.pageSize.getWidth();
+      let y = 18;
+
+      // Header
+      doc.setFillColor(11, 17, 32);
+      doc.rect(0, 0, pageW, 38, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.setTextColor(255, 220, 80);
+      doc.text('CoinDev', 14, 16);
+      doc.setFontSize(10);
+      doc.setTextColor(180, 190, 210);
+      doc.setFont('helvetica', 'normal');
+      doc.text(lang === 'es' ? 'Reporte Financiero' : 'Financial Report', 14, 24);
+      doc.setFontSize(9);
+      doc.setTextColor(130, 145, 170);
+      doc.text(`${lang === 'es' ? 'Período' : 'Period'}: ${pLabel}   |   ${lang === 'es' ? 'Generado' : 'Generated'}: ${exportDate}   |   USD: ${liveUsdRate} CRC`, 14, 32);
+      y = 48;
+
+      // Section helper
+      const section = (title: string) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(80, 100, 140);
+        doc.text(title.toUpperCase(), 14, y);
+        doc.setDrawColor(80, 100, 140);
+        doc.setLineWidth(0.3);
+        doc.line(14, y + 1.5, pageW - 14, y + 1.5);
+        y += 7;
+      };
+
+      // Summary
+      section(lang === 'es' ? 'Resumen del Período' : 'Period Summary');
+      autoTable(doc, {
+        startY: y,
+        head: [[lang === 'es' ? 'Ingresos' : 'Income', lang === 'es' ? 'Gastos' : 'Expenses', lang === 'es' ? 'Ahorro' : 'Savings', lang === 'es' ? 'Tasa de ahorro' : 'Savings rate']],
+        body: [[fmt(income), fmt(totalExp), fmt(savings), Math.round(savingsRate) + '%']],
+        theme: 'grid',
+        headStyles: { fillColor: [20, 30, 55], textColor: [180, 200, 230], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 10, fontStyle: 'bold', textColor: [30, 40, 60] },
+        columnStyles: { 0: { textColor: [16, 185, 129] }, 1: { textColor: [239, 68, 68] }, 2: { textColor: [91, 155, 255] }, 3: { textColor: [100, 120, 160] } },
+        margin: { left: 14, right: 14 },
+      });
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+
+      // Health
+      section(lang === 'es' ? 'Salud Financiera' : 'Financial Health');
+      autoTable(doc, {
+        startY: y,
+        head: [[lang === 'es' ? 'Tasa de ahorro' : 'Savings rate', lang === 'es' ? 'Gastos fijos / Ingresos' : 'Fixed / Income', lang === 'es' ? 'Días de cobertura' : 'Coverage days']],
+        body: [[Math.round(healthSavingsRate) + '%', Math.round(healthFixedRatio) + '%', String(healthEmergencyDays) + (lang === 'es' ? ' días' : ' days')]],
+        theme: 'grid',
+        headStyles: { fillColor: [20, 30, 55], textColor: [180, 200, 230], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 10, fontStyle: 'bold', textColor: [30, 40, 60] },
+        margin: { left: 14, right: 14 },
+      });
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+
+      // Category breakdown
+      if (donutData.length > 0) {
+        section(lang === 'es' ? 'Distribución por Categoría' : 'Category Breakdown');
+        autoTable(doc, {
+          startY: y,
+          head: [['#', lang === 'es' ? 'Categoría' : 'Category', lang === 'es' ? 'Monto' : 'Amount', '% ' + (lang === 'es' ? 'del total' : 'of total')]],
+          body: donutData.map((d, i) => [
+            String(i + 1),
+            CAT[d.cat]?.[`label_${lang}` as 'label_es'] ?? d.cat,
+            fmt(d.value),
+            totalExp > 0 ? Math.round((d.value / totalExp) * 100) + '%' : '0%',
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: [20, 30, 55], textColor: [180, 200, 230], fontStyle: 'bold', fontSize: 9 },
+          bodyStyles: { fontSize: 9, textColor: [30, 40, 60] },
+          columnStyles: { 0: { cellWidth: 12 }, 3: { cellWidth: 22, fontStyle: 'bold' } },
+          margin: { left: 14, right: 14 },
+        });
+        y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+      }
+
+      // Top merchants
+      if (topMerchants.length > 0) {
+        if (y > 220) { doc.addPage(); y = 18; }
+        section(lang === 'es' ? 'Donde Más Gastas' : 'Top Merchants');
+        autoTable(doc, {
+          startY: y,
+          head: [['#', lang === 'es' ? 'Comercio / Descripción' : 'Merchant / Description', lang === 'es' ? 'Monto' : 'Amount']],
+          body: topMerchants.map(([desc, amt], i) => [String(i + 1), desc, fmt(amt)]),
+          theme: 'striped',
+          headStyles: { fillColor: [20, 30, 55], textColor: [180, 200, 230], fontStyle: 'bold', fontSize: 9 },
+          bodyStyles: { fontSize: 9, textColor: [30, 40, 60] },
+          columnStyles: { 0: { cellWidth: 12 }, 2: { fontStyle: 'bold', cellWidth: 32 } },
+          margin: { left: 14, right: 14 },
+        });
+        y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+      }
+
+      // Year evolution
+      const yearData = yearEvolution.filter(p => !p.future);
+      if (yearData.length > 0) {
+        if (y > 220) { doc.addPage(); y = 18; }
+        section(lang === 'es' ? 'Evolución Anual' : 'Year Evolution');
+        autoTable(doc, {
+          startY: y,
+          head: [[lang === 'es' ? 'Mes' : 'Month', lang === 'es' ? 'Ingresos' : 'Income', lang === 'es' ? 'Gastos' : 'Expenses', 'Balance']],
+          body: yearData.map(p => [p.m, fmt(p.income), fmt(p.expense), fmt(p.income - p.expense)]),
+          theme: 'striped',
+          headStyles: { fillColor: [20, 30, 55], textColor: [180, 200, 230], fontStyle: 'bold', fontSize: 9 },
+          bodyStyles: { fontSize: 9, textColor: [30, 40, 60] },
+          columnStyles: { 1: { textColor: [16, 185, 129] }, 2: { textColor: [239, 68, 68] }, 3: { fontStyle: 'bold' } },
+          margin: { left: 14, right: 14 },
+        });
+      }
+
+      // Footer on all pages
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 160, 180);
+        doc.text('CoinDev · coindev.app', 14, doc.internal.pageSize.getHeight() - 8);
+        doc.text(`${i} / ${totalPages}`, pageW - 14, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
+      }
+
+      doc.save(`coindev-reporte-${pLabel.replace(/\s/g, '-').toLowerCase()}.pdf`);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setExporting(null);
+    }
+  }
 
   return (
     <div>
@@ -55,12 +252,41 @@ export default function ReportesPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.reportsTitle}</h1>
-          <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{yearLabel}</div>
+          <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>
+            {yearLabel}
+            {liveUsdRate !== 510 && (
+              <span style={{ marginLeft: 10, padding: '2px 8px', borderRadius: 999, background: 'rgba(91,155,255,0.08)', border: '1px solid rgba(91,155,255,0.18)', fontSize: 11, color: '#5B9BFF', fontWeight: 500 }}>
+                USD = {liveUsdRate} CRC
+              </span>
+            )}
+          </div>
         </div>
-        <PeriodChips value={period} onChange={setPeriod} t={t} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <PeriodChips value={period} onChange={setPeriod} t={t} />
+
+          {/* Export buttons */}
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              onClick={handleExportCSV}
+              disabled={loading || exporting !== null}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 9, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: loading || exporting !== null ? 'default' : 'pointer', opacity: loading || exporting !== null ? 0.5 : 1 }}
+            >
+              <Icon name="download" size={13} stroke={1.8} />
+              {exporting === 'csv' ? (lang === 'es' ? 'Exportando…' : 'Exporting…') : 'CSV'}
+            </button>
+            <button
+              onClick={handleExportPDF}
+              disabled={loading || exporting !== null}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 9, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: loading || exporting !== null ? 'default' : 'pointer', opacity: loading || exporting !== null ? 0.5 : 1 }}
+            >
+              <Icon name="download" size={13} stroke={1.8} />
+              {exporting === 'pdf' ? (lang === 'es' ? 'Generando…' : 'Generating…') : 'PDF'}
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* ── Financial Health ──────────────────────────────────────── */}
+      {/* ── Financial Health ──────────────────────────────────────────────── */}
       {!loading && (
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>{t.healthTitle}</div>

@@ -153,6 +153,7 @@ export function toAccount(a: DbAccount): Account {
     color: a.color,
     tail: a.last_digits ? `••${a.last_digits}` : '',
     limit: a.credit_limit != null ? Number(a.credit_limit) : undefined,
+    currency: a.currency ?? 'CRC',
   };
 }
 
