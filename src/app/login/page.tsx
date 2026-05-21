@@ -321,6 +321,11 @@ export default function LoginPage() {
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>Ingresa a tu cuenta</p>
             </div>
 
+            <div style={{ marginBottom: 4, textAlign: 'center', fontSize: 13.5, color: 'rgba(255,255,255,0.3)' }}>
+              ¿No tienes cuenta?{' '}
+              <a href="/register" style={{ color: 'rgba(91,155,255,0.85)', fontWeight: 500, textDecoration: 'none' }}>Regístrate gratis</a>
+            </div>
+
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }} noValidate>
 
               {/* Email */}

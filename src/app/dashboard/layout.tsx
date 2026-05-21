@@ -10,6 +10,9 @@ import { greet, fmtMoney } from '@/lib/data';
 import { SettingsPanel } from '@/components/screens/SettingsPanel';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead, type DbNotification } from '@/lib/db';
+import { TrialBanner } from '@/components/shell/TrialBanner';
+
+const ADMIN_EMAIL = 'stevengalocr@gmail.com';
 
 const NAV_ITEMS = [
   { href: '/dashboard',              icon: 'home',   key: 'home'      },
@@ -39,7 +42,7 @@ const MOBILE_MORE = [
 
 function DashInner({ children }: { children: ReactNode }) {
   const { t, lang, currency } = useApp();
-  const { profile, unreadNotifications, movements, accounts } = useData();
+  const { user, profile, unreadNotifications, movements, accounts } = useData();
   const pathname = usePathname();
   const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -143,6 +146,24 @@ function DashInner({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+          {/* Admin-only link */}
+          {user?.email === ADMIN_EMAIL && (() => {
+            const active = isActive('/dashboard/admin');
+            return (
+              <Link href="/dashboard/admin" style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
+                borderRadius: 'var(--r-md)', marginTop: 6, textDecoration: 'none',
+                color: active ? 'var(--text)' : 'var(--text-2)',
+                background: active ? 'color-mix(in oklab, var(--blue) 10%, var(--surface))' : 'transparent',
+                border: active ? '1px solid color-mix(in oklab, var(--blue) 30%, var(--border))' : '1px solid transparent',
+                fontWeight: active ? 600 : 400, fontSize: 13.5, transition: 'all 140ms',
+                letterSpacing: '-0.01em',
+              }}>
+                <Icon name="shield" size={17} stroke={active ? 2 : 1.7} />
+                Administración
+              </Link>
+            );
+          })()}
         </nav>
 
         <div style={{ padding: '14px 16px', borderTop: '1px solid var(--border)' }}>
@@ -360,6 +381,8 @@ function DashInner({ children }: { children: ReactNode }) {
             </button>
           </div>
         </header>
+
+        <TrialBanner />
 
         <main style={{ flex: 1, padding: '32px 36px 100px', minWidth: 0 }} className="main-pad">
           <div style={{ maxWidth: 1400, margin: '0 auto' }}>

@@ -33,6 +33,8 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
   const [desc, setDesc] = useState(initialData?.desc ?? '');
   const [fixed, setFixed] = useState(initialData?.fixed ?? initialFixed);
   const [date, setDate] = useState(initialData ? toLocalDateStr(initialData.date) : toLocalDateStr(new Date()));
+  const [recType, setRecType] = useState<'monthly' | 'weekly' | 'custom' | null>(initialData?.recurrence?.type ?? null);
+  const [recValue, setRecValue] = useState<number>(initialData?.recurrence?.value ?? 1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -51,11 +53,15 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
       setAccId(initialData.account);
       setDesc(initialData.desc);
       setFixed(initialData.fixed);
+      setRecType(initialData.recurrence?.type ?? null);
+      setRecValue(initialData.recurrence?.value ?? 1);
       setDate(toLocalDateStr(initialData.date));
     } else {
       setAmount('');
       setDesc('');
       setFixed(initialFixed);
+      setRecType(null);
+      setRecValue(1);
       setCat(initialType === 'income' ? 'salary' : 'groceries');
       setType(initialType);
       setDate(toLocalDateStr(new Date()));
@@ -82,7 +88,7 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
       if (isEditing && initialData) {
         await updateTransaction(
           initialData.id,
-          { type, cat, amount: parseFloat(amount), account_id: accId, date, description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'), is_fixed: fixed },
+          { type, cat, amount: parseFloat(amount), account_id: accId, date, description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'), is_fixed: fixed, recurrence_type: fixed ? recType : null, recurrence_value: fixed && recType ? recValue : null },
           { type: initialData.type, amount: initialData.amount, account: initialData.account }
         );
       } else {
@@ -94,6 +100,8 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
           date,
           description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'),
           is_fixed: fixed,
+          recurrence_type: fixed ? recType : null,
+          recurrence_value: fixed && recType ? recValue : null,
         });
       }
       onClose();
@@ -219,11 +227,92 @@ export function AddMovementModal({ open, onClose, initialFixed = false, initialT
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0', minHeight: 46 }}>
               <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, width: 90, flexShrink: 0 }}>{t.recurring}</div>
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
-                <button onClick={() => setFixed(!fixed)} style={{ width: 46, height: 27, borderRadius: 14, position: 'relative', background: fixed ? 'var(--income)' : 'var(--surface-3)', transition: 'background 150ms', border: 0 }}>
+                <button onClick={() => { setFixed(!fixed); if (fixed) setRecType(null); }} style={{ width: 46, height: 27, borderRadius: 14, position: 'relative', background: fixed ? 'var(--income)' : 'var(--surface-3)', transition: 'background 150ms', border: 0 }}>
                   <span style={{ position: 'absolute', top: 3.5, left: fixed ? 23 : 3.5, width: 20, height: 20, borderRadius: 10, background: fixed ? '#0A0F1C' : 'var(--text-3)', transition: 'left 180ms cubic-bezier(0.2,0.7,0.2,1)', display: 'block' }} />
                 </button>
               </div>
             </div>
+
+            {/* Recurrence picker — only when fixed is on */}
+            {fixed && (
+              <>
+                <div className="cd-divider" />
+                <div style={{ padding: '12px 0' }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginBottom: 9 }}>
+                    {lang === 'es' ? 'Frecuencia de recurrencia' : 'Recurrence frequency'}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                    {([
+                      { id: null,      label_es: 'Sin definir', label_en: 'Undefined' },
+                      { id: 'monthly', label_es: 'Mensual',     label_en: 'Monthly'   },
+                      { id: 'weekly',  label_es: 'Semanal',     label_en: 'Weekly'    },
+                      { id: 'custom',  label_es: 'Cada N días', label_en: 'Every N d' },
+                    ] as const).map(opt => (
+                      <button key={String(opt.id)} onClick={() => setRecType(opt.id)} style={{
+                        padding: '7px 4px', borderRadius: 8, fontSize: 11, fontWeight: 500,
+                        border: `1px solid ${recType === opt.id ? 'var(--blue)' : 'var(--border)'}`,
+                        background: recType === opt.id ? 'color-mix(in oklab, var(--blue) 10%, var(--surface))' : 'var(--surface)',
+                        color: recType === opt.id ? 'var(--text)' : 'var(--text-2)',
+                        transition: 'all 130ms', cursor: 'pointer',
+                      }}>
+                        {lang === 'es' ? opt.label_es : opt.label_en}
+                      </button>
+                    ))}
+                  </div>
+
+                  {recType === 'monthly' && (
+                    <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                        {lang === 'es' ? 'Día del mes:' : 'Day of month:'}
+                      </span>
+                      <select value={recValue} onChange={e => setRecValue(Number(e.target.value))} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 10px', color: 'var(--text)', fontSize: 13, fontFamily: 'var(--font-sans)', outline: 'none' }}>
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                          <option key={d} value={d} style={{ background: '#10141F' }}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {recType === 'weekly' && (
+                    <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                        {lang === 'es' ? 'Día:' : 'Day:'}
+                      </span>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {(lang === 'es'
+                          ? ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+                          : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                        ).map((d, i) => (
+                          <button key={i} onClick={() => setRecValue(i)} style={{
+                            width: 34, height: 30, borderRadius: 7, fontSize: 11, fontWeight: 500,
+                            border: `1px solid ${recValue === i ? 'var(--blue)' : 'var(--border)'}`,
+                            background: recValue === i ? 'color-mix(in oklab, var(--blue) 12%, var(--surface))' : 'var(--surface)',
+                            color: recValue === i ? 'var(--text)' : 'var(--text-2)',
+                          }}>{d}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {recType === 'custom' && (
+                    <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                        {lang === 'es' ? 'Cada' : 'Every'}
+                      </span>
+                      <input
+                        type="number" min="1" max="365"
+                        value={recValue}
+                        onChange={e => setRecValue(Math.max(1, parseInt(e.target.value) || 1))}
+                        style={{ width: 64, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 10px', color: 'var(--text)', fontSize: 13, fontFamily: 'var(--font-sans)', outline: 'none', textAlign: 'center' }}
+                      />
+                      <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                        {lang === 'es' ? 'días' : 'days'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           {error && <p style={{ fontSize: 13, color: 'var(--expense)', marginBottom: 12, padding: '8px 12px', background: 'var(--expense-soft)', borderRadius: 8 }}>{error}</p>}

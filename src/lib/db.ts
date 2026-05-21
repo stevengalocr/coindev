@@ -75,6 +75,11 @@ export interface DbProfile {
   language: string;
   theme: string;
   plan: string;
+  plan_status: 'trial' | 'active' | 'pending_payment' | 'blocked';
+  trial_started_at: string | null;
+  plan_expires_at: string | null;
+  admin_notes: string | null;
+  created_at: string;
 }
 
 export interface DbAccount {
@@ -100,6 +105,8 @@ export interface DbTransaction {
   date: string;
   is_fixed: boolean;
   status: string;
+  recurrence_type: 'monthly' | 'weekly' | 'custom' | null;
+  recurrence_value: number | null;
 }
 
 export interface DbBudget {
@@ -160,6 +167,9 @@ export function toMovement(t: DbTransaction): Movement {
     date: new Date(t.date + 'T12:00:00'),
     desc: t.description,
     fixed: t.is_fixed,
+    recurrence: t.recurrence_type
+      ? { type: t.recurrence_type, value: t.recurrence_value ?? 1 }
+      : null,
   };
 }
 
@@ -176,8 +186,33 @@ export function toBudget(b: DbBudget, movements: Movement[]): Budget {
 // ── Queries ─────────────────────────────────────────────────────────
 export async function fetchProfile(): Promise<DbProfile | null> {
   const sb = createClient();
-  const { data } = await sb.from('profiles').select('*').single();
+  const { data } = await sb
+    .from('profiles')
+    .select('id,full_name,email,default_currency,language,theme,plan,plan_status,trial_started_at,plan_expires_at,admin_notes,created_at')
+    .single();
   return data as DbProfile | null;
+}
+
+export async function fetchAllProfiles(): Promise<DbProfile[]> {
+  const sb = createClient();
+  const { data, error } = await sb
+    .from('profiles')
+    .select('id,full_name,email,default_currency,language,theme,plan,plan_status,trial_started_at,plan_expires_at,admin_notes,created_at')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as DbProfile[];
+}
+
+export async function updateUserPlanStatus(
+  userId: string,
+  planStatus: DbProfile['plan_status'],
+  adminNotes?: string
+): Promise<void> {
+  const sb = createClient();
+  const patch: Record<string, unknown> = { plan_status: planStatus };
+  if (adminNotes !== undefined) patch.admin_notes = adminNotes;
+  const { error } = await sb.from('profiles').update(patch).eq('id', userId);
+  if (error) throw error;
 }
 
 export async function upsertProfile(patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme'>>): Promise<void> {
@@ -203,7 +238,7 @@ export async function fetchTransactions(): Promise<DbTransaction[]> {
   const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
   const { data } = await sb
     .from('transactions')
-    .select('id,account_id,category_id,type,amount,description,notes,date,is_fixed,status')
+    .select('id,account_id,category_id,type,amount,description,notes,date,is_fixed,status,recurrence_type,recurrence_value')
     .is('deleted_at', null)
     .eq('status', 'confirmed')
     .gte('date', yearStart)
@@ -308,6 +343,8 @@ export interface NewTransaction {
   date: string;
   description: string;
   is_fixed: boolean;
+  recurrence_type?: 'monthly' | 'weekly' | 'custom' | null;
+  recurrence_value?: number | null;
 }
 
 export async function insertTransaction(tx: NewTransaction): Promise<void> {
@@ -327,6 +364,8 @@ export async function insertTransaction(tx: NewTransaction): Promise<void> {
     notes: tx.cat,
     date: tx.date,
     is_fixed: tx.is_fixed,
+    recurrence_type: tx.recurrence_type ?? null,
+    recurrence_value: tx.recurrence_value ?? null,
     status: 'confirmed',
   });
   if (error) throw error;
@@ -472,6 +511,8 @@ export async function updateTransaction(id: string, data: {
   date?: string;
   description?: string;
   is_fixed?: boolean;
+  recurrence_type?: 'monthly' | 'weekly' | 'custom' | null;
+  recurrence_value?: number | null;
   oldType?: 'income' | 'expense';
   oldAmount?: number;
   oldAccountId?: string;
@@ -485,6 +526,8 @@ export async function updateTransaction(id: string, data: {
   if (data.date !== undefined) updates.date = data.date;
   if (data.description !== undefined) updates.description = data.description;
   if (data.is_fixed !== undefined) updates.is_fixed = data.is_fixed;
+  if ('recurrence_type' in data) updates.recurrence_type = data.recurrence_type ?? null;
+  if ('recurrence_value' in data) updates.recurrence_value = data.recurrence_value ?? null;
   const { error } = await sb.from('transactions').update(updates).eq('id', id);
   if (error) throw error;
 
