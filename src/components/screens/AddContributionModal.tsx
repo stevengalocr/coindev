@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { Icon } from '@/components/ui/Icon';
-import { fmtMoney, type SavingsGoal } from '@/lib/data';
+import { fmtMoney, getCurrencyMeta, type SavingsGoal } from '@/lib/data';
 import { AccountGlyph } from '@/components/shell/CategoryGlyph';
 
 interface Props {
@@ -16,12 +16,13 @@ interface Props {
 
 export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) {
   const { lang } = useApp();
-  const { accounts, addContribution } = useData();
+  const { accounts, addContribution, liveUsdRate } = useData();
   const [amount, setAmount] = useState('');
   const [accountId, setAccountId] = useState('');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [confirmingConversion, setConfirmingConversion] = useState(false);
 
   const validAccounts = accounts.filter(a => a.kind !== 'credit');
 
@@ -30,6 +31,7 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
     setAmount('');
     setNote('');
     setError('');
+    setConfirmingConversion(false);
     setAccountId(validAccounts[0]?.id ?? '');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -37,6 +39,16 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
   if (!open || !goal) return null;
 
   const remaining = goal.target - goal.current;
+  const goalCurrency = goal.currency ?? 'CRC';
+  const selectedAcc = accounts.find(a => a.id === accountId);
+  const accCurrency = selectedAcc?.currency ?? 'CRC';
+  const needsConversion = !!selectedAcc && accCurrency !== goalCurrency;
+
+  function convertToGoalCurrency(amt: number): number {
+    if (accCurrency === 'USD' && goalCurrency === 'CRC') return amt * liveUsdRate;
+    if (accCurrency === 'CRC' && goalCurrency === 'USD') return amt / liveUsdRate;
+    return amt;
+  }
 
   async function handleSave() {
     if (!goal) return;
@@ -49,15 +61,20 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
       setError(lang === 'es' ? 'Selecciona una cuenta.' : 'Select an account.');
       return;
     }
-    const acc = accounts.find(a => a.id === accountId);
-    if (acc && amt > acc.balance) {
+    if (selectedAcc && amt > selectedAcc.balance) {
       setError(lang === 'es' ? 'Saldo insuficiente en esa cuenta.' : 'Insufficient balance in that account.');
+      return;
+    }
+    if (needsConversion && !confirmingConversion) {
+      setError('');
+      setConfirmingConversion(true);
       return;
     }
     setSaving(true);
     setError('');
     try {
-      await addContribution(goal.id, accountId, amt, note.trim() || undefined);
+      const finalAmt = needsConversion ? convertToGoalCurrency(amt) : amt;
+      await addContribution(goal.id, accountId, finalAmt, note.trim() || undefined);
       onClose();
       onSuccess?.();
     } catch (e) {
@@ -100,9 +117,10 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {lang === 'es' ? 'Monto del abono' : 'Deposit amount'}
+              {accCurrency && <span style={{ marginLeft: 6, color: 'var(--blue)', fontWeight: 600 }}>({accCurrency})</span>}
             </div>
             <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>₡</span>
+              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>{getCurrencyMeta(accCurrency).symbol}</span>
               <input
                 style={{ width: '100%', background: 'var(--surface-2)', border: '1.5px solid var(--border)', borderRadius: 'var(--r-md)', padding: '11px 14px 11px 28px', color: 'var(--text)', fontSize: 14, fontFamily: 'var(--font-sans)', outline: 'none', transition: 'border-color 150ms', boxSizing: 'border-box' }}
                 onFocus={e => e.currentTarget.style.borderColor = 'var(--blue)'}
@@ -110,11 +128,32 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
                 placeholder="0"
                 type="number" min="1"
                 value={amount}
-                onChange={e => setAmount(e.target.value)}
+                onChange={e => { setAmount(e.target.value); setConfirmingConversion(false); }}
                 autoFocus
               />
             </div>
           </div>
+
+          {/* Conversion banner */}
+          {confirmingConversion && needsConversion && (() => {
+            const amt = parseFloat(amount) || 0;
+            const converted = convertToGoalCurrency(amt);
+            const goalMeta = getCurrencyMeta(goalCurrency);
+            const accMeta = getCurrencyMeta(accCurrency);
+            return (
+              <div style={{ marginBottom: 16, padding: '14px 16px', borderRadius: 'var(--r-md)', background: 'color-mix(in oklab, var(--blue) 10%, var(--surface))', border: '1.5px solid var(--blue)' }}>
+                <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, marginBottom: 4 }}>
+                  {lang === 'es' ? 'Confirmar conversión de moneda' : 'Confirm currency conversion'}
+                </div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                  {lang === 'es'
+                    ? <>Estás aportando <strong>{accMeta.symbol}{amt.toLocaleString()}</strong> desde una cuenta en <strong>{accCurrency}</strong>. Equivale a <strong>{goalMeta.symbol}{goalMeta.decimals > 0 ? converted.toFixed(goalMeta.decimals) : Math.round(converted).toLocaleString()}</strong> en la meta ({goalCurrency}).</>
+                    : <>You&apos;re depositing <strong>{accMeta.symbol}{amt.toLocaleString()}</strong> from a <strong>{accCurrency}</strong> account. This equals <strong>{goalMeta.symbol}{goalMeta.decimals > 0 ? converted.toFixed(goalMeta.decimals) : Math.round(converted).toLocaleString()}</strong> in the goal ({goalCurrency}).</>
+                  }
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Account selector */}
           <div style={{ marginBottom: 16 }}>
@@ -173,7 +212,11 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
             fontSize: 14, fontWeight: 700, border: 0, cursor: saving ? 'not-allowed' : 'pointer',
             opacity: saving ? 0.7 : 1,
           }}>
-            {saving ? (lang === 'es' ? 'Guardando…' : 'Saving…') : (lang === 'es' ? 'Confirmar abono' : 'Confirm deposit')}
+            {saving
+              ? (lang === 'es' ? 'Guardando…' : 'Saving…')
+              : confirmingConversion
+                ? (lang === 'es' ? 'Confirmar conversión y abonar' : 'Confirm conversion & deposit')
+                : (lang === 'es' ? 'Confirmar abono' : 'Confirm deposit')}
           </button>
         </div>
       </div>

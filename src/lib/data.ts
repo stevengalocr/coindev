@@ -368,14 +368,15 @@ export interface Budget {
   cat: string;
   limit: number;
   spent: number;
+  currency: string;
 }
 
 export const BUDGETS: Budget[] = [
-  { cat: 'groceries', limit: 150000, spent: 110100 },
-  { cat: 'food',      limit: 80000,  spent: 36450  },
-  { cat: 'transport', limit: 50000,  spent: 29700  },
-  { cat: 'fun',       limit: 60000,  spent: 55700  },
-  { cat: 'health',    limit: 40000,  spent: 32000  },
+  { cat: 'groceries', limit: 150000, spent: 110100, currency: 'CRC' },
+  { cat: 'food',      limit: 80000,  spent: 36450,  currency: 'CRC' },
+  { cat: 'transport', limit: 50000,  spent: 29700,  currency: 'CRC' },
+  { cat: 'fun',       limit: 60000,  spent: 55700,  currency: 'CRC' },
+  { cat: 'health',    limit: 40000,  spent: 32000,  currency: 'CRC' },
 ];
 
 export const YEAR_EVOLUTION = [

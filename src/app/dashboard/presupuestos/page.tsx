@@ -160,8 +160,8 @@ export default function PresupuestosPage() {
                           {c?.[`label_${lang}` as 'label_es'] ?? b.cat}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                          <span className="mono" style={{ fontSize: 14, color: over ? 'var(--expense)' : 'var(--text)', fontWeight: 600 }}>{fmtMoney(b.spent, 'CRC')}</span>
-                          <span className="mono" style={{ fontSize: 12, color: 'var(--text-3)' }}>{t.of} {fmtMoney(b.limit, 'CRC')}</span>
+                          <span className="mono" style={{ fontSize: 14, color: over ? 'var(--expense)' : 'var(--text)', fontWeight: 600 }}>{fmtMoney(b.spent, b.currency ?? 'CRC')}</span>
+                          <span className="mono" style={{ fontSize: 12, color: 'var(--text-3)' }}>{t.of} {fmtMoney(b.limit, b.currency ?? 'CRC')}</span>
                         </div>
                       </div>
                       <div style={{ height: 7, background: 'var(--surface-3)', borderRadius: 999, overflow: 'hidden', marginBottom: 8 }}>
@@ -169,7 +169,7 @@ export default function PresupuestosPage() {
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 11.5, color: over ? 'var(--expense)' : danger ? 'var(--warn)' : 'var(--text-3)', fontWeight: 500 }}>
-                          {over ? `${fmtMoney(b.spent - b.limit, 'CRC')} ${t.over}` : `${fmtMoney(b.limit - b.spent, 'CRC')} ${t.left}`}
+                          {over ? `${fmtMoney(b.spent - b.limit, b.currency ?? 'CRC')} ${t.over}` : `${fmtMoney(b.limit - b.spent, b.currency ?? 'CRC')} ${t.left}`}
                         </span>
                         <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: over ? 'var(--expense)' : danger ? 'var(--warn)' : 'var(--text-3)' }}>{Math.round(pct)}%</span>
                       </div>
