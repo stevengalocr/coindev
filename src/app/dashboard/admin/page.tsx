@@ -163,7 +163,7 @@ export default function AdminPage() {
               <div key={p.id} className="cd-card" style={{ padding: '16px 20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }} className="admin-table-row">
                   {/* Avatar */}
-                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: isAdminUser ? 'var(--gradient-hero)' : 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700, color: isAdminUser ? '#0A0F1C' : 'var(--text-2)', flexShrink: 0 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: isAdminUser ? 'var(--gradient-hero)' : 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700, color: isAdminUser ? 'var(--btn-hero-text)' : 'var(--text-2)', flexShrink: 0 }}>
                     {initials}
                   </div>
 
@@ -266,7 +266,7 @@ export default function AdminPage() {
                       <button
                         onClick={() => handleSaveNotes(p.id)}
                         disabled={saving === p.id + '_notes'}
-                        style={{ padding: '7px 16px', borderRadius: 8, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 12.5, fontWeight: 700, border: 0, cursor: 'pointer' }}
+                        style={{ padding: '7px 16px', borderRadius: 8, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 12.5, fontWeight: 700, border: 0, cursor: 'pointer' }}
                       >
                         {saving === p.id + '_notes' ? 'Guardando…' : 'Guardar nota'}
                       </button>

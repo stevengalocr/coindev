@@ -117,7 +117,7 @@ export default function MetasPage() {
         </div>
         <button
           onClick={() => setAddOpen(true)}
-          style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
           <Icon name="plus" size={15} stroke={2.4} /> {t.addGoal}
         </button>
@@ -180,7 +180,7 @@ export default function MetasPage() {
           <div style={{ fontSize: 13, color: 'var(--text-3)', maxWidth: 300, margin: '0 auto 20px' }}>
             {lang === 'es' ? 'Crea tu primera meta de ahorro para empezar a seguir tu progreso.' : 'Create your first savings goal to start tracking your progress.'}
           </div>
-          <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <Icon name="plus" size={14} stroke={2.4} />
             {lang === 'es' ? 'Crear primera meta' : 'Create first goal'}
           </button>
@@ -369,7 +369,7 @@ function GoalCard({ goal, currency, lang, t, accounts, menuId, expanded, contrib
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: 8 }}>
         {goal.status === 'active' && (
-          <button onClick={() => onContribute(goal)} style={{ flex: 1, padding: '9px 12px', borderRadius: 'var(--r-md)', background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, border: 0, cursor: 'pointer' }}>
+          <button onClick={() => onContribute(goal)} style={{ flex: 1, padding: '9px 12px', borderRadius: 'var(--r-md)', background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, border: 0, cursor: 'pointer' }}>
             <Icon name="plus" size={13} stroke={2.5} />
             {lang === 'es' ? 'Abonar' : 'Deposit'}
           </button>

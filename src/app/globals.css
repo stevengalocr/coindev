@@ -38,6 +38,7 @@
   --warn: #F2C94C;
   --warn-soft: rgba(242, 201, 76, 0.16);
   --gradient-hero: linear-gradient(135deg, #5BE5D1 0%, #5B9BFF 45%, #9F7BFF 100%);
+  --btn-hero-text: #0C0E14;
   --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 30px -16px rgba(0,0,0,0.6);
   --shadow-pop: 0 22px 60px -10px rgba(0,0,0,0.75);
 }
@@ -61,6 +62,7 @@
   --warn: #B07807;
   --warn-soft: rgba(242, 201, 76, 0.22);
   --gradient-hero: linear-gradient(135deg, #2ABBA5 0%, #3F7AD6 45%, #7551E0 100%);
+  --btn-hero-text: #ffffff;
   --shadow-card: 0 1px 0 rgba(255,255,255,0.8) inset, 0 10px 24px -16px rgba(20,30,60,0.18);
   --shadow-pop: 0 24px 60px -8px rgba(20,30,60,0.18);
 }

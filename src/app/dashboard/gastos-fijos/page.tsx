@@ -113,7 +113,7 @@ export default function GastosFijosPage() {
               <option value="next_due">{lang === 'es' ? 'Próximo pago' : 'Next due'}</option>
             </select>
           )}
-          <button onClick={() => setAddOpen(true)} style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => setAddOpen(true)} style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <Icon name="plus" size={15} stroke={2.4} /> {lang === 'es' ? 'Nuevo gasto fijo' : 'New fixed expense'}
           </button>
         </div>
@@ -156,7 +156,7 @@ export default function GastosFijosPage() {
           <div style={{ fontSize: 13, color: 'var(--text-3)', maxWidth: 300, margin: '0 auto 20px' }}>
             {lang === 'es' ? 'Registra tus gastos recurrentes como alquiler, suscripciones y servicios.' : 'Record your recurring expenses like rent, subscriptions and services.'}
           </div>
-          <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <Icon name="plus" size={14} stroke={2.4} />
             {lang === 'es' ? 'Agregar gasto fijo' : 'Add fixed expense'}
           </button>

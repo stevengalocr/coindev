@@ -174,7 +174,7 @@ function DashInner({ children }: { children: ReactNode }) {
           <button onClick={() => setAddOpen(true)} style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
             padding: '10px 16px', borderRadius: 12,
-            background: 'var(--gradient-hero)', color: '#0C0E14',
+            background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)',
             fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em',
             boxShadow: '0 2px 16px color-mix(in oklab, var(--cyan) 30%, transparent)',
             transition: 'opacity 150ms',
@@ -250,7 +250,7 @@ function DashInner({ children }: { children: ReactNode }) {
             padding: '10px 12px', borderRadius: 12,
             background: 'var(--surface)', border: '1px solid var(--border)',
           }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--gradient-hero)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800, color: '#0C0E14', flexShrink: 0, letterSpacing: '-0.02em' }}>{initials}</div>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--gradient-hero)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800, color: 'var(--btn-hero-text)', flexShrink: 0, letterSpacing: '-0.02em' }}>{initials}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
               <div style={{ display: 'inline-flex', alignItems: 'center', marginTop: 3, padding: '1px 7px', borderRadius: 999, background: 'color-mix(in oklab, var(--cyan) 12%, var(--surface-3))', border: '1px solid color-mix(in oklab, var(--cyan) 20%, var(--border))' }}>
@@ -408,18 +408,17 @@ function DashInner({ children }: { children: ReactNode }) {
       <nav style={{
         display: 'none',
         position: 'fixed',
-        bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+        bottom: 'calc(18px + env(safe-area-inset-bottom, 0px))',
         left: 14, right: 14,
         zIndex: 50,
-        background: 'color-mix(in oklab, var(--bg-2) 94%, transparent)',
+        background: 'color-mix(in oklab, var(--bg-2) 96%, transparent)',
         backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-        borderRadius: 26,
-        border: '1px solid color-mix(in oklab, var(--border) 80%, transparent)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.35), 0 1px 0 color-mix(in oklab, white 5%, transparent) inset',
-        padding: '0 4px',
+        borderRadius: 28,
+        border: '1px solid var(--border)',
+        boxShadow: '0 8px 36px rgba(0,0,0,0.32), 0 1px 0 color-mix(in oklab, white 6%, transparent) inset',
         height: 64,
       }} className="mobile-nav">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', alignItems: 'flex-end', height: '100%' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', alignItems: 'center', height: '100%', padding: '0 2px' }}>
 
           {/* Left: Metas + Movimientos */}
           {MOBILE_LEFT.map(item => {
@@ -427,8 +426,8 @@ function DashInner({ children }: { children: ReactNode }) {
             const labels: Record<string, string> = { goals: t.goals, movements: t.movements };
             return (
               <Link key={item.key} href={item.href} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                padding: '10px 0 12px', textDecoration: 'none',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 4, height: '100%', textDecoration: 'none',
                 color: active ? 'var(--cyan)' : 'var(--text-3)',
                 transition: 'color 120ms',
               }}>
@@ -440,22 +439,24 @@ function DashInner({ children }: { children: ReactNode }) {
             );
           })}
 
-          {/* Center: Inicio FAB — round */}
+          {/* Center: Inicio FAB — perfectly round, elevated */}
           <Link href="/dashboard" style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-            textDecoration: 'none', transform: 'translateY(-12px)', padding: '0 0 2px',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: 5, height: '100%', textDecoration: 'none',
+            transform: 'translateY(-10px)',
           }}>
             <div style={{
-              width: 54, height: 54, borderRadius: '50%',
+              width: 52, height: 52, borderRadius: '50%',
               background: 'var(--gradient-hero)',
               display: 'grid', placeItems: 'center',
+              flexShrink: 0,
               boxShadow: isHome
-                ? '0 0 0 4px color-mix(in oklab, var(--cyan) 30%, transparent), 0 8px 28px color-mix(in oklab, var(--cyan) 50%, transparent)'
-                : '0 4px 20px rgba(0,0,0,0.5)',
-              opacity: isHome ? 1 : 0.85,
+                ? '0 0 0 4px color-mix(in oklab, var(--cyan) 28%, transparent), 0 8px 28px color-mix(in oklab, var(--cyan) 45%, transparent)'
+                : '0 4px 20px rgba(0,0,0,0.45)',
+              opacity: isHome ? 1 : 0.86,
               transition: 'box-shadow 200ms, opacity 200ms',
             }}>
-              <Icon name="home" size={26} stroke={2.2} style={{ color: '#0C0E14' }} />
+              <Icon name="home" size={24} stroke={2.2} style={{ color: 'var(--btn-hero-text)' }} />
             </div>
             <span style={{ fontSize: 9, fontWeight: 700, color: isHome ? 'var(--text)' : 'var(--text-3)', lineHeight: 1 }}>
               {lang === 'es' ? 'Inicio' : 'Home'}
@@ -468,8 +469,8 @@ function DashInner({ children }: { children: ReactNode }) {
             const labels: Record<string, string> = { divisas: t.divisas };
             return (
               <Link key={item.key} href={item.href} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                padding: '10px 0 12px', textDecoration: 'none',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 4, height: '100%', textDecoration: 'none',
                 color: active ? 'var(--cyan)' : 'var(--text-3)',
                 transition: 'color 120ms',
               }}>
@@ -483,8 +484,8 @@ function DashInner({ children }: { children: ReactNode }) {
 
           {/* Más */}
           <button onClick={() => setMoreOpen(v => !v)} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-            padding: '10px 0 12px', background: 'transparent', border: 0,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: 4, height: '100%', background: 'transparent', border: 0,
             color: moreActive ? 'var(--cyan)' : moreOpen ? 'var(--text)' : 'var(--text-3)',
             transition: 'color 120ms',
           }}>
@@ -502,7 +503,7 @@ function DashInner({ children }: { children: ReactNode }) {
           <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 48, background: 'rgba(3,6,15,0.55)', backdropFilter: 'blur(4px)' }} />
           <div style={{
             position: 'fixed',
-            bottom: 'calc(12px + 64px + env(safe-area-inset-bottom, 0px) + 8px)',
+            bottom: 'calc(18px + 64px + env(safe-area-inset-bottom, 0px) + 10px)',
             left: '50%', transform: 'translateX(-50%)',
             zIndex: 49,
             background: 'var(--bg-2)', border: '1px solid var(--border)',
@@ -558,7 +559,7 @@ function DashInner({ children }: { children: ReactNode }) {
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
           .mobile-nav { display: block !important; }
-          .main-pad { padding: 24px 20px 120px !important; }
+          .main-pad { padding: 24px 20px 126px !important; }
         }
       `}</style>
 

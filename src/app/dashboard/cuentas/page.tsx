@@ -87,7 +87,7 @@ export default function CuentasPage() {
         </div>
         <button
           onClick={() => setAddOpen(true)}
-          style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
           <Icon name="plus" size={15} stroke={2.4} /> {t.addAccount}
         </button>
@@ -140,7 +140,7 @@ export default function CuentasPage() {
               ? 'Agrega tu cuenta de banco, tarjeta o efectivo para empezar a registrar tus finanzas.'
               : 'Add your bank account, card or cash to start tracking your finances.'}
           </div>
-          <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <Icon name="plus" size={14} stroke={2.4} />
             {lang === 'es' ? 'Agregar cuenta' : 'Add account'}
           </button>
