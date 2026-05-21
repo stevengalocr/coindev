@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useData } from '@/hooks/useData';
 import { useApp } from '@/hooks/useApp';
 import { Icon } from '@/components/ui/Icon';
-import { fetchAllProfiles, updateUserPlanStatus, type DbProfile } from '@/lib/db';
+import { fetchAllProfiles, updateUserPlanStatus, adminDeleteUser, type DbProfile } from '@/lib/db';
 
 const ADMIN_EMAIL = 'stevengalocr@gmail.com';
 const TRIAL_DAYS = 7;
@@ -39,6 +39,7 @@ export default function AdminPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState<Record<string, string>>({});
   const [notesOpen, setNotesOpen] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -214,6 +215,34 @@ export default function AdminPage() {
                         Nota
                         {p.admin_notes && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#5B9BFF' }} />}
                       </button>
+
+                      {/* Delete button — two-step confirm */}
+                      {confirmDelete === p.id ? (
+                        <button
+                          onClick={async () => {
+                            setSaving(p.id + '_del');
+                            try {
+                              await adminDeleteUser(p.id);
+                              setProfiles(prev => prev.filter(u => u.id !== p.id));
+                              setConfirmDelete(null);
+                            } catch (e) { console.error(e); }
+                            finally { setSaving(null); }
+                          }}
+                          disabled={saving === p.id + '_del'}
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, background: 'var(--expense-soft)', border: '1px solid rgba(239,68,68,0.3)', fontSize: 12, color: 'var(--expense)', cursor: 'pointer', fontWeight: 600 }}
+                        >
+                          <Icon name="trash" size={12} stroke={1.7} />
+                          {saving === p.id + '_del' ? 'Eliminando…' : '¿Confirmar?'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDelete(p.id)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--expense)', cursor: 'pointer' }}
+                        >
+                          <Icon name="trash" size={12} stroke={1.7} />
+                          Eliminar
+                        </button>
+                      )}
 
                       {saving === p.id && (
                         <span style={{ fontSize: 11, color: 'var(--text-3)' }}>Guardando…</span>
