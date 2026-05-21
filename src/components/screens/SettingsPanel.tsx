@@ -93,7 +93,7 @@ export function SettingsPanel({ open, onClose }: Props) {
 
             {/* Profile avatar + summary */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px', background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)' }}>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--gradient-hero)', display: 'grid', placeItems: 'center', fontSize: 17, fontWeight: 700, color: '#0C0E14', flexShrink: 0 }}>{initials}</div>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--gradient-hero)', display: 'grid', placeItems: 'center', fontSize: 17, fontWeight: 700, color: 'var(--btn-hero-text)', flexShrink: 0 }}>{initials}</div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentName}</div>
                 <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>

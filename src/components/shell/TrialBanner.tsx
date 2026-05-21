@@ -116,7 +116,7 @@ export function TrialBanner() {
               ? 'Tu acceso ha sido suspendido. Contacta con soporte para resolver tu situación.'
               : 'Your access has been suspended. Contact support to resolve your situation.'}
           </p>
-          <a href="mailto:stevengalocr@gmail.com" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 12, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+          <a href="mailto:stevengalocr@gmail.com" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 12, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             stevengalocr@gmail.com
           </a>
         </div>

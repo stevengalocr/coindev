@@ -137,7 +137,7 @@ export function AddBudgetModal({ open, onClose, onSuccess, initialData }: Props)
 
               <button onClick={handleSave} disabled={saving} style={{
                 width: '100%', padding: '14px', borderRadius: 'var(--r-md)',
-                background: 'var(--gradient-hero)', color: '#0A0F1C',
+                background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)',
                 fontSize: 14, fontWeight: 700, border: 0, cursor: saving ? 'not-allowed' : 'pointer',
                 opacity: saving ? 0.7 : 1,
               }}>
@@ -205,7 +205,7 @@ export function AddBudgetModal({ open, onClose, onSuccess, initialData }: Props)
 
               <button onClick={handleSave} disabled={saving} style={{
                 width: '100%', padding: '14px', borderRadius: 'var(--r-md)',
-                background: 'var(--gradient-hero)', color: '#0A0F1C',
+                background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)',
                 fontSize: 14, fontWeight: 700, border: 0, cursor: saving ? 'not-allowed' : 'pointer',
                 opacity: saving ? 0.7 : 1,
               }}>

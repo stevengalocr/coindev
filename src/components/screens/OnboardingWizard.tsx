@@ -179,7 +179,7 @@ export function OnboardingWizard() {
                 if (step === 'movement') setAddMovOpen(true);
                 if (step === 'budget') setAddBudOpen(true);
               }}
-              style={{ padding: '10px 20px', borderRadius: 11, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ padding: '10px 20px', borderRadius: 11, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}
             >
               <Icon name="plus" size={14} stroke={2.5} />
               {lang === 'es' ? current.cta_es : current.cta_en}
