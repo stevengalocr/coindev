@@ -186,12 +186,21 @@ export function toBudget(b: DbBudget, movements: Movement[]): Budget {
 // ── Queries ─────────────────────────────────────────────────────────
 export async function fetchProfile(): Promise<DbProfile | null> {
   const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return null;
   const { data, error } = await sb
     .from('profiles')
     .select('*')
+    .eq('id', user.id)
     .single();
   if (error) console.error('[fetchProfile]', error.message);
-  return (data as DbProfile | null);
+  return data as DbProfile | null;
+}
+
+export async function adminDeleteUser(targetUserId: string): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.rpc('admin_delete_user', { target_user_id: targetUserId });
+  if (error) throw error;
 }
 
 export async function fetchAllProfiles(): Promise<DbProfile[]> {
