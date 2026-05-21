@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Deep blue coin background -->
+    <radialGradient id="coin-bg" cx="40%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#2A4A8A"/>
+      <stop offset="60%" stop-color="#1A3070"/>
+      <stop offset="100%" stop-color="#0D1E4A"/>
+    </radialGradient>
+    <!-- Gold ring gradient -->
+    <radialGradient id="gold-ring" cx="30%" cy="25%" r="80%">
+      <stop offset="0%" stop-color="#FFE08A"/>
+      <stop offset="40%" stop-color="#D4A520"/>
+      <stop offset="100%" stop-color="#8A6010"/>
+    </radialGradient>
+    <!-- Gold code symbol -->
+    <linearGradient id="gold-code" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE599"/>
+      <stop offset="50%" stop-color="#C9920A"/>
+      <stop offset="100%" stop-color="#A07010"/>
+    </linearGradient>
+    <!-- Teal ribbon -->
+    <linearGradient id="ribbon-teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D4CC"/>
+      <stop offset="100%" stop-color="#0088CC"/>
+    </linearGradient>
+    <!-- Purple ribbon -->
+    <linearGradient id="ribbon-purple" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8844EE"/>
+      <stop offset="50%" stop-color="#BB44FF"/>
+      <stop offset="100%" stop-color="#EE66CC"/>
+    </linearGradient>
+    <!-- Orange ribbon -->
+    <linearGradient id="ribbon-orange" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF8800"/>
+      <stop offset="100%" stop-color="#FFD700"/>
+    </linearGradient>
+    <!-- Glow filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Teal ribbon (behind coin, left sweep) -->
+  <path d="M80 340 Q60 280 100 230 Q140 180 220 200 Q190 260 200 310 Q150 330 80 340Z"
+    fill="url(#ribbon-teal)" opacity="0.85" filter="url(#soft-glow)"/>
+  <path d="M60 360 Q40 290 90 235 Q130 185 210 205 Q185 265 195 318 Q140 345 60 360Z"
+    fill="none" stroke="#00D4CC" stroke-width="2" opacity="0.6"/>
+
+  <!-- Purple/pink ribbon (right side) -->
+  <path d="M320 200 Q420 190 450 260 Q470 320 410 380 Q370 340 330 310 Q315 260 320 200Z"
+    fill="url(#ribbon-purple)" opacity="0.85" filter="url(#soft-glow)"/>
+
+  <!-- Orange/gold flame (bottom left) -->
+  <path d="M130 380 Q110 420 160 450 Q200 470 240 440 Q210 410 200 370 Q165 390 130 380Z"
+    fill="url(#ribbon-orange)" opacity="0.9" filter="url(#soft-glow)"/>
+
+  <!-- Main coin outer ring (gold) -->
+  <circle cx="256" cy="240" r="170" fill="url(#gold-ring)" filter="url(#glow)"/>
+  <!-- Coin inner rings (decorative concentric) -->
+  <circle cx="256" cy="240" r="158" fill="url(#coin-bg)"/>
+  <circle cx="256" cy="240" r="162" fill="none" stroke="#C9920A" stroke-width="1" opacity="0.5"/>
+  <circle cx="256" cy="240" r="150" fill="none" stroke="#C9920A" stroke-width="1" opacity="0.4"/>
+  <circle cx="256" cy="240" r="140" fill="none" stroke="#C9920A" stroke-width="1" opacity="0.3"/>
+  <circle cx="256" cy="240" r="130" fill="none" stroke="#C9920A" stroke-width="1" opacity="0.2"/>
+
+  <!-- Subtle nebula/galaxy inside coin -->
+  <circle cx="256" cy="240" r="158" fill="url(#coin-bg)"/>
+  <ellipse cx="280" cy="210" rx="80" ry="60" fill="#1e3a80" opacity="0.4"/>
+  <ellipse cx="230" cy="270" rx="60" ry="40" fill="#2a1a6a" opacity="0.3"/>
+
+  <!-- Code symbol </> in gold -->
+  <!-- < bracket -->
+  <path d="M195 200 L148 240 L195 280" fill="none" stroke="url(#gold-code)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <!-- > bracket -->
+  <path d="M317 200 L364 240 L317 280" fill="none" stroke="url(#gold-code)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <!-- / slash -->
+  <path d="M285 190 L227 290" fill="none" stroke="url(#gold-code)" stroke-width="20" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Highlight on coin (subtle shine) -->
+  <ellipse cx="215" cy="190" rx="50" ry="30" fill="white" opacity="0.06"/>
+</svg>

@@ -63,22 +63,40 @@ export function Icon({ name, size = 20, stroke = 1.7, style, className }: IconPr
     case 'eye': return <svg {...common}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
     case 'eye-off': return <svg {...common}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="m1 1 22 22"/></svg>;
     case 'logo': return (
-      <svg {...common} viewBox="0 0 24 24">
+      <svg {...common} viewBox="0 0 24 24" fill="none">
         <defs>
-          <linearGradient id="cd-logo-sw" x1="0" x2="1" y1="1" y2="0">
-            <stop offset="0" stopColor="#5BE5D1"/>
-            <stop offset="0.5" stopColor="#5B9BFF"/>
-            <stop offset="1" stopColor="#9F7BFF"/>
-          </linearGradient>
-          <radialGradient id="cd-logo-coin" cx="0.35" cy="0.3" r="0.8">
-            <stop offset="0" stopColor="#F8DD7C"/>
-            <stop offset="0.5" stopColor="#F2C94C"/>
-            <stop offset="1" stopColor="#A8800F"/>
+          <radialGradient id="cd-coin" cx="38%" cy="32%" r="75%">
+            <stop offset="0%" stopColor="#3A5EAA"/>
+            <stop offset="100%" stopColor="#0D1E4A"/>
           </radialGradient>
+          <linearGradient id="cd-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFE08A"/>
+            <stop offset="50%" stopColor="#D4A520"/>
+            <stop offset="100%" stopColor="#8A6010"/>
+          </linearGradient>
+          <linearGradient id="cd-teal" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#00D4CC"/>
+            <stop offset="100%" stopColor="#0088CC"/>
+          </linearGradient>
+          <linearGradient id="cd-purple" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#8844EE"/>
+            <stop offset="100%" stopColor="#EE66CC"/>
+          </linearGradient>
         </defs>
-        <path d="M3 16c2.5 4 6 5 9 4s5-3 9-7" stroke="url(#cd-logo-sw)" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-        <ellipse cx="12" cy="11" rx="5.2" ry="5.2" fill="url(#cd-logo-coin)"/>
-        <path d="M12 7v8M10 9.5h3.5a1.4 1.4 0 0 1 0 2.8H10M10 13h4" stroke="#7a5a08" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+        {/* Teal ribbon */}
+        <path d="M3 15 Q2 12 4 10 Q6.5 8 10 9 Q9 11.5 9.5 14 Q6.5 15 3 15Z" fill="url(#cd-teal)" opacity="0.9"/>
+        {/* Purple ribbon */}
+        <path d="M14 9 Q19 8.5 20.5 12 Q21.5 15 18.5 18 Q17 16 15.5 14.5 Q14.5 12 14 9Z" fill="url(#cd-purple)" opacity="0.9"/>
+        {/* Gold ring */}
+        <circle cx="12" cy="11" r="7.8" fill="url(#cd-gold)"/>
+        {/* Blue coin face */}
+        <circle cx="12" cy="11" r="7" fill="url(#cd-coin)"/>
+        {/* < bracket */}
+        <path d="M9.5 8.5 L7.5 11 L9.5 13.5" stroke="url(#cd-gold)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        {/* > bracket */}
+        <path d="M14.5 8.5 L16.5 11 L14.5 13.5" stroke="url(#cd-gold)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        {/* / slash */}
+        <path d="M13.2 8 L10.8 14" stroke="url(#cd-gold)" strokeWidth="1.1" strokeLinecap="round" fill="none"/>
       </svg>
     );
     case 'swap': return <svg {...common}><path d="M4 7h13"/><path d="m14 4 3 3-3 3"/><path d="M20 17H7"/><path d="m10 14-3 3 3 3"/></svg>;

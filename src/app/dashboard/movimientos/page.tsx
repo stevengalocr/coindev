@@ -48,11 +48,13 @@ function MovimientosInner() {
     if (acc) {/* account filter could be added here – for now prefills search with account name */}
   }, [searchParams]);
 
-  let list = filterMovs(movements, period).filter(m => {
+  const periodMovs = filterMovs(movements, period);
+  let list = periodMovs.filter(m => {
     if (filter !== 'all' && m.type !== filter) return false;
     if (query && !m.desc.toLowerCase().includes(query.toLowerCase())) return false;
     return true;
   });
+  const hasActiveFilters = filter !== 'all' || !!query;
 
   if (sort === 'amount_desc') list = [...list].sort((a, b) => b.amount - a.amount);
   else if (sort === 'amount_asc') list = [...list].sort((a, b) => a.amount - b.amount);
@@ -115,7 +117,8 @@ function MovimientosInner() {
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.movements}</h1>
             <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>
-              {list.length} {t.transactions} · <span className="mono">{fmtMoney(total, currency, { sign: true })}</span>
+              {list.length} {t.transactions}
+              {list.length > 0 && <> · <span className="mono">{fmtMoney(total, currency, { sign: true })}</span></>}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -189,18 +192,29 @@ function MovimientosInner() {
         ) : Object.entries(groups).length === 0 ? (
           <div className="cd-card" style={{ padding: '60px 24px', textAlign: 'center' }}>
             <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', margin: '0 auto 16px', color: 'var(--text-3)' }}>
-              <Icon name="list" size={26} stroke={1.6} />
+              <Icon name={hasActiveFilters ? 'search' : 'list'} size={26} stroke={1.6} />
             </div>
             <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
-              {lang === 'es' ? 'Sin movimientos' : 'No transactions'}
+              {hasActiveFilters
+                ? (lang === 'es' ? 'Sin resultados' : 'No results')
+                : (lang === 'es' ? 'Sin movimientos' : 'No transactions')}
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-3)', maxWidth: 300, margin: '0 auto 20px' }}>
-              {lang === 'es' ? 'Registra tu primer ingreso o gasto para empezar a ver tu historial.' : 'Record your first income or expense to start seeing your history.'}
+              {hasActiveFilters
+                ? (lang === 'es' ? 'Ningún movimiento coincide con tu búsqueda o filtros activos.' : 'No transactions match your search or active filters.')
+                : (lang === 'es' ? 'Registra tu primer ingreso o gasto para empezar a ver tu historial.' : 'Record your first income or expense to start seeing your history.')}
             </div>
-            <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Icon name="plus" size={14} stroke={2.4} />
-              {lang === 'es' ? 'Agregar movimiento' : 'Add transaction'}
-            </button>
+            {hasActiveFilters ? (
+              <button onClick={() => { setQuery(''); setFilter('all'); }} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--surface-3)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Icon name="x" size={14} stroke={2} />
+                {lang === 'es' ? 'Limpiar filtros' : 'Clear filters'}
+              </button>
+            ) : (
+              <button onClick={() => setAddOpen(true)} style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0A0F1C', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Icon name="plus" size={14} stroke={2.4} />
+                {lang === 'es' ? 'Agregar movimiento' : 'Add transaction'}
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
