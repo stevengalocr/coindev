@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { Icon } from '@/components/ui/Icon';
+import { LATAM_CURRENCIES } from '@/lib/data';
 import { APP_TO_DB_ACC } from '@/lib/db';
 
 const COLORS = ['#5B9BFF','#4FE0A9','#9F7BFF','#FF8BB5','#F2C94C','#5BE5D1','#FF6B83','#FF9F43'];
@@ -23,9 +24,8 @@ interface Props {
 }
 
 export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props) {
-  const { lang, currency, liveUsdRate } = useApp();
+  const { lang } = useApp();
   const { addAccount, updateAccount } = useData();
-  const symbol = currency === 'USD' ? '$' : '₡';
   const isEditing = !!initialData;
 
   const [type, setType] = useState<'checking'|'savings'|'cash'|'credit_card'>(
@@ -34,29 +34,27 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
   const [name, setName] = useState(initialData?.name ?? '');
   const [balance, setBalance] = useState('');
   const [color, setColor] = useState(initialData?.color ?? COLORS[0]);
+  const [currency, setCurrency] = useState(initialData?.currency ?? 'CRC');
   const [creditLimit, setCreditLimit] = useState(initialData?.limit?.toString() ?? '');
   const [lastDigits, setLastDigits] = useState(initialData?.tail.replace('••', '') ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Sync when modal opens or initialData changes
   useEffect(() => {
     if (!open) return;
     if (initialData) {
       setType(APP_TO_DB_ACC[initialData.kind] as 'checking'|'savings'|'cash'|'credit_card');
       setName(initialData.name);
       setColor(initialData.color);
-      setCreditLimit(initialData.limit
-        ? currency === 'USD'
-          ? (initialData.limit / liveUsdRate).toFixed(0)
-          : initialData.limit.toString()
-        : '');
+      setCurrency(initialData.currency ?? 'CRC');
+      setCreditLimit(initialData.limit?.toString() ?? '');
       setLastDigits(initialData.tail.replace('••', ''));
     } else {
       setType('checking');
       setName('');
       setBalance('');
       setColor(COLORS[0]);
+      setCurrency('CRC');
       setCreditLimit('');
       setLastDigits('');
     }
@@ -65,29 +63,32 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
 
   if (!open) return null;
 
+  const selectedCur = LATAM_CURRENCIES.find(c => c.code === currency) ?? LATAM_CURRENCIES[0];
+
   async function handleSave() {
     if (!name.trim()) { setError(lang === 'es' ? 'Escribe un nombre.' : 'Enter a name.'); return; }
     setSaving(true); setError('');
     try {
-      const toСRC = (v: number) => currency === 'USD' ? Math.round(v * liveUsdRate) : v;
       if (isEditing && initialData) {
         const rawLimit = creditLimit ? parseFloat(creditLimit.replace(/,/g,'')) : null;
         await updateAccount(initialData.id, {
           name: name.trim(),
           type,
           color,
-          credit_limit: type === 'credit_card' && rawLimit ? toСRC(rawLimit) : null,
+          currency,
+          credit_limit: type === 'credit_card' && rawLimit ? rawLimit : null,
           last_digits: lastDigits.trim() || null,
         });
       } else {
-        const bal = toСRC(parseFloat(balance.replace(/,/g, '')) || 0);
+        const bal = parseFloat(balance.replace(/,/g, '')) || 0;
         const rawLimit = creditLimit ? parseFloat(creditLimit.replace(/,/g,'')) : undefined;
         await addAccount({
           name: name.trim(),
           type,
           initial_balance: bal,
           color,
-          credit_limit: type === 'credit_card' && rawLimit ? toСRC(rawLimit) : undefined,
+          currency,
+          credit_limit: type === 'credit_card' && rawLimit ? rawLimit : undefined,
           last_digits: lastDigits.trim() || undefined,
         });
       }
@@ -95,7 +96,7 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
       onSuccess?.();
       if (!isEditing) {
         setName(''); setBalance(''); setCreditLimit(''); setLastDigits('');
-        setType('checking'); setColor(COLORS[0]);
+        setType('checking'); setColor(COLORS[0]); setCurrency('CRC');
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al guardar.');
@@ -131,7 +132,6 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
         maxHeight: '92vh', overflowY: 'auto',
       }}>
 
-        {/* Handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
         </div>
@@ -174,11 +174,33 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
             <input className="cd-sheet-inp" placeholder={lang === 'es' ? 'Ej: BAC Cuenta corriente' : 'e.g. Chase Checking'} value={name} onChange={e => setName(e.target.value)} />
           </Field>
 
+          {/* Moneda */}
+          <Field label={lang === 'es' ? 'Moneda' : 'Currency'}>
+            <div style={{ position: 'relative' }}>
+              <select
+                value={currency}
+                onChange={e => setCurrency(e.target.value)}
+                className="cd-sheet-inp"
+                style={{ appearance: 'none', paddingRight: 36, cursor: 'pointer' }}
+              >
+                {LATAM_CURRENCIES.map(cur => (
+                  <option key={cur.code} value={cur.code} style={{ background: '#10141F' }}>
+                    {cur.code} — {cur.symbol} — {lang === 'es' ? cur.name_es : cur.name_en}
+                  </option>
+                ))}
+              </select>
+              <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="mono" style={{ fontSize: 15, fontWeight: 700, color: 'var(--blue)' }}>{selectedCur.symbol}</span>
+                <Icon name="chevron-down" size={13} style={{ color: 'var(--text-3)' }} />
+              </div>
+            </div>
+          </Field>
+
           {/* Balance — only in creation mode */}
           {!isEditing && (
             <Field label={lang === 'es' ? (isCredit ? 'Saldo actual (deuda)' : 'Saldo inicial') : (isCredit ? 'Current balance (debt)' : 'Initial balance')}>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>{symbol}</span>
+                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>{selectedCur.symbol}</span>
                 <input className="cd-sheet-inp" style={{ paddingLeft: 28 }} placeholder="0" type="number" min="0" value={balance} onChange={e => setBalance(e.target.value)} />
               </div>
             </Field>
@@ -189,7 +211,7 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
             <>
               <Field label={lang === 'es' ? 'Límite de crédito' : 'Credit limit'}>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>{symbol}</span>
+                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>{selectedCur.symbol}</span>
                   <input className="cd-sheet-inp" style={{ paddingLeft: 28 }} placeholder="0" type="number" min="0" value={creditLimit} onChange={e => setCreditLimit(e.target.value)} />
                 </div>
               </Field>

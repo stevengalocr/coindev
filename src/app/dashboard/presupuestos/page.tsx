@@ -12,7 +12,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useToast } from '@/components/ui/Toast';
 
 export default function PresupuestosPage() {
-  const { t, currency, lang } = useApp();
+  const { t, lang } = useApp();
   const { budgets, loading, deleteBudget } = useData();
   const toast = useToast();
   const [hoverId, setHoverId] = useState<string | null>(null);
@@ -123,14 +123,14 @@ export default function PresupuestosPage() {
                   {t.spent} · {t.thisMonth}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <MoneyText amount={totalSpent} currency={currency} size={30} weight={600} />
-                  <span className="mono" style={{ fontSize: 14, color: 'var(--text-3)' }}>{t.of} {fmtMoney(totalLimit, currency)}</span>
+                  <MoneyText amount={totalSpent} currency="CRC" size={30} weight={600} />
+                  <span className="mono" style={{ fontSize: 14, color: 'var(--text-3)' }}>{t.of} {fmtMoney(totalLimit, 'CRC')}</span>
                 </div>
               </div>
               <div style={{ flex: 1, minWidth: 180 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12, color: 'var(--text-3)' }}>
                   <span>{Math.round(overallPct)}% {lang === 'es' ? 'utilizado' : 'used'}</span>
-                  <span>{fmtMoney(totalLimit - totalSpent, currency)} {t.left}</span>
+                  <span>{fmtMoney(totalLimit - totalSpent, 'CRC')} {t.left}</span>
                 </div>
                 <div style={{ height: 8, background: 'var(--surface-3)', borderRadius: 999, overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min(overallPct, 100)}%`, height: '100%', background: 'var(--gradient-hero)', transition: 'width 600ms' }} />
@@ -160,8 +160,8 @@ export default function PresupuestosPage() {
                           {c?.[`label_${lang}` as 'label_es'] ?? b.cat}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                          <span className="mono" style={{ fontSize: 14, color: over ? 'var(--expense)' : 'var(--text)', fontWeight: 600 }}>{fmtMoney(b.spent, currency)}</span>
-                          <span className="mono" style={{ fontSize: 12, color: 'var(--text-3)' }}>{t.of} {fmtMoney(b.limit, currency)}</span>
+                          <span className="mono" style={{ fontSize: 14, color: over ? 'var(--expense)' : 'var(--text)', fontWeight: 600 }}>{fmtMoney(b.spent, 'CRC')}</span>
+                          <span className="mono" style={{ fontSize: 12, color: 'var(--text-3)' }}>{t.of} {fmtMoney(b.limit, 'CRC')}</span>
                         </div>
                       </div>
                       <div style={{ height: 7, background: 'var(--surface-3)', borderRadius: 999, overflow: 'hidden', marginBottom: 8 }}>
@@ -169,7 +169,7 @@ export default function PresupuestosPage() {
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 11.5, color: over ? 'var(--expense)' : danger ? 'var(--warn)' : 'var(--text-3)', fontWeight: 500 }}>
-                          {over ? `${fmtMoney(b.spent - b.limit, currency)} ${t.over}` : `${fmtMoney(b.limit - b.spent, currency)} ${t.left}`}
+                          {over ? `${fmtMoney(b.spent - b.limit, 'CRC')} ${t.over}` : `${fmtMoney(b.limit - b.spent, 'CRC')} ${t.left}`}
                         </span>
                         <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: over ? 'var(--expense)' : danger ? 'var(--warn)' : 'var(--text-3)' }}>{Math.round(pct)}%</span>
                       </div>

@@ -24,8 +24,9 @@ export default function MovimientosPage() {
 }
 
 function MovimientosInner() {
-  const { t, currency, lang } = useApp();
+  const { t, lang } = useApp();
   const { movements, accounts, loading, deleteTransaction } = useData();
+  const accCurrencyMap = Object.fromEntries(accounts.map(a => [a.id, a.currency ?? 'CRC']));
   const toast = useToast();
   const searchParams = useSearchParams();
 
@@ -118,7 +119,7 @@ function MovimientosInner() {
             <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.movements}</h1>
             <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>
               {list.length} {t.transactions}
-              {list.length > 0 && <> · <span className="mono">{fmtMoney(total, currency, { sign: true })}</span></>}
+              {list.length > 0 && <> · <span className="mono">{fmtMoney(total, 'CRC', { sign: true })}</span></>}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -225,7 +226,7 @@ function MovimientosInner() {
                   {sort === 'date' && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px 8px', alignItems: 'baseline' }}>
                       <span style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>{dayLabel(day)}</span>
-                      <span className="mono" style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>{fmtMoney(daySum, currency, { sign: true })}</span>
+                      <span className="mono" style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>{fmtMoney(daySum, 'CRC', { sign: true })}</span>
                     </div>
                   )}
                   <div className="cd-card" style={{ padding: compact ? 2 : 4 }}>
@@ -255,7 +256,7 @@ function MovimientosInner() {
                               </div>
                             )}
                           </div>
-                          <MoneyText amount={m.amount} currency={currency as any} size={compact ? 12.5 : 13.5} weight={600} sign type={m.type} />
+                          <MoneyText amount={m.amount} currency={accCurrencyMap[m.account] ?? 'CRC'} size={compact ? 12.5 : 13.5} weight={600} sign type={m.type} />
                           <div style={{ position: 'relative' }}>
                             <button
                               onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); }}

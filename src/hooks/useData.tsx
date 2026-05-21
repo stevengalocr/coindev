@@ -58,7 +58,7 @@ interface DataState {
   refetch: () => Promise<void>;
   updateTransaction: (id: string, data: Parameters<typeof updateTransaction>[1], old: { type: 'income' | 'expense'; amount: number; account: string }) => Promise<void>;
   deleteTransaction: (id: string, type: 'income' | 'expense', amount: number, accountId: string) => Promise<void>;
-  updateAccount: (id: string, data: { name?: string; type?: string; color?: string; credit_limit?: number | null; last_digits?: string | null }) => Promise<void>;
+  updateAccount: (id: string, data: { name?: string; type?: string; color?: string; currency?: string; credit_limit?: number | null; last_digits?: string | null }) => Promise<void>;
   deleteAccount: (id: string) => Promise<void>;
   updateBudget: (cat: string, limit_amount: number) => Promise<void>;
   deleteBudget: (cat: string) => Promise<void>;
@@ -158,7 +158,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await load();
   }, [load]);
 
-  const updateAcc = useCallback(async (id: string, data: { name?: string; type?: string; color?: string; credit_limit?: number | null; last_digits?: string | null }) => {
+  const updateAcc = useCallback(async (id: string, data: { name?: string; type?: string; color?: string; currency?: string; credit_limit?: number | null; last_digits?: string | null }) => {
     await updateAccount(id, data);
     await load();
   }, [load]);

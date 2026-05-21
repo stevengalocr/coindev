@@ -15,7 +15,7 @@ interface Props {
 }
 
 export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) {
-  const { lang, currency } = useApp();
+  const { lang } = useApp();
   const { accounts, addContribution } = useData();
   const [amount, setAmount] = useState('');
   const [accountId, setAccountId] = useState('');
@@ -90,7 +90,7 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--text-3)', marginTop: 2 }}>
                 {goal.name} · {lang === 'es' ? 'Pendiente:' : 'Remaining:'}{' '}
-                <span style={{ fontWeight: 600, color: 'var(--text-2)' }}>{fmtMoney(Math.max(0, remaining), currency)}</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-2)' }}>{fmtMoney(Math.max(0, remaining), goal.currency ?? 'CRC')}</span>
               </div>
             </div>
             <button onClick={onClose} style={{ color: 'var(--text-3)', padding: 4 }}><Icon name="x" size={18} /></button>
@@ -133,7 +133,7 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
                   <AccountGlyph acc={{ kind: a.kind, color: a.color }} size={32} />
                   <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{a.name}</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{fmtMoney(a.balance, currency)}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{fmtMoney(a.balance, a.currency ?? 'CRC')}</div>
                   </div>
                   {accountId === a.id && <Icon name="check" size={16} stroke={2.5} style={{ color: 'var(--blue)', flexShrink: 0 }} />}
                 </button>
