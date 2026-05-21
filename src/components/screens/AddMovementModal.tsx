@@ -23,12 +23,15 @@ function toLocalDateStr(d: Date): string {
 }
 
 export function AddMovementModal({ open, onClose, onSuccess, initialFixed = false, initialType = 'expense', initialData }: Props) {
-  const { t, currency, lang } = useApp();
+  const { t, currency, lang, liveUsdRate } = useApp();
   const { accounts, addTransaction, updateTransaction } = useData();
   const isEditing = !!initialData;
 
+  const toCRC = (v: number) => currency === 'USD' ? Math.round(v * liveUsdRate) : v;
+  const fromCRC = (v: number) => currency === 'USD' ? parseFloat((v / liveUsdRate).toFixed(2)) : v;
+
   const [type, setType] = useState<'expense' | 'income'>(initialData?.type ?? initialType);
-  const [amount, setAmount] = useState(initialData ? String(initialData.amount) : '');
+  const [amount, setAmount] = useState(initialData ? String(fromCRC(initialData.amount)) : '');
   const [cat, setCat] = useState(initialData?.cat ?? (initialType === 'income' ? 'salary' : 'groceries'));
   const [accId, setAccId] = useState(initialData?.account ?? '');
   const [desc, setDesc] = useState(initialData?.desc ?? '');
@@ -49,7 +52,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
     if (!open) return;
     if (initialData) {
       setType(initialData.type);
-      setAmount(String(initialData.amount));
+      setAmount(String(fromCRC(initialData.amount)));
       setCat(initialData.cat);
       setAccId(initialData.account);
       setDesc(initialData.desc);
@@ -68,7 +71,8 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
       setDate(toLocalDateStr(new Date()));
     }
     setError('');
-  }, [open, initialData, initialFixed, initialType]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialData, initialFixed, initialType, currency, liveUsdRate]);
 
   useEffect(() => {
     if (!open) return;
@@ -86,17 +90,18 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
     setSaving(true);
     setError('');
     try {
+      const crcAmount = toCRC(parseFloat(amount));
       if (isEditing && initialData) {
         await updateTransaction(
           initialData.id,
-          { type, cat, amount: parseFloat(amount), account_id: accId, date, description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'), is_fixed: fixed, recurrence_type: fixed ? recType : null, recurrence_value: fixed && recType ? recValue : null },
+          { type, cat, amount: crcAmount, account_id: accId, date, description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'), is_fixed: fixed, recurrence_type: fixed ? recType : null, recurrence_value: fixed && recType ? recValue : null },
           { type: initialData.type, amount: initialData.amount, account: initialData.account }
         );
       } else {
         await addTransaction({
           type,
           cat,
-          amount: parseFloat(amount),
+          amount: crcAmount,
           account_id: accId,
           date,
           description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'),
@@ -321,7 +326,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
 
           <button onClick={handleSave} disabled={!amount || amount === '0' || saving} style={{
             width: '100%', padding: '15px 18px', borderRadius: 14,
-            background: 'var(--gradient-hero)', color: '#0A0F1C',
+            background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)',
             fontSize: 15, fontWeight: 600, letterSpacing: '0.01em',
             opacity: (!amount || amount === '0' || saving) ? 0.5 : 1,
             transition: 'opacity 150ms',

@@ -10,6 +10,7 @@ interface AppState {
   currency: Currency;
   theme: 'dark' | 'light';
   t: T;
+  liveUsdRate: number;
   setLang: (l: Lang) => void;
   setCurrency: (c: Currency) => void;
   setTheme: (t: 'dark' | 'light') => void;
@@ -23,11 +24,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>('es');
   const [currency, setCurrencyState] = useState<Currency>('CRC');
   const [theme, setThemeState] = useState<'dark' | 'light'>('dark');
+  const [liveUsdRate, setLiveUsdRate] = useState(510);
 
   // Apply theme on mount
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    fetch('/api/fx')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.rates?.[0]?.crc) setLiveUsdRate(data.rates[0].crc); })
+      .catch(() => {});
+  }, []);
 
   const setLang = useCallback((l: Lang) => setLangState(l), []);
   const setCurrency = useCallback((c: Currency) => setCurrencyState(c), []);
@@ -43,7 +52,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   return (
-    <AppCtx.Provider value={{ lang, currency, theme, t: I18N[lang], setLang, setCurrency, setTheme, signOut }}>
+    <AppCtx.Provider value={{ lang, currency, theme, t: I18N[lang], liveUsdRate, setLang, setCurrency, setTheme, signOut }}>
       {children}
     </AppCtx.Provider>
   );

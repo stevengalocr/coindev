@@ -62,10 +62,36 @@ async function fetchRates(date: 'latest' | string): Promise<Record<string, numbe
   return null;
 }
 
+const MONTHS_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+async function fetchHistory(): Promise<Array<{ month: string; rate: number }>> {
+  const now = new Date();
+  const entries = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+    return {
+      date: d.toISOString().slice(0, 10),
+      label: `${MONTHS_ES[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`,
+    };
+  });
+
+  const results = await Promise.allSettled(
+    entries.map(({ date }) => fetchRates(date).then(r => r?.crc ?? null))
+  );
+
+  return entries
+    .map(({ label }, i) => {
+      const res = results[i];
+      const rate = res.status === 'fulfilled' && res.value ? Math.round(res.value) : null;
+      return rate ? { month: label, rate } : null;
+    })
+    .filter(Boolean) as Array<{ month: string; rate: number }>;
+}
+
 export async function GET() {
-  const [today, prev] = await Promise.all([
+  const [today, prev, history] = await Promise.all([
     fetchRates('latest'),
     fetchRates(prevDate()),
+    fetchHistory(),
   ]);
 
   if (!today) {
@@ -109,7 +135,7 @@ export async function GET() {
 
   const date = new Date().toISOString().slice(0, 10);
 
-  return NextResponse.json({ rates, date, live: true }, {
+  return NextResponse.json({ rates, date, live: true, history }, {
     headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
   });
 }

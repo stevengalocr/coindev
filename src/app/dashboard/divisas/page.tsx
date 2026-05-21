@@ -7,6 +7,20 @@ import { Icon } from '@/components/ui/Icon';
 import { Sparkline } from '@/components/shell/Charts';
 
 interface ApiFxRate extends FxRate { live?: boolean }
+interface HistoryPoint { month: string; rate: number }
+
+const MONTHS_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function buildFallbackHistory(): HistoryPoint[] {
+  const now = new Date();
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+    return {
+      month: `${MONTHS_ES[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`,
+      rate: FX_HISTORY[i]?.rate ?? 510,
+    };
+  });
+}
 
 function CurrencyBadge({ cc, size = 36 }: { cc: string; size?: number }) {
   return (
@@ -37,6 +51,7 @@ export default function DivisasPage() {
   const [fromCRC, setFromCRC] = useState(true);
   const [amount, setAmount] = useState('');
   const [rates, setRates] = useState<ApiFxRate[]>(FX_RATES);
+  const [history, setHistory] = useState<HistoryPoint[]>(buildFallbackHistory);
   const [date, setDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [live, setLive] = useState(false);
@@ -50,6 +65,9 @@ export default function DivisasPage() {
         setRates(data.rates as ApiFxRate[]);
         setDate(data.date);
         setLive(true);
+        if (Array.isArray(data.history) && data.history.length >= 2) {
+          setHistory(data.history as HistoryPoint[]);
+        }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -63,7 +81,9 @@ export default function DivisasPage() {
       : Math.round(parsed * usd.crc).toLocaleString('es-CR')
     : '';
 
-  const historyValues = FX_HISTORY.map(h => h.rate);
+  const historyValues = history.map(h => h.rate);
+  const historyFirst = history[0]?.month ?? '';
+  const historyLast = history[history.length - 1]?.month ?? '';
 
   const updatedLabel = (() => {
     const d = date ? new Date(date + 'T12:00:00') : new Date();
@@ -168,12 +188,12 @@ export default function DivisasPage() {
               {/* Sparkline — hidden on mobile via CSS */}
               <div className="fx-sparkline" style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
                 <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                  {lang === 'es' ? 'Últimos 12 meses (ref.)' : 'Last 12 months (ref.)'}
+                  {lang === 'es' ? 'Últimos 12 meses' : 'Last 12 months'}
                 </div>
                 <Sparkline data={historyValues} color="var(--blue)" height={64} width={180} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', width: 180, fontSize: 10, color: 'var(--text-4)' }}>
-                  <span>Jun &apos;25</span>
-                  <span>May &apos;26</span>
+                  <span>{historyFirst}</span>
+                  <span>{historyLast}</span>
                 </div>
               </div>
             </div>

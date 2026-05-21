@@ -23,8 +23,9 @@ interface Props {
 }
 
 export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props) {
-  const { lang } = useApp();
+  const { lang, currency, liveUsdRate } = useApp();
   const { addAccount, updateAccount } = useData();
+  const symbol = currency === 'USD' ? '$' : '₡';
   const isEditing = !!initialData;
 
   const [type, setType] = useState<'checking'|'savings'|'cash'|'credit_card'>(
@@ -45,7 +46,11 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
       setType(APP_TO_DB_ACC[initialData.kind] as 'checking'|'savings'|'cash'|'credit_card');
       setName(initialData.name);
       setColor(initialData.color);
-      setCreditLimit(initialData.limit?.toString() ?? '');
+      setCreditLimit(initialData.limit
+        ? currency === 'USD'
+          ? (initialData.limit / liveUsdRate).toFixed(0)
+          : initialData.limit.toString()
+        : '');
       setLastDigits(initialData.tail.replace('••', ''));
     } else {
       setType('checking');
@@ -64,22 +69,25 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
     if (!name.trim()) { setError(lang === 'es' ? 'Escribe un nombre.' : 'Enter a name.'); return; }
     setSaving(true); setError('');
     try {
+      const toСRC = (v: number) => currency === 'USD' ? Math.round(v * liveUsdRate) : v;
       if (isEditing && initialData) {
+        const rawLimit = creditLimit ? parseFloat(creditLimit.replace(/,/g,'')) : null;
         await updateAccount(initialData.id, {
           name: name.trim(),
           type,
           color,
-          credit_limit: type === 'credit_card' && creditLimit ? parseFloat(creditLimit.replace(/,/g,'')) : null,
+          credit_limit: type === 'credit_card' && rawLimit ? toСRC(rawLimit) : null,
           last_digits: lastDigits.trim() || null,
         });
       } else {
-        const bal = parseFloat(balance.replace(/,/g, '')) || 0;
+        const bal = toСRC(parseFloat(balance.replace(/,/g, '')) || 0);
+        const rawLimit = creditLimit ? parseFloat(creditLimit.replace(/,/g,'')) : undefined;
         await addAccount({
           name: name.trim(),
           type,
           initial_balance: bal,
           color,
-          credit_limit: type === 'credit_card' && creditLimit ? parseFloat(creditLimit.replace(/,/g,'')) : undefined,
+          credit_limit: type === 'credit_card' && rawLimit ? toСRC(rawLimit) : undefined,
           last_digits: lastDigits.trim() || undefined,
         });
       }
@@ -170,7 +178,7 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
           {!isEditing && (
             <Field label={lang === 'es' ? (isCredit ? 'Saldo actual (deuda)' : 'Saldo inicial') : (isCredit ? 'Current balance (debt)' : 'Initial balance')}>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>₡</span>
+                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>{symbol}</span>
                 <input className="cd-sheet-inp" style={{ paddingLeft: 28 }} placeholder="0" type="number" min="0" value={balance} onChange={e => setBalance(e.target.value)} />
               </div>
             </Field>
@@ -181,7 +189,7 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
             <>
               <Field label={lang === 'es' ? 'Límite de crédito' : 'Credit limit'}>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>₡</span>
+                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>{symbol}</span>
                   <input className="cd-sheet-inp" style={{ paddingLeft: 28 }} placeholder="0" type="number" min="0" value={creditLimit} onChange={e => setCreditLimit(e.target.value)} />
                 </div>
               </Field>
@@ -216,7 +224,7 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
 
           <button onClick={handleSave} disabled={saving} style={{
             width: '100%', padding: '14px', borderRadius: 'var(--r-md)',
-            background: 'var(--gradient-hero)', color: '#0A0F1C',
+            background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)',
             fontSize: 14, fontWeight: 700, border: 0, cursor: saving ? 'not-allowed' : 'pointer',
             opacity: saving ? 0.7 : 1, transition: 'opacity 150ms',
           }}>
