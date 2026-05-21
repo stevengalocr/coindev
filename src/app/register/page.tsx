@@ -30,7 +30,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -54,46 +53,37 @@ export default function RegisterPage() {
       });
       if (signUpErr) {
         setError(
-          signUpErr.message.includes('already registered')
-            ? 'Este correo ya está registrado.'
+          signUpErr.message.includes('already registered') || signUpErr.message.includes('already exists')
+            ? 'Este correo ya está registrado. Intenta iniciar sesión.'
             : signUpErr.message
         );
         return;
       }
 
-      // If session exists immediately → update profile and go to dashboard
+      // If session came back immediately → go to dashboard
       if (data.session) {
-        await sb.from('profiles').update({ full_name: name.trim() }).eq('id', data.user!.id);
+        if (data.user) {
+          await sb.from('profiles').update({ full_name: name.trim() }).eq('id', data.user.id);
+        }
         router.push('/dashboard');
-      } else {
-        // Email confirmation required
-        setSuccess(true);
+        return;
       }
+
+      // Email was auto-confirmed server-side — sign in now to get a session
+      const { error: signInErr } = await sb.auth.signInWithPassword({ email, password });
+      if (signInErr) {
+        // Shouldn't happen, but fallback
+        setError('Cuenta creada. Inicia sesión para continuar.');
+        router.push('/login');
+        return;
+      }
+
+      router.push('/dashboard');
     } catch {
       setError('Ocurrió un error inesperado. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
-  }
-
-  if (success) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#07090F', padding: 24 }}>
-        <style>{`@keyframes fadeUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }`}</style>
-        <div style={{ maxWidth: 420, width: '100%', textAlign: 'center', animation: 'fadeUp 350ms both' }}>
-          <div style={{ width: 64, height: 64, borderRadius: 20, background: 'rgba(91,229,209,0.1)', border: '1px solid rgba(91,229,209,0.2)', display: 'grid', placeItems: 'center', margin: '0 auto 24px', color: '#5BE5D1' }}>
-            <Icon name="check" size={28} stroke={2} />
-          </div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: '#EDF0F7', letterSpacing: '-0.03em', marginBottom: 10 }}>¡Revisa tu correo!</h2>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, marginBottom: 28 }}>
-            Te enviamos un enlace de confirmación a <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{email}</strong>. Haz clic en el enlace para activar tu cuenta.
-          </p>
-          <Link href="/login" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: '#EDF0F7', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>
-            Volver al inicio de sesión
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -249,7 +239,7 @@ export default function RegisterPage() {
               border: 0, cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.6 : 1, transition: 'opacity 150ms',
             }}>
-              {loading ? <SpinnerIcon /> : 'Crear cuenta gratis'}
+              {loading ? <SpinnerIcon /> : 'Comenzar prueba de 7 días'}
             </button>
           </form>
 
