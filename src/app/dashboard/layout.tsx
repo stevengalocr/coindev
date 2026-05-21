@@ -109,9 +109,7 @@ function DashInner({ children }: { children: ReactNode }) {
         <div style={{ padding: '24px 20px 20px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -20, right: -20, width: 120, height: 120, borderRadius: '50%', background: 'radial-gradient(circle, color-mix(in oklab, var(--cyan) 12%, transparent), transparent 70%)', pointerEvents: 'none' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
-            <div style={{ width: 42, height: 42, borderRadius: 14, background: 'linear-gradient(135deg, color-mix(in oklab, var(--cyan) 20%, var(--surface)), var(--surface))', border: '1px solid color-mix(in oklab, var(--cyan) 25%, var(--border))', display: 'grid', placeItems: 'center', flexShrink: 0, boxShadow: '0 2px 12px color-mix(in oklab, var(--cyan) 15%, transparent)' }}>
-              <Icon name="logo" size={24} />
-            </div>
+            <img src="/logo-64.png" alt="CoinDev" width={42} height={42} style={{ borderRadius: 14, flexShrink: 0, display: 'block' }} />
             <div>
               <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)', lineHeight: 1.1 }}>CoinDev</div>
               <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3, letterSpacing: '0.01em' }}>{t.tagline}</div>

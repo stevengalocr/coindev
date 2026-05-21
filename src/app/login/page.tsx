@@ -120,16 +120,7 @@ function BrandPanel() {
       {/* Logo */}
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 44, height: 44, borderRadius: 14,
-            background: 'linear-gradient(135deg, #5BE5D1 0%, #5B9BFF 50%, #9F7BFF 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 32px rgba(91,155,255,0.4)',
-          }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#07090F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
+          <img src="/logo-64.png" alt="CoinDev" width={44} height={44} style={{ borderRadius: 14, display: 'block', boxShadow: '0 0 32px rgba(91,155,255,0.4)' }} />
           <div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#EDF0F7', letterSpacing: '-0.4px' }}>CoinDev</div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.04em', marginTop: 1 }}>FINANZAS PERSONALES</div>
@@ -388,15 +379,7 @@ export default function LoginPage() {
 
           {/* Logo mobile */}
           <div style={{ display: 'none', alignItems: 'center', gap: 10, marginBottom: 32, justifyContent: 'center' }} className="login-logo-mobile">
-            <div style={{
-              width: 36, height: 36, borderRadius: 11,
-              background: 'linear-gradient(135deg, #5BE5D1 0%, #5B9BFF 50%, #9F7BFF 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#07090F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-              </svg>
-            </div>
+            <img src="/logo-64.png" alt="CoinDev" width={36} height={36} style={{ borderRadius: 11, display: 'block' }} />
             <span style={{ fontSize: 18, fontWeight: 700, color: '#EDF0F7' }}>CoinDev</span>
           </div>
 
