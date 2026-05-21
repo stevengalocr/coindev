@@ -186,18 +186,19 @@ export function toBudget(b: DbBudget, movements: Movement[]): Budget {
 // ── Queries ─────────────────────────────────────────────────────────
 export async function fetchProfile(): Promise<DbProfile | null> {
   const sb = createClient();
-  const { data } = await sb
+  const { data, error } = await sb
     .from('profiles')
-    .select('id,full_name,email,default_currency,language,theme,plan,plan_status,trial_started_at,plan_expires_at,admin_notes,created_at')
+    .select('*')
     .single();
-  return data as DbProfile | null;
+  if (error) console.error('[fetchProfile]', error.message);
+  return (data as DbProfile | null);
 }
 
 export async function fetchAllProfiles(): Promise<DbProfile[]> {
   const sb = createClient();
   const { data, error } = await sb
     .from('profiles')
-    .select('id,full_name,email,default_currency,language,theme,plan,plan_status,trial_started_at,plan_expires_at,admin_notes,created_at')
+    .select('*')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as DbProfile[];

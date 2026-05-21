@@ -171,7 +171,9 @@ function DashInner({ children }: { children: ReactNode }) {
             <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--gradient-hero)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700, color: '#0C0E14', flexShrink: 0 }}>{initials}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>{profile?.plan === 'pro' ? 'Plan Pro' : 'Plan Free'} · CR</div>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
+                {profile?.plan_status === 'active' ? 'Plan Activo' : profile?.plan_status === 'trial' ? 'Prueba 7d' : profile?.plan_status === 'pending_payment' ? 'Pago pendiente' : 'Plan Free'} · CR
+              </div>
             </div>
             <button style={{ color: 'var(--text-3)', width: 28, height: 28, borderRadius: 8, display: 'grid', placeItems: 'center', transition: 'color 140ms, background 140ms', flexShrink: 0 }} aria-label={t.settings} onClick={() => setSettingsOpen(true)}>
               <Icon name="settings" size={15} stroke={1.6} />
