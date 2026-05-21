@@ -385,6 +385,9 @@ function DashInner({ children }: { children: ReactNode }) {
               <Icon name="bell" size={16} stroke={1.6} />
               {unreadNotifications > 0 && <span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, borderRadius: '50%', background: 'var(--expense)', border: '1.5px solid var(--surface)' }} />}
             </button>
+            <button onClick={() => setSettingsOpen(true)} style={{ width: 34, height: 34, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', display: 'grid', placeItems: 'center', color: 'var(--text-2)' }}>
+              <Icon name="settings" size={16} stroke={1.6} />
+            </button>
             <button onClick={() => setAddOpen(true)} style={{ height: 34, padding: '0 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: '#0C0E14', fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
               <Icon name="plus" size={13} stroke={2.5} />
               {lang === 'es' ? 'Nuevo' : 'New'}
@@ -482,6 +485,16 @@ function DashInner({ children }: { children: ReactNode }) {
                 );
               })}
             </div>
+            <div style={{ height: 1, background: 'var(--border)', margin: '8px 4px' }} />
+            <button onClick={() => { setMoreOpen(false); setSettingsOpen(true); }} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+              padding: '12px 12px', borderRadius: 12, background: 'var(--surface)',
+              border: '1px solid var(--border)', color: 'var(--text-2)',
+              fontSize: 13, fontWeight: 500,
+            }}>
+              <Icon name="settings" size={18} stroke={1.6} />
+              {lang === 'es' ? 'Configuración' : 'Settings'}
+            </button>
           </div>
         </>
       )}
