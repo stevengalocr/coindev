@@ -12,6 +12,7 @@ import { AddMovementModal } from '@/components/screens/AddMovementModal';
 import { TrialBanner } from '@/components/shell/TrialBanner';
 import { ToastProvider } from '@/components/ui/Toast';
 import { FeedbackModal } from '@/components/screens/FeedbackModal';
+import { MyReportsModal } from '@/components/screens/MyReportsModal';
 
 const ADMIN_EMAIL = 'stevengalocr@gmail.com';
 
@@ -75,6 +76,7 @@ function DashInner({ children }: { children: ReactNode }) {
   const [addOpen, setAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [myReportsOpen, setMyReportsOpen] = useState(false);
 
   // Triple-click on Inicio → open Add Movement modal
   const homeClickCount = useRef(0);
@@ -212,7 +214,7 @@ function DashInner({ children }: { children: ReactNode }) {
 
         {/* Feedback — hidden for admin */}
         {user?.email !== ADMIN_EMAIL && (
-          <div style={{ padding: '8px 14px 4px' }}>
+          <div style={{ padding: '8px 14px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
             <button onClick={() => setFeedbackOpen(true)} style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 9,
               padding: '9px 12px', borderRadius: 10, background: 'transparent',
@@ -224,6 +226,18 @@ function DashInner({ children }: { children: ReactNode }) {
             >
               <Icon name="edit" size={14} stroke={1.7} />
               {lang === 'es' ? 'Reportar problema / Sugerencia' : 'Report issue / Suggestion'}
+            </button>
+            <button onClick={() => setMyReportsOpen(true)} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 9,
+              padding: '9px 12px', borderRadius: 10, background: 'transparent',
+              border: '1px solid transparent', color: 'var(--text-3)',
+              fontSize: 12.5, fontWeight: 500, transition: 'all 140ms',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--text-3)'; }}
+            >
+              <Icon name="list" size={14} stroke={1.7} />
+              {lang === 'es' ? 'Mis reportes' : 'My reports'}
             </button>
           </div>
         )}
@@ -417,7 +431,7 @@ function DashInner({ children }: { children: ReactNode }) {
                 </Link>
               )}
 
-              {user?.email !== ADMIN_EMAIL && (
+              {user?.email !== ADMIN_EMAIL && (<>
                 <button onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }} style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: 12,
                   padding: '13px 16px', borderRadius: 14, background: 'var(--surface)',
@@ -429,7 +443,18 @@ function DashInner({ children }: { children: ReactNode }) {
                   </div>
                   {lang === 'es' ? 'Reportar / Sugerir' : 'Report / Suggest'}
                 </button>
-              )}
+                <button onClick={() => { setMoreOpen(false); setMyReportsOpen(true); }} style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '13px 16px', borderRadius: 14, background: 'var(--surface)',
+                  border: '1px solid var(--border)', color: 'var(--text-2)',
+                  fontSize: 13, fontWeight: 500,
+                }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--surface-3)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <Icon name="list" size={18} stroke={1.6} style={{ color: 'var(--text-3)' }} />
+                  </div>
+                  {lang === 'es' ? 'Mis reportes' : 'My reports'}
+                </button>
+              </>)}
 
               <button onClick={() => { setMoreOpen(false); setSettingsOpen(true); }} style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: 12,
@@ -458,6 +483,7 @@ function DashInner({ children }: { children: ReactNode }) {
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} />
       <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      <MyReportsModal open={myReportsOpen} onClose={() => setMyReportsOpen(false)} />
     </div>
   );
 }
