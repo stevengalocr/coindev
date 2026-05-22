@@ -257,7 +257,7 @@ function DashInner({ children }: { children: ReactNode }) {
         <TrialBanner />
 
         <main style={{ flex: 1, padding: '40px 36px 80px', minWidth: 0 }} className="main-pad">
-          <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+          <div key={pathname} style={{ maxWidth: 1400, margin: '0 auto' }} className="page-enter">
             {children}
           </div>
         </main>

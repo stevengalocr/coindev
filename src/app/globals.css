@@ -114,3 +114,45 @@ button { cursor: pointer; border: 0; background: none; color: inherit; font: inh
   opacity: 0.6;
   mix-blend-mode: overlay;
 }
+
+/* ── Dashboard micro-animations ─────────────────────────────────── */
+@keyframes cd-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: cd-fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cd-card {
+  transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+.cd-card:hover {
+  box-shadow: var(--shadow-pop);
+  border-color: var(--border-strong);
+}
+
+/* Stagger children inside a page container */
+.stagger > * {
+  animation: cd-fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger > *:nth-child(1)  { animation-delay: 0ms; }
+.stagger > *:nth-child(2)  { animation-delay: 40ms; }
+.stagger > *:nth-child(3)  { animation-delay: 80ms; }
+.stagger > *:nth-child(4)  { animation-delay: 120ms; }
+.stagger > *:nth-child(5)  { animation-delay: 160ms; }
+.stagger > *:nth-child(6)  { animation-delay: 200ms; }
+.stagger > *:nth-child(7)  { animation-delay: 240ms; }
+.stagger > *:nth-child(8)  { animation-delay: 280ms; }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .stagger > * {
+    animation: none;
+  }
+  .cd-card {
+    transition: none;
+  }
+}
