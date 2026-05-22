@@ -723,7 +723,7 @@ function Hero() {
           <style>{`@keyframes heroFadeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}`}</style>
           <span className="badge">
             <span className="badge-dot" />
-            Construida para Costa Rica · <span className="mono">v2.4</span> en producción
+            Finanzas personales para Latinoamérica
           </span>
         </div>
 
@@ -735,8 +735,8 @@ function Hero() {
               <span className="ln" style={{ color:'var(--cyan)' }}>precisión absoluta.</span>
             </h1>
             <p className="hero-sub">
-              La app de finanzas personales hecha para Costa Rica. Registrá ingresos,
-              controlá presupuestos, alcanzá metas y manejá colones y dólares con tipos
+              La app de finanzas personales hecha para Latinoamérica. Registrá ingresos,
+              controlá presupuestos, alcanzá metas y manejá múltiples monedas con tipos
               de cambio en vivo — todo en un solo lugar.
             </p>
             <div className="hero-ctas">
@@ -818,7 +818,7 @@ function Modules() {
           <h2 className="sec-h">Todo lo que necesitás para entender, decidir y crecer financieramente.</h2>
         </Reveal>
         <Reveal delay={0.14}>
-          <p className="sec-p">Desde el primer movimiento hasta tu meta de un año. CoinDev une cuentas, presupuestos, metas y divisas en flujos diseñados para el día a día costarricense.</p>
+          <p className="sec-p">Desde el primer movimiento hasta tu meta de un año. CoinDev une cuentas, presupuestos, metas y divisas en flujos diseñados para el día a día latinoamericano.</p>
         </Reveal>
 
         <div className="bento">
@@ -830,18 +830,18 @@ function Modules() {
             <p>Registrá ingresos y gastos en segundos. Filtros por tipo, búsqueda y agrupación automática "Hoy" / "Ayer".</p>
             <div className="t-vis mov-list">
               <div className="mov-it">
-                <div className="mov-g" style={{ background:'rgba(74,222,128,.15)', color:'#7be8a9' }}>💰</div>
-                <div className="mov-desc">Salario quincenal<div className="mov-d">Salario · Ayer</div></div>
+                <div className="mov-g" style={{ background:'rgba(74,222,128,.15)', color:'#7be8a9' }}><Ic n="trending" size={13} col="#7be8a9" /></div>
+                <div className="mov-desc">Salario quincenal<div className="mov-d">Ingresos · Ayer</div></div>
                 <div className="mov-am mov-in">+₡ 950,000</div>
               </div>
               <div className="mov-it">
-                <div className="mov-g" style={{ background:'rgba(255,107,107,.15)', color:'#ffb4b4' }}>🛒</div>
-                <div className="mov-desc">Mas x Menos<div className="mov-d">Alimentación · Hoy</div></div>
+                <div className="mov-g" style={{ background:'rgba(255,107,107,.15)', color:'#ffb4b4' }}><Ic n="wallet" size={13} col="#ffb4b4" /></div>
+                <div className="mov-desc">Supermercado<div className="mov-d">Alimentación · Hoy</div></div>
                 <div className="mov-am mov-out">−₡ 48,500</div>
               </div>
               <div className="mov-it">
-                <div className="mov-g" style={{ background:'rgba(63,210,255,.15)', color:'var(--cyan)' }}>⛽</div>
-                <div className="mov-desc">RECOPE gasolina<div className="mov-d">Transporte · Ayer</div></div>
+                <div className="mov-g" style={{ background:'rgba(63,210,255,.15)', color:'var(--cyan)' }}><Ic n="zap" size={13} col="var(--cyan)" /></div>
+                <div className="mov-desc">Gasolinera<div className="mov-d">Transporte · Ayer</div></div>
                 <div className="mov-am mov-out">−₡ 22,300</div>
               </div>
             </div>
@@ -912,7 +912,7 @@ function Modules() {
                 <div className="goal-pct">62%</div>
               </div>
               <div>
-                <div style={{ fontSize:13.5, fontWeight:500 }}>✈️ Viaje a Europa</div>
+                <div style={{ fontSize:13.5, fontWeight:500, display:'flex', alignItems:'center', gap:6 }}><Ic n="target" size={13} col="var(--cyan)" /> Viaje a Europa</div>
                 <div className="mono" style={{ fontSize:12, color:'var(--ink-faint)', marginTop:3 }}>₡ 1,860,000 / ₡ 3,000,000</div>
                 <div className="mono" style={{ fontSize:11.5, color:'var(--cyan)', marginTop:3 }}>faltan 142 días</div>
               </div>
@@ -926,9 +926,9 @@ function Modules() {
             <h3>Gastos fijos sin sorpresas</h3>
             <p>Alquiler, suscripciones, servicios. Próxima fecha y total comprometido.</p>
             <div className="t-vis rec-list">
-              <div className="rec-it"><div className="rec-nm">🏠 Alquiler</div><div className="rec-due">04 jun</div><div className="rec-am">−₡ 350k</div></div>
-              <div className="rec-it"><div className="rec-nm">📺 Netflix</div><div className="rec-due">12 jun</div><div className="rec-am">−$ 15.99</div></div>
-              <div className="rec-it"><div className="rec-nm">📶 Kolbi</div><div className="rec-due">18 jun</div><div className="rec-am">−₡ 29,900</div></div>
+              <div className="rec-it"><div className="rec-nm"><Ic n="shield" size={12} col="var(--ink-faint)" /> Alquiler</div><div className="rec-due">04 jun</div><div className="rec-am">−₡ 350k</div></div>
+              <div className="rec-it"><div className="rec-nm"><Ic n="eye" size={12} col="var(--ink-faint)" /> Netflix</div><div className="rec-due">12 jun</div><div className="rec-am">−$ 15.99</div></div>
+              <div className="rec-it"><div className="rec-nm"><Ic n="zap" size={12} col="var(--ink-faint)" /> Plan de datos</div><div className="rec-due">18 jun</div><div className="rec-am">−₡ 29,900</div></div>
             </div>
           </div>
 
@@ -1004,20 +1004,20 @@ function ConverterSection() {
       <div className="c">
         <div className="cr-wrap">
           <div>
-            <Reveal><span className="eyebrow">Diseñada para Costa Rica</span></Reveal>
-            <Reveal delay={0.08}><h2 className="sec-h">Colones y dólares — en la misma app.</h2></Reveal>
-            <Reveal delay={0.14}><p className="sec-p">Cobrás en colones, pagás suscripciones en dólares, viajás por la región. CoinDev convierte, registra y suma todo automáticamente con el tipo de cambio oficial del BCCR.</p></Reveal>
+            <Reveal><span className="eyebrow">Diseñada para Latinoamérica</span></Reveal>
+            <Reveal delay={0.08}><h2 className="sec-h">Tu moneda local y el dólar — en la misma app.</h2></Reveal>
+            <Reveal delay={0.14}><p className="sec-p">Cobrás en tu moneda local, pagás suscripciones en dólares, viajás por la región. CoinDev convierte, registra y suma todo automáticamente con tipos de cambio en tiempo real.</p></Reveal>
             <Reveal delay={0.2}>
               <div className="hero-ctas" style={{ marginTop:28 }}>
                 <a href={LS_URL} className="btn btn-primary lemonsqueezy-button">Probalo gratis</a>
                 <Link href="/login" className="btn btn-ghost">Iniciar sesión</Link>
               </div>
               <div className="hero-meta" style={{ marginTop:24 }}>
-                <div className="hero-meta-it"><Ic n="check" size={13} col="var(--cyan)" />Tipo de cambio BCCR</div>
+                <div className="hero-meta-it"><Ic n="check" size={13} col="var(--cyan)" />Tipos de cambio en tiempo real</div>
                 <div className="hero-meta-it"><Ic n="check" size={13} col="var(--cyan)" />28 monedas LATAM</div>
               </div>
               <div className="cur-badges">
-                {['🇨🇷 CRC','🇺🇸 USD','🇲🇽 MXN','🇨🇴 COP','🇧🇷 BRL','🇨🇱 CLP','🇵🇪 PEN','🇦🇷 ARS','🇬🇹 GTQ','+ 19 más'].map(c => (
+                {['CRC','USD','MXN','COP','BRL','CLP','PEN','ARS','GTQ','+ 19 más'].map(c => (
                   <span key={c} className="badge" style={{ fontSize:12 }}>{c}</span>
                 ))}
               </div>
@@ -1028,11 +1028,11 @@ function ConverterSection() {
             <div className="conv-card">
               <div className="conv-h">
                 <div className="conv-title">Conversor en vivo</div>
-                <div className="conv-live"><span className="conv-dot"/>BCCR · LIVE</div>
+                <div className="conv-live"><span className="conv-dot"/>Currency API · LIVE</div>
               </div>
               <div className="conv-field">
                 <input value={fromVal} onChange={handleFrom} type="text" inputMode="decimal" placeholder="0.00" />
-                <div className="conv-ccy">{inv ? '🇨🇷 CRC' : '🇺🇸 USD'} ▾</div>
+                <div className="conv-ccy">{inv ? 'CRC' : 'USD'} ▾</div>
               </div>
               <div className="conv-swap-row">
                 <button className="conv-swap-btn" onClick={handleSwap} aria-label="invertir">
@@ -1041,7 +1041,7 @@ function ConverterSection() {
               </div>
               <div className="conv-field">
                 <input value={toVal} type="text" inputMode="decimal" readOnly style={{ color:'var(--ink-dim)' }} />
-                <div className="conv-ccy">{inv ? '🇺🇸 USD' : '🇨🇷 CRC'} ▾</div>
+                <div className="conv-ccy">{inv ? 'USD' : 'CRC'} ▾</div>
               </div>
               <div className="conv-rate">
                 <span>1 USD = <b>₡ {RATE.toFixed(2)} CRC</b></span>
@@ -1064,7 +1064,7 @@ function HowItWorks() {
         <Reveal delay={0.08}><h2 className="sec-h">De cero al control total en menos de cinco minutos.</h2></Reveal>
         <div className="steps">
           {[
-            { title:'Creá tus cuentas', body:'Bancarias, efectivo y tarjetas en segundos. Definí moneda (CRC o USD) y saldo inicial — listo.' },
+            { title:'Creá tus cuentas', body:'Bancarias, efectivo y tarjetas en segundos. Definí moneda (CRC, USD u otra) y saldo inicial — listo.' },
             { title:'Registrá movimientos', body:'Cada gasto o ingreso entra con categoría, cuenta y moneda. Marcá los recurrentes y ya nunca se te escapan.' },
             { title:'Decidí con datos', body:'Reportes, presupuestos y metas trabajan juntos para que sepás exactamente dónde estás y a dónde vas.' },
           ].map((s, i) => (
@@ -1115,15 +1115,15 @@ function Security() {
 /* ─── Testimonials ──────────────────────────────────────────────────── */
 function Testimonials() {
   const items = [
-    { q:'"Por fin una app que entiende que manejo colones y dólares al mismo tiempo. El conversor con el tipo de cambio del BCCR es exactamente lo que necesitaba."', nm:'Carlos M.', role:'Freelancer · San José', av:'CM' },
-    { q:'"Los presupuestos con alerta al 80% me salvaron de pasarme en transporte dos veces seguidas. Ahora sé exactamente cuándo frenar."', nm:'Valeria R.', role:'Diseñadora · Heredia', av:'VR' },
-    { q:'"Tenía miedo de que mis datos financieros estuvieran inseguros. Saber que RLS los protege me da total tranquilidad."', nm:'Diego A.', role:'Ingeniero · Cartago', av:'DA' },
+    { q:'"Por fin una app que entiende que manejo dos monedas al mismo tiempo. El conversor con el tipo de cambio en tiempo real es exactamente lo que necesitaba."', nm:'Carlos M.', role:'Freelancer · Ciudad de México', av:'CM' },
+    { q:'"Los presupuestos con alerta al 80% me salvaron de pasarme en transporte dos veces seguidas. Ahora sé exactamente cuándo frenar."', nm:'Valeria R.', role:'Diseñadora · Bogotá', av:'VR' },
+    { q:'"Tenía miedo de que mis datos financieros estuvieran inseguros. Saber que RLS los protege me da total tranquilidad."', nm:'Diego A.', role:'Ingeniero · Lima', av:'DA' },
   ];
   return (
     <section className="section" style={{ paddingTop:20 }}>
       <div className="c">
         <Reveal><span className="eyebrow">Lo que dicen los usuarios</span></Reveal>
-        <Reveal delay={0.08}><h2 className="sec-h" style={{ maxWidth:540 }}>Finanzas bajo control. Desde Costa Rica.</h2></Reveal>
+        <Reveal delay={0.08}><h2 className="sec-h" style={{ maxWidth:540 }}>Finanzas bajo control. Desde Latinoamérica.</h2></Reveal>
         <div className="testi-grid">
           {items.map((t, i) => (
             <Reveal key={i} delay={i * 0.1}>
@@ -1155,7 +1155,7 @@ function Pricing() {
     'Metas de ahorro con historial de aportes',
     'Gastos fijos y recurrentes automatizados',
     'Reportes de evolución anual (12 meses)',
-    'Tipos de cambio en tiempo real · BCCR',
+    'Tipos de cambio en tiempo real · Currency API',
     'Acceso desde cualquier dispositivo sin instalar',
     'Soporte en español · Respuesta rápida',
     'Datos cifrados con RLS · Sin publicidad',
@@ -1176,7 +1176,7 @@ function Pricing() {
                 <span className="price-tag disp">4.99</span>
                 <span style={{ fontSize:17, color:'var(--ink-faint)', marginBottom:14 }}>/mes</span>
               </div>
-              <div className="mono" style={{ fontSize:13, color:'var(--ink-faint)', marginBottom:28 }}>≈ ₡ 2,550 CRC · Cancelá cuando quieras</div>
+              <div className="mono" style={{ fontSize:13, color:'var(--ink-faint)', marginBottom:28 }}>Facturado en USD · Cancelá cuando quieras</div>
               <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'7px 16px', borderRadius:999, background:'rgba(74,222,128,.1)', border:'1px solid rgba(74,222,128,.25)', marginBottom:28 }}>
                 <Ic n="zap" size={13} col="var(--green)" />
                 <span style={{ fontSize:12.5, fontWeight:600, color:'var(--green)' }}>7 días gratis · Sin tarjeta requerida</span>
@@ -1216,7 +1216,7 @@ const FAQS = [
   { q:'¿Necesito tarjeta para la prueba?',          a:'No. Los primeros 7 días son completamente gratis y sin datos de pago. Al finalizar, se te invitará a suscribirte.' },
   { q:'¿Puedo cancelar cuando quiera?',              a:'Sí, en cualquier momento desde tu panel de Lemon Squeezy. Sin penalizaciones ni períodos mínimos.' },
   { q:'¿Mis datos financieros están seguros?',       a:'Absolutamente. Usamos Supabase con Row-Level Security (RLS). Tus datos son solo accesibles por vos — ni el equipo de CoinDev puede leerlos.' },
-  { q:'¿Soporta colones y dólares al mismo tiempo?', a:'Sí. Tenés cuentas en CRC y USD simultáneamente. El tipo de cambio se aplica automáticamente con datos del BCCR para una vista consolidada.' },
+  { q:'¿Soporta varias monedas al mismo tiempo?',    a:'Sí. Tenés cuentas en CRC, USD y otras monedas simultáneamente. El tipo de cambio se aplica automáticamente con datos en tiempo real para una vista consolidada.' },
   { q:'¿Qué pasa si cancelo o pauso?',               a:'Tus datos se conservan siempre. Al reactivar, todo está exactamente como lo dejaste.' },
   { q:'¿Funciona como app en mi celular?',           a:'Sí. CoinDev es una PWA. Instalala desde el navegador en iOS o Android y funciona como app nativa sin ir al App Store.' },
 ];
@@ -1291,7 +1291,7 @@ function Footer() {
               <img src="/icon-192.png" alt="CoinDev" />
               <span>Coin<span className="brand-dim">Dev</span></span>
             </a>
-            <p className="foot-desc">Finanzas personales construidas para Costa Rica, con la precisión de quien las arma desde cero.</p>
+            <p className="foot-desc">Finanzas personales construidas para Latinoamérica, con la precisión de quien las arma desde cero.</p>
           </div>
           <div className="foot-col">
             <h5>Producto</h5>
@@ -1314,8 +1314,8 @@ function Footer() {
           </div>
         </div>
         <div className="foot-bottom">
-          <span>© {new Date().getFullYear()} CoinDev · Construido para Costa Rica</span>
-          <span className="mono">coindev.app · v2.4</span>
+          <span>© {new Date().getFullYear()} CoinDev · Hecho en Latinoamérica</span>
+          <span className="mono">coindev.app</span>
         </div>
       </div>
     </footer>
