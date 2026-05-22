@@ -41,7 +41,7 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) { setError('Escribe tu nombre.'); return; }
-    if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres.'); return; }
+    if (password.length < 3) { setError('La contraseña debe tener al menos 3 caracteres.'); return; }
     setError('');
     setLoading(true);
     try {
@@ -208,7 +208,7 @@ export default function RegisterPage() {
                   className="reg-input"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Tu contraseña"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   style={{ paddingRight: 42 }}
