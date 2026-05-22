@@ -49,12 +49,12 @@ WHERE email = 'stevengalocr@gmail.com';
 -- 9. Limpiar tokens de sesión activos del admin
 --    (forzar re-login con la nueva contraseña)
 DELETE FROM auth.sessions
-WHERE user_id = (
-  SELECT id FROM auth.users WHERE email = 'stevengalocr@gmail.com'
+WHERE user_id::text = (
+  SELECT id::text FROM auth.users WHERE email = 'stevengalocr@gmail.com'
 );
 DELETE FROM auth.refresh_tokens
-WHERE user_id = (
-  SELECT id FROM auth.users WHERE email = 'stevengalocr@gmail.com'
+WHERE user_id::text = (
+  SELECT id::text FROM auth.users WHERE email = 'stevengalocr@gmail.com'
 );
 
 -- 10. Verificación final
