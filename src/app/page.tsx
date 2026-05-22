@@ -1,46 +1,81 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 
 const CHECKOUT_URL = process.env.NEXT_PUBLIC_LEMONSQUEEZY_CHECKOUT_URL ?? '#pricing';
 
-/* ── Inline SVG icons ──────────────────────────────────────────────── */
-const PATHS: Record<string, string[]> = {
-  menu: ['M4 6h16M4 12h16M4 18h16'],
-  x: ['M18 6 6 18M6 6l12 12'],
-  arrow: ['M5 12h14M12 5l7 7-7 7'],
-  check: ['M20 6 9 17l-5-5'],
-  zap: ['M13 2 3 14h9l-1 8 10-12h-9l1-8z'],
-  globe: ['M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z', 'M2 12h20', 'M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z'],
-  wallet: ['M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z', 'M16 3H8L6 7h12l-2-4z'],
-  chart: ['M3 3v18h18', 'M18 9l-5 5-4-4-4 4'],
-  target: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z'],
-  repeat: ['M17 1l4 4-4 4', 'M3 11V9a4 4 0 0 1 4-4h14', 'M7 23l-4-4 4-4', 'M21 13v2a4 4 0 0 1-4 4H3'],
-  lock: ['M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z', 'M7 11V7a5 5 0 0 1 10 0v4'],
-  shield: ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
-  coins: ['M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10z', 'M12 22c5.523 0 10-2.239 10-5s-4.477-5-10-5S2 14.239 2 17s4.477 5 10 5z'],
-  trending: ['M23 6l-9.5 9.5-5-5L1 18', 'M17 6h6v6'],
-  swap: ['M7 16V4m0 0L3 8m4-4 4 4', 'M17 8v12m0 0 4-4m-4 4-4-4'],
-  book: ['M4 19.5A2.5 2.5 0 0 1 6.5 17H20', 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'],
-  help: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3', 'M12 17h.01'],
+/* ─── SVG Paths ────────────────────────────────────────────────────── */
+const P: Record<string, string[]> = {
+  arrow:    ['M5 12h14M12 5l7 7-7 7'],
+  check:    ['M20 6 9 17l-5-5'],
+  menu:     ['M4 6h16M4 12h16M4 18h16'],
+  x:        ['M18 6 6 18M6 6l12 12'],
+  zap:      ['M13 2 3 14h9l-1 8 10-12h-9l1-8z'],
+  lock:     ['M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z','M7 11V7a5 5 0 0 1 10 0v4'],
+  shield:   ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
+  trending: ['M23 6l-9.5 9.5-5-5L1 18','M17 6h6v6'],
+  wallet:   ['M21 12V7H5a2 2 0 0 1 0-4h14v4','M3 5v14a2 2 0 0 0 2 2h16v-5','M18 12a2 2 0 0 0 0 4h4v-4z'],
+  swap:     ['M7 16V4m0 0L3 8m4-4 4 4','M17 8v12m0 0 4-4m-4 4-4-4'],
+  chart:    ['M3 3v18h18','M18 9l-5 5-4-4-4 4'],
+  target:   ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z'],
+  repeat:   ['M17 1l4 4-4 4','M3 11V9a4 4 0 0 1 4-4h14','M7 23l-4-4 4-4','M21 13v2a4 4 0 0 1-4 4H3'],
+  dollar:   ['M12 1v22','M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'],
+  barChart: ['M12 20V10','M18 20V4','M6 20v-4'],
+  pie:      ['M21.21 15.89A10 10 0 1 1 8 2.83','M22 12A10 10 0 0 0 12 2v10z'],
+  bell:     ['M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9','M13.73 21a2 2 0 0 1-3.46 0'],
 };
-
-function Icon({ name, size = 20, stroke = 1.7, color }: { name: string; size?: number; stroke?: number; color?: string }) {
-  const paths = PATHS[name] ?? PATHS.help;
+function Ic({ n, size = 16, stroke = 1.7, col }: { n: string; size?: number; stroke?: number; col?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color ?? 'currentColor'} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, display: 'block' }}>
-      {paths.map((d, i) => <path key={i} d={d} />)}
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={col ?? 'currentColor'} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', flexShrink: 0 }}>
+      {(P[n] ?? P.arrow).map((d, i) => <path key={i} d={d} />)}
     </svg>
   );
 }
 
-/* ── Navbar ─────────────────────────────────────────────────────────── */
+/* ─── Ticker ────────────────────────────────────────────────────────── */
+const RATES = [
+  { pair: 'USD/CRC', rate: '512.34', delta: '+0.42', up: true },
+  { pair: 'USD/MXN', rate: '17.18',  delta: '-0.09', up: false },
+  { pair: 'USD/PEN', rate: '3.762',  delta: '+0.014', up: true },
+  { pair: 'USD/COP', rate: '4,128',  delta: '-2.10', up: false },
+  { pair: 'USD/BRL', rate: '5.082',  delta: '-0.022', up: false },
+  { pair: 'USD/ARS', rate: '987.50', delta: '+1.30', up: true },
+  { pair: 'USD/CLP', rate: '934.20', delta: '+3.10', up: true },
+  { pair: 'USD/GTQ', rate: '7.750',  delta: '+0.004', up: true },
+  { pair: 'USD/UYU', rate: '39.85',  delta: '-0.12', up: false },
+  { pair: 'EUR/USD', rate: '1.0842', delta: '+0.002', up: true },
+];
+
+function Ticker() {
+  return (
+    <div style={{ background: '#0A0D16', borderBottom: '1px solid #1A1F2E', overflow: 'hidden', height: 36, display: 'flex', alignItems: 'center' }}>
+      <style>{`
+        @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .ticker-track { display: flex; gap: 0; animation: ticker 38s linear infinite; width: max-content; }
+        .ticker-track:hover { animation-play-state: paused; }
+      `}</style>
+      <div className="ticker-track">
+        {[...RATES, ...RATES].map((r, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 28px', borderRight: '1px solid #1A1F2E', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#5B9BFF', letterSpacing: '0.04em' }}>{r.pair}</span>
+            <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#C8D0E4' }}>{r.rate}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: r.up ? '#4FE0A9' : '#FF6B83', display: 'flex', alignItems: 'center', gap: 2 }}>
+              {r.up ? '▲' : '▼'} {r.delta}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Navbar ────────────────────────────────────────────────────────── */
 function Navbar() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mob, setMob] = useState(false);
 
   useEffect(() => {
     const sb = createClient();
@@ -48,420 +83,555 @@ function Navbar() {
     const { data: { subscription } } = sb.auth.onAuthStateChange((_, s) => setLoggedIn(!!s));
     return () => subscription.unsubscribe();
   }, []);
-
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 20);
+    const fn = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', fn, { passive: true });
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  const links = [
-    { href: '#features', label: 'Características' },
-    { href: '#manual', label: 'Manual' },
-    { href: '#pricing', label: 'Precio' },
-    { href: '#faq', label: 'FAQ' },
-  ];
+  const links = ['Producto','Módulos','Divisas','Seguridad','Precio'];
+  const hrefs = ['#hero','#modulos','#divisas','#seguridad','#pricing'];
 
   return (
-    <nav style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-      background: scrolled ? 'rgba(7,9,15,0.88)' : 'transparent',
-      backdropFilter: scrolled ? 'blur(20px)' : 'none',
-      borderBottom: scrolled ? '1px solid rgba(35,42,61,0.8)' : '1px solid transparent',
-      transition: 'all 220ms',
-    }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', gap: 32 }}>
-        {/* Logo */}
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon-192.png" alt="CoinDev" width={30} height={30} style={{ borderRadius: 8 }} />
-          <span style={{ fontSize: 18, fontWeight: 800, color: '#EDF0F7', letterSpacing: '-0.03em' }}>CoinDev</span>
-        </a>
-
-        {/* Desktop links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28, flex: 1, justifyContent: 'center' }} className="ld-dlinks">
-          {links.map(l => (
-            <a key={l.href} href={l.href} style={{ fontSize: 14, fontWeight: 500, color: '#9098AE', textDecoration: 'none', transition: 'color 140ms' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#EDF0F7')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#9098AE')}>
-              {l.label}
-            </a>
-          ))}
-        </div>
-
-        {/* Desktop actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }} className="ld-dlinks">
-          {loggedIn ? (
-            <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 999, background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color: '#0C0E14', fontSize: 13.5, fontWeight: 700, textDecoration: 'none' }}>
-              Ir al app <Icon name="arrow" size={14} />
-            </Link>
-          ) : (
-            <>
-              <Link href="/login" style={{ fontSize: 13.5, fontWeight: 500, color: '#9098AE', textDecoration: 'none', padding: '8px 14px' }}>
-                Iniciar sesión
-              </Link>
-              <a href={CHECKOUT_URL} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 999, background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color: '#0C0E14', fontSize: 13.5, fontWeight: 700, textDecoration: 'none' }}>
-                Empezar gratis
-              </a>
-            </>
-          )}
-        </div>
-
-        {/* Mobile hamburger */}
-        <button onClick={() => setMobileOpen(v => !v)} style={{ marginLeft: 'auto', display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: '#9098AE', padding: 4 }} className="ld-mbtn">
-          <Icon name={mobileOpen ? 'x' : 'menu'} size={22} />
-        </button>
-      </div>
-
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div style={{ background: '#0C111B', borderTop: '1px solid #232A3D', padding: '16px 24px 28px' }}>
-          {links.map(l => (
-            <a key={l.href} href={l.href} onClick={() => setMobileOpen(false)} style={{ display: 'block', padding: '12px 0', fontSize: 15, fontWeight: 500, color: '#9098AE', textDecoration: 'none', borderBottom: '1px solid #232A3D' }}>
-              {l.label}
-            </a>
-          ))}
-          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Link href="/login" style={{ textAlign: 'center', padding: '12px', borderRadius: 14, border: '1px solid #232A3D', color: '#9098AE', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
-              Iniciar sesión
-            </Link>
-            <a href={CHECKOUT_URL} style={{ textAlign: 'center', padding: '12px', borderRadius: 14, background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color: '#0C0E14', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
-              7 días gratis — Empezar
-            </a>
-          </div>
-        </div>
-      )}
-
+    <>
       <style>{`
-        @media (max-width: 768px) {
-          .ld-dlinks { display: none !important; }
-          .ld-mbtn { display: flex !important; }
-        }
+        .nav-link { font-size:14px; font-weight:500; color:#9098AE; text-decoration:none; transition:color 140ms; padding:4px 0; }
+        .nav-link:hover { color:#EDF0F7; }
+        @media(max-width:860px){ .nd{ display:none!important; } .nb{ display:flex!important; } }
+        .nb{ display:none; }
       `}</style>
-    </nav>
-  );
-}
-
-/* ── Hero ───────────────────────────────────────────────────────────── */
-function Hero() {
-  return (
-    <section style={{ paddingTop: 136, paddingBottom: 80, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: '5%', left: '50%', transform: 'translateX(-50%)', width: 800, height: 600, background: 'radial-gradient(ellipse, rgba(91,155,255,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px', position: 'relative' }}>
-        {/* Badge */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 999, background: 'rgba(91,229,209,0.08)', border: '1px solid rgba(91,229,209,0.2)', marginBottom: 28 }}>
-          <Icon name="zap" size={13} color="#5BE5D1" />
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: '#5BE5D1' }}>7 días gratis · Sin tarjeta requerida</span>
-        </div>
-
-        <h1 style={{ fontSize: 'clamp(36px, 6vw, 68px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.08, color: '#EDF0F7', marginBottom: 22 }}>
-          Tus finanzas personales,{' '}
-          <span style={{ background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            claras como el agua
-          </span>
-        </h1>
-
-        <p style={{ fontSize: 'clamp(16px, 2.2vw, 19px)', color: '#9098AE', lineHeight: 1.65, maxWidth: 620, margin: '0 auto 36px', fontWeight: 400 }}>
-          Control total de tus cuentas, movimientos, presupuestos y metas de ahorro. Diseñado para LATAM con soporte para CRC, USD y 16 monedas más.
-        </p>
-
-        <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 60 }}>
-          <a href={CHECKOUT_URL} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 999, background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color: '#0C0E14', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 32px rgba(91,155,255,0.25)' }}>
-            Comenzar gratis — 7 días <Icon name="arrow" size={16} color="#0C0E14" />
+      <nav style={{ position:'fixed', top:36, left:0, right:0, zIndex:100, background: scrolled ? 'rgba(6,8,14,0.92)' : 'transparent', backdropFilter: scrolled ? 'blur(20px)' : 'none', borderBottom: scrolled ? '1px solid #1A1F2E' : '1px solid transparent', transition:'all 220ms' }}>
+        <div style={{ maxWidth:1200, margin:'0 auto', padding:'0 28px', height:60, display:'flex', alignItems:'center', gap:32 }}>
+          <a href="/" style={{ display:'flex', alignItems:'center', gap:9, textDecoration:'none', flexShrink:0 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icon-192.png" alt="CoinDev" width={28} height={28} style={{ borderRadius:7 }} />
+            <span style={{ fontSize:17, fontWeight:800, color:'#EDF0F7', letterSpacing:'-0.03em' }}><span style={{ color:'#EDF0F7' }}>Coin</span><span style={{ color:'#5B9BFF' }}>Dev</span></span>
           </a>
-          <a href="#manual" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 999, background: '#10141F', color: '#9098AE', border: '1px solid #232A3D', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
-            <Icon name="book" size={16} /> Ver manual
-          </a>
-        </div>
-
-        {/* Dashboard preview */}
-        <DashboardMockup />
-      </div>
-    </section>
-  );
-}
-
-function DashboardMockup() {
-  return (
-    <div style={{ position: 'relative', display: 'inline-block', width: '100%', maxWidth: 780 }}>
-      <div style={{ background: '#0C111B', border: '1px solid #232A3D', borderRadius: 20, overflow: 'hidden', boxShadow: '0 40px 120px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)' }}>
-        {/* Window chrome */}
-        <div style={{ background: '#10141F', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #232A3D' }}>
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FF5F57' }} />
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FFBD2E' }} />
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#28C840' }} />
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <div style={{ background: '#161B2A', padding: '3px 20px', borderRadius: 6, fontSize: 12, color: '#626B85' }}>coindev.app/dashboard</div>
+          <div className="nd" style={{ display:'flex', alignItems:'center', gap:24, flex:1, justifyContent:'center' }}>
+            {links.map((l,i) => <a key={l} href={hrefs[i]} className="nav-link">{l}</a>)}
           </div>
+          <div className="nd" style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+            {loggedIn ? (
+              <Link href="/dashboard" style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 20px', borderRadius:8, background:'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color:'#06080E', fontSize:13.5, fontWeight:700, textDecoration:'none' }}>
+                Ir al app <Ic n="arrow" size={14} col="#06080E" />
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" style={{ fontSize:13.5, fontWeight:500, color:'#9098AE', textDecoration:'none', padding:'8px 16px', borderRadius:8, border:'1px solid #1A1F2E', transition:'all 140ms', background:'transparent' }}
+                  onMouseEnter={e=>{(e.currentTarget as HTMLAnchorElement).style.borderColor='#2A3145';(e.currentTarget as HTMLAnchorElement).style.color='#EDF0F7';}}
+                  onMouseLeave={e=>{(e.currentTarget as HTMLAnchorElement).style.borderColor='#1A1F2E';(e.currentTarget as HTMLAnchorElement).style.color='#9098AE';}}>
+                  Iniciar sesión
+                </Link>
+                <a href={CHECKOUT_URL} style={{ display:'flex', alignItems:'center', gap:7, padding:'8px 20px', borderRadius:8, background:'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color:'#06080E', fontSize:13.5, fontWeight:700, textDecoration:'none', boxShadow:'0 0 20px rgba(91,155,255,0.25)' }}>
+                  Crear cuenta gratis <Ic n="arrow" size={13} col="#06080E" />
+                </a>
+              </>
+            )}
+          </div>
+          <button className="nb" onClick={()=>setMob(v=>!v)} style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', color:'#9098AE', padding:4 }}>
+            <Ic n={mob?'x':'menu'} size={22} />
+          </button>
         </div>
-        {/* Cards */}
-        <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gap: 12 }}>
-          <div style={{ background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', borderRadius: 16, padding: '22px 20px' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.7, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#0C0E14' }}>Balance total</div>
-            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', color: '#0C0E14', marginBottom: 4 }}>₡2,847,500</div>
-            <div style={{ fontSize: 12, opacity: 0.6, color: '#0C0E14', marginBottom: 16 }}>+₡127,000 este mes</div>
-            <div style={{ height: 40, background: 'rgba(0,0,0,0.15)', borderRadius: 8, display: 'flex', alignItems: 'flex-end', padding: '4px', gap: 3 }}>
-              {[30,50,45,68,55,82,65,90,72,88,70,95].map((h, i) => (
-                <div key={i} style={{ flex: 1, height: `${h}%`, background: 'rgba(255,255,255,0.5)', borderRadius: 2 }} />
-              ))}
+        {mob && (
+          <div style={{ background:'#0C0F1A', borderTop:'1px solid #1A1F2E', padding:'16px 28px 24px' }}>
+            {links.map((l,i)=>(
+              <a key={l} href={hrefs[i]} onClick={()=>setMob(false)} style={{ display:'block', padding:'12px 0', fontSize:15, fontWeight:500, color:'#9098AE', textDecoration:'none', borderBottom:'1px solid #1A1F2E' }}>{l}</a>
+            ))}
+            <div style={{ marginTop:16, display:'flex', flexDirection:'column', gap:10 }}>
+              <Link href="/login" style={{ textAlign:'center', padding:'12px', borderRadius:8, border:'1px solid #1A1F2E', color:'#9098AE', fontSize:14, fontWeight:600, textDecoration:'none' }}>Iniciar sesión</Link>
+              <a href={CHECKOUT_URL} style={{ textAlign:'center', padding:'12px', borderRadius:8, background:'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color:'#06080E', fontSize:14, fontWeight:700, textDecoration:'none' }}>Crear cuenta gratis →</a>
             </div>
           </div>
-          <div style={{ background: '#10141F', border: '1px solid #232A3D', borderRadius: 16, padding: '18px' }}>
-            <div style={{ fontSize: 10, color: '#626B85', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Ingresos</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#4FE0A9', letterSpacing: '-0.02em', marginBottom: 6 }}>₡1,900,000</div>
-            <div style={{ fontSize: 11, color: '#626B85' }}>↑ 8% vs mes anterior</div>
+        )}
+      </nav>
+    </>
+  );
+}
+
+/* ─── Hero ──────────────────────────────────────────────────────────── */
+function Hero() {
+  return (
+    <section id="hero" style={{ paddingTop:130, paddingBottom:80, position:'relative', overflow:'hidden' }}>
+      {/* BG glows */}
+      <div style={{ position:'absolute', top:'-10%', right:'-5%', width:700, height:700, background:'radial-gradient(circle, rgba(91,155,255,0.07) 0%, transparent 65%)', pointerEvents:'none' }} />
+      <div style={{ position:'absolute', bottom:'10%', left:'-10%', width:500, height:500, background:'radial-gradient(circle, rgba(91,229,209,0.05) 0%, transparent 65%)', pointerEvents:'none' }} />
+
+      <div style={{ maxWidth:1200, margin:'0 auto', padding:'0 28px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:60, alignItems:'center' }}>
+        {/* Left */}
+        <div>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'5px 12px', borderRadius:6, background:'rgba(79,224,169,0.08)', border:'1px solid rgba(79,224,169,0.2)', marginBottom:28 }}>
+            <div style={{ width:7, height:7, borderRadius:'50%', background:'#4FE0A9', boxShadow:'0 0 6px #4FE0A9' }} />
+            <span style={{ fontSize:12, fontWeight:600, color:'#4FE0A9', letterSpacing:'0.04em' }}>Construida para LATAM · v2.5 en producción</span>
           </div>
-          <div style={{ background: '#10141F', border: '1px solid #232A3D', borderRadius: 16, padding: '18px' }}>
-            <div style={{ fontSize: 10, color: '#626B85', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Gastos</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#FF6B83', letterSpacing: '-0.02em', marginBottom: 6 }}>₡1,247,000</div>
-            <div style={{ fontSize: 11, color: '#626B85' }}>↓ 3% vs mes anterior</div>
+
+          <h1 style={{ fontSize:'clamp(38px,4.5vw,62px)', fontWeight:800, letterSpacing:'-0.04em', lineHeight:1.07, color:'#EDF0F7', marginBottom:24 }}>
+            Tus finanzas,{' '}
+            <span style={{ display:'inline-flex', alignItems:'center', gap:8, background:'linear-gradient(135deg,rgba(91,229,209,0.12),rgba(91,155,255,0.12))', border:'1px solid rgba(91,155,255,0.25)', borderRadius:10, padding:'2px 14px', fontFamily:'var(--font-mono)', color:'#5B9BFF' }}>
+              &lt;/&gt; multimoneda
+            </span>
+            <br />
+            <span style={{ background:'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
+              precisión absoluta.
+            </span>
+          </h1>
+
+          <p style={{ fontSize:'clamp(15px,1.6vw,17px)', color:'#7A82A0', lineHeight:1.7, maxWidth:480, marginBottom:36 }}>
+            CoinDev es la app de finanzas personales pensada para América Latina. Registrá ingresos, controlá presupuestos, alcanzá metas y manejá pesos, soles, colones y dólares con tipos de cambio en vivo — todo en un solo lugar.
+          </p>
+
+          <div style={{ display:'flex', flexWrap:'wrap', gap:12, marginBottom:36 }}>
+            <a href={CHECKOUT_URL} style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'13px 26px', borderRadius:9, background:'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color:'#06080E', fontSize:14.5, fontWeight:700, textDecoration:'none', boxShadow:'0 8px 28px rgba(91,155,255,0.3)' }}>
+              Crear cuenta gratis <Ic n="arrow" size={15} col="#06080E" />
+            </a>
+            <Link href="/login" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'13px 22px', borderRadius:9, background:'transparent', color:'#9098AE', border:'1px solid #1A1F2E', fontSize:14.5, fontWeight:600, textDecoration:'none' }}>
+              Iniciar sesión
+            </Link>
           </div>
-          <div style={{ background: '#10141F', border: '1px solid #232A3D', borderRadius: 14, padding: '14px 16px', gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-            {[
-              { name: 'BAC Colones', bal: '₡1,240,000', col: '#5B9BFF' },
-              { name: 'BAC Dólares', bal: '$1,200', col: '#4FE0A9' },
-              { name: 'Efectivo', bal: '₡85,000', col: '#F2C94C' },
-            ].map((a, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 9, background: `${a.col}22`, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: a.col }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#EDF0F7' }}>{a.name}</div>
-                  <div style={{ fontSize: 11, color: '#626B85', fontFamily: 'monospace' }}>{a.bal}</div>
-                </div>
+
+          <div style={{ display:'flex', gap:24, flexWrap:'wrap' }}>
+            {[{icon:'shield',txt:'Sin tarjeta requerida'},{icon:'lock',txt:'Datos 100% privados'},{icon:'zap',txt:'7 días gratis'}].map(b=>(
+              <div key={b.txt} style={{ display:'flex', alignItems:'center', gap:6 }}>
+                <Ic n={b.icon} size={14} col="#5B9BFF" />
+                <span style={{ fontSize:12.5, color:'#626B85', fontWeight:500 }}>{b.txt}</span>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Right — App mockup */}
+        <HeroMockup />
       </div>
-      <div style={{ position: 'absolute', bottom: -14, right: -10, background: '#10141F', border: '1px solid #232A3D', borderRadius: 14, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 12px 30px rgba(0,0,0,0.5)' }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4FE0A9', boxShadow: '0 0 6px #4FE0A9' }} />
-        <span style={{ fontSize: 12, fontWeight: 600, color: '#EDF0F7' }}>En tiempo real</span>
+
+      {/* Responsive hero */}
+      <style>{`@media(max-width:860px){ .hero-grid{ grid-template-columns:1fr!important; } .hero-mockup{ display:none!important; } }`}</style>
+    </section>
+  );
+}
+
+function HeroMockup() {
+  return (
+    <div className="hero-mockup" style={{ position:'relative' }}>
+      {/* Floating "ahorro este mes" badge */}
+      <div style={{ position:'absolute', top:-18, right:20, zIndex:10, background:'rgba(16,20,31,0.95)', border:'1px solid #232A3D', borderRadius:12, padding:'10px 16px', backdropFilter:'blur(12px)', boxShadow:'0 12px 32px rgba(0,0,0,0.5)' }}>
+        <div style={{ fontSize:10, fontWeight:700, color:'#626B85', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:4 }}>Ahorro este mes</div>
+        <div style={{ fontSize:20, fontWeight:800, color:'#4FE0A9', letterSpacing:'-0.03em' }}>+₡ 653,000</div>
+      </div>
+
+      <div style={{ background:'#0D1120', border:'1px solid #1A1F2E', borderRadius:18, overflow:'hidden', boxShadow:'0 32px 80px -8px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.03)' }}>
+        {/* Nav tabs */}
+        <div style={{ background:'#0A0D18', padding:'14px 20px', display:'flex', alignItems:'center', gap:4, borderBottom:'1px solid #1A1F2E' }}>
+          {['Inicio','Movimientos','Cuentas','Reportes'].map((t,i)=>(
+            <button key={t} style={{ padding:'6px 14px', borderRadius:7, fontSize:12.5, fontWeight: i===0?600:400, color: i===0?'#EDF0F7':'#626B85', background: i===0?'#161C2E':'transparent', border:'none', cursor:'pointer' }}>{t}</button>
+          ))}
+          <div style={{ marginLeft:'auto', display:'flex', gap:4 }}>
+            {['#5B9BFF','#4FE0A9','#9F7BFF'].map(c=><div key={c} style={{ width:9, height:9, borderRadius:'50%', background:c, opacity:0.7 }} />)}
+          </div>
+        </div>
+
+        <div style={{ padding:20 }}>
+          {/* Balance header */}
+          <div style={{ marginBottom:16 }}>
+            <div style={{ fontSize:10, fontWeight:600, color:'#424A62', letterSpacing:'0.07em', textTransform:'uppercase', marginBottom:6 }}>BALANCE NETO · NOVIEMBRE</div>
+            <div style={{ display:'flex', alignItems:'flex-end', gap:12 }}>
+              <span style={{ fontSize:34, fontWeight:800, letterSpacing:'-0.04em', color:'#EDF0F7', fontFamily:'var(--font-mono)' }}>₡ 2,847,500</span>
+              <div style={{ marginBottom:6, display:'flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:6, background:'rgba(79,224,169,0.12)', border:'1px solid rgba(79,224,169,0.2)' }}>
+                <span style={{ fontSize:11, fontWeight:700, color:'#4FE0A9' }}>↑ 12.4%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Cards row */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+            <div style={{ background:'#0A0D18', border:'1px solid #1A1F2E', borderRadius:12, padding:'14px' }}>
+              <div style={{ fontSize:10, color:'#424A62', fontWeight:600, letterSpacing:'0.07em', textTransform:'uppercase', marginBottom:8 }}>INGRESOS</div>
+              <div style={{ fontSize:20, fontWeight:800, color:'#4FE0A9', letterSpacing:'-0.02em', marginBottom:8, fontFamily:'var(--font-mono)' }}>+₡ 1,900,000</div>
+              <Sparkline color="#4FE0A9" data={[30,55,42,70,58,82,65,90,72,88,75,95]} />
+            </div>
+            <div style={{ background:'#0A0D18', border:'1px solid #1A1F2E', borderRadius:12, padding:'14px' }}>
+              <div style={{ fontSize:10, color:'#424A62', fontWeight:600, letterSpacing:'0.07em', textTransform:'uppercase', marginBottom:8 }}>GASTOS</div>
+              <div style={{ fontSize:20, fontWeight:800, color:'#FF6B83', letterSpacing:'-0.02em', marginBottom:8, fontFamily:'var(--font-mono)' }}>-₡ 1,247,000</div>
+              <Sparkline color="#FF6B83" data={[80,60,75,45,65,40,55,70,50,60,45,52]} />
+            </div>
+          </div>
+
+          {/* Donut + categories */}
+          <div style={{ background:'#0A0D18', border:'1px solid #1A1F2E', borderRadius:12, padding:'14px', display:'flex', alignItems:'center', gap:20 }}>
+            <DonutChart />
+            <div style={{ flex:1 }}>
+              {[{l:'Vivienda',pct:32,c:'#5B9BFF'},{l:'Comida',pct:24,c:'#9F7BFF'},{l:'Transporte',pct:18,c:'#4FE0A9'},{l:'Ocio',pct:14,c:'#FF8BB5'}].map(cat=>(
+                <div key={cat.l} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <div style={{ width:7, height:7, borderRadius:'50%', background:cat.c }} />
+                    <span style={{ fontSize:11.5, color:'#9098AE' }}>{cat.l}</span>
+                  </div>
+                  <span style={{ fontSize:11.5, fontWeight:600, color:'#626B85', fontFamily:'var(--font-mono)' }}>{cat.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-/* ── Stats ──────────────────────────────────────────────────────────── */
-function Stats() {
+function Sparkline({ color, data }: { color: string; data: number[] }) {
+  const w = 120, h = 32;
+  const max = Math.max(...data), min = Math.min(...data);
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((v - min) / (max - min)) * h;
+    return `${x},${y}`;
+  }).join(' ');
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" opacity={0.8} />
+    </svg>
+  );
+}
+
+function DonutChart() {
+  const segments = [
+    { pct: 32, color: '#5B9BFF' },
+    { pct: 24, color: '#9F7BFF' },
+    { pct: 18, color: '#4FE0A9' },
+    { pct: 14, color: '#FF8BB5' },
+    { pct: 12, color: '#F2C94C' },
+  ];
+  const r = 28, cx = 36, cy = 36, gap = 2;
+  let angle = -90;
+  const paths = segments.map(s => {
+    const a1 = angle, a2 = angle + (s.pct / 100) * 360 - gap;
+    angle += (s.pct / 100) * 360;
+    const x1 = cx + r * Math.cos((a1 * Math.PI) / 180);
+    const y1 = cy + r * Math.sin((a1 * Math.PI) / 180);
+    const x2 = cx + r * Math.cos((a2 * Math.PI) / 180);
+    const y2 = cy + r * Math.sin((a2 * Math.PI) / 180);
+    const large = a2 - a1 > 180 ? 1 : 0;
+    return <path key={s.color} d={`M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`} fill="none" stroke={s.color} strokeWidth={8} strokeLinecap="round" />;
+  });
+  return (
+    <svg width={72} height={72} viewBox="0 0 72 72">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1A1F2E" strokeWidth={8} />
+      {paths}
+      <text x={cx} y={cy - 3} textAnchor="middle" fontSize={14} fontWeight={800} fill="#EDF0F7">6</text>
+      <text x={cx} y={cy + 9} textAnchor="middle" fontSize={7} fill="#626B85">CAT.</text>
+    </svg>
+  );
+}
+
+/* ─── Module Section ─────────────────────────────────────────────────── */
+function Modules() {
+  return (
+    <section id="modulos" style={{ padding:'100px 28px', background:'#06080E' }}>
+      <div style={{ maxWidth:1200, margin:'0 auto' }}>
+        {/* Header */}
+        <div style={{ marginBottom:60 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
+            <div style={{ width:32, height:1, background:'#5B9BFF' }} />
+            <span style={{ fontSize:11, fontWeight:700, color:'#5B9BFF', textTransform:'uppercase', letterSpacing:'0.12em' }}>SEIS MÓDULOS · UNA SOLA APP</span>
+          </div>
+          <h2 style={{ fontSize:'clamp(30px,3.5vw,50px)', fontWeight:800, letterSpacing:'-0.04em', color:'#EDF0F7', lineHeight:1.1, maxWidth:680 }}>
+            Todo lo que necesitás para entender, decidir y crecer financieramente.
+          </h2>
+          <p style={{ fontSize:'clamp(14px,1.6vw,17px)', color:'#626B85', lineHeight:1.7, maxWidth:560, marginTop:16 }}>
+            Desde el primer movimiento hasta tu meta de un año. CoinDev une cuentas, presupuestos, metas y divisas en flujos diseñados para el día a día latinoamericano.
+          </p>
+        </div>
+
+        {/* Top 2 big cards */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
+          <ModuleCard
+            path="/dashboard/movimientos"
+            icon="swap" color="#5B9BFF"
+            title="Movimientos con contexto"
+            desc="Cada ingreso o gasto categorizado, fechado y asociado a una cuenta. Filtrá, buscá y exportá tu historial completo."
+            mockup={<MovimientosMock />}
+          />
+          <ModuleCard
+            path="/dashboard/cuentas"
+            icon="wallet" color="#4FE0A9"
+            title="Cuentas multi-moneda"
+            desc="Bancarias, ahorro, efectivo y tarjetas. Cada cuenta en su moneda nativa. El dashboard consolida todo en CRC o USD."
+            mockup={<CuentasMock />}
+          />
+        </div>
+
+        {/* Bottom 3 cards */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16, marginBottom:16 }}>
+          <ModuleCard
+            path="/dashboard/presupuestos"
+            icon="chart" color="#9F7BFF"
+            title="Presupuestos con alerta"
+            desc="Definí límites por categoría y CoinDev te avisa al 80%."
+            mockup={<PresupuestosMock />}
+          />
+          <ModuleCard
+            path="/dashboard/metas"
+            icon="target" color="#FF8BB5"
+            title="Metas con aportes reales"
+            desc="Cada abono descuenta de una cuenta y suma al progreso. Con historial."
+            mockup={<MetasMock />}
+          />
+          <ModuleCard
+            path="/dashboard/gastos-fijos"
+            icon="repeat" color="#F2C94C"
+            title="Gastos fijos sin sorpresas"
+            desc="Alquiler, suscripciones, servicios. Próxima fecha y total comprometido."
+            mockup={<GastosFijosMock />}
+          />
+        </div>
+
+        {/* Bottom 2 cards */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+          <ModuleCard
+            path="/dashboard"
+            icon="dollar" color="#5BE5D1"
+            title="Tipos de cambio, en vivo"
+            desc="USD, EUR y más divisas LATAM sincronizadas. El total de tus cuentas se convierte automáticamente para comparación unificada."
+            mockup={<DivisasMock />}
+          />
+          <ModuleCard
+            path="/dashboard/reportes"
+            icon="barChart" color="#5B9BFF"
+            title="Reportes que sí entendés"
+            desc="Evolución anual de ingresos vs gastos, desglose por categoría y tendencias. Decisiones con datos, no con corazonadas."
+            mockup={<ReportesMock />}
+          />
+        </div>
+      </div>
+
+      <style>{`
+        @media(max-width:860px){
+          .mod-top{ grid-template-columns:1fr!important; }
+          .mod-bot3{ grid-template-columns:1fr!important; }
+          .mod-bot2{ grid-template-columns:1fr!important; }
+        }
+      `}</style>
+    </section>
+  );
+}
+
+function ModuleCard({ path, icon, color, title, desc, mockup }: {
+  path: string; icon: string; color: string; title: string; desc: string; mockup: React.ReactNode;
+}) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)} style={{ background:'#0D1120', border:`1px solid ${hov ? color+'33' : '#1A1F2E'}`, borderRadius:18, padding:'24px', transition:'border-color 200ms, transform 200ms', transform: hov ? 'translateY(-2px)' : 'none', overflow:'hidden' }}>
+      <div style={{ fontSize:10, fontWeight:700, color:'#424A62', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:14 }}>{path}</div>
+      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
+        <div style={{ width:38, height:38, borderRadius:10, background:color+'18', display:'grid', placeItems:'center' }}>
+          <Ic n={icon} size={18} col={color} />
+        </div>
+      </div>
+      <h3 style={{ fontSize:18, fontWeight:700, color:'#EDF0F7', letterSpacing:'-0.025em', marginBottom:8, lineHeight:1.25 }}>{title}</h3>
+      <p style={{ fontSize:13, color:'#626B85', lineHeight:1.65, marginBottom:20 }}>{desc}</p>
+      <div style={{ borderTop:'1px solid #1A1F2E', paddingTop:18 }}>{mockup}</div>
+    </div>
+  );
+}
+
+/* ─── Module mini-mockups ─────────────────────────────────────────────── */
+function MovimientosMock() {
   const items = [
-    { value: '18+', label: 'Monedas LATAM soportadas' },
-    { value: '6', label: 'Módulos completamente funcionales' },
-    { value: '100%', label: 'Datos privados y cifrados' },
-    { value: '$4.99', label: 'Al mes, todo incluido' },
+    { cat:'Salario', amount:'+₡950,000', color:'#4FE0A9', date:'30 nov' },
+    { cat:'Supermercado', amount:'-₡48,500', color:'#FF6B83', date:'28 nov' },
+    { cat:'Netflix', amount:'-₡9,500', color:'#FF6B83', date:'25 nov' },
+    { cat:'Freelance', amount:'+₡180,000', color:'#4FE0A9', date:'22 nov' },
   ];
   return (
-    <section style={{ padding: '48px 24px', borderTop: '1px solid #232A3D', borderBottom: '1px solid #232A3D' }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 24, textAlign: 'center' }}>
-        {items.map(s => (
-          <div key={s.label}>
-            <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-0.04em', background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 6 }}>{s.value}</div>
-            <div style={{ fontSize: 13, color: '#626B85', fontWeight: 500 }}>{s.label}</div>
+    <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+      {items.map((t,i)=>(
+        <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ width:8, height:8, borderRadius:'50%', background:t.color, flexShrink:0 }} />
+            <span style={{ fontSize:12, color:'#9098AE' }}>{t.cat}</span>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <span style={{ fontSize:10, color:'#424A62' }}>{t.date}</span>
+            <span style={{ fontSize:12, fontWeight:700, color:t.color, fontFamily:'var(--font-mono)' }}>{t.amount}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CuentasMock() {
+  const accs = [
+    { name:'BAC Colones', bal:'₡1,240,000', color:'#5B9BFF' },
+    { name:'BAC Dólares', bal:'$1,200', color:'#4FE0A9' },
+    { name:'Efectivo', bal:'₡85,000', color:'#F2C94C' },
+  ];
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+      {accs.map((a,i)=>(
+        <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'#0A0D18', borderRadius:10, border:'1px solid #1A1F2E' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:28, height:28, borderRadius:8, background:a.color+'22', display:'grid', placeItems:'center' }}>
+              <div style={{ width:9, height:9, borderRadius:'50%', background:a.color }} />
+            </div>
+            <span style={{ fontSize:12.5, fontWeight:600, color:'#C8D0E4' }}>{a.name}</span>
+          </div>
+          <span style={{ fontSize:12.5, fontWeight:700, color:'#EDF0F7', fontFamily:'var(--font-mono)' }}>{a.bal}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PresupuestosMock() {
+  const items = [
+    { cat:'Comida', spent:4200, limit:5400, color:'#9F7BFF' },
+    { cat:'Transporte', spent:2600, limit:2700, color:'#F2C94C' },
+    { cat:'Ocio', spent:1000, limit:3000, color:'#5B9BFF' },
+  ];
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+      {items.map((b,i)=>{
+        const pct = Math.min(100, (b.spent/b.limit)*100);
+        const over = pct > 80;
+        return (
+          <div key={i}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
+              <span style={{ fontSize:12, color:'#9098AE' }}>{b.cat}</span>
+              <span style={{ fontSize:11, color:'#626B85', fontFamily:'var(--font-mono)' }}>$ {(b.spent/1000).toFixed(1)}k / {(b.limit/1000).toFixed(1)}k</span>
+            </div>
+            <div style={{ height:5, background:'#1A1F2E', borderRadius:999, overflow:'hidden' }}>
+              <div style={{ width:`${pct}%`, height:'100%', background: over ? b.color : b.color, borderRadius:999, opacity: over ? 1 : 0.7 }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function MetasMock() {
+  const r = 32, cx = 40, cy = 40;
+  const pct = 62;
+  const angle = (pct / 100) * 360 - 90;
+  const x2 = cx + r * Math.cos((angle * Math.PI) / 180);
+  const y2 = cy + r * Math.sin((angle * Math.PI) / 180);
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:20 }}>
+      <svg width={80} height={80} viewBox="0 0 80 80">
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1A1F2E" strokeWidth={7} />
+        <path d={`M ${cx} ${cy-r} A ${r} ${r} 0 ${pct>50?1:0} 1 ${x2} ${y2}`} fill="none" stroke="#FF8BB5" strokeWidth={7} strokeLinecap="round" />
+        <text x={cx} y={cy-2} textAnchor="middle" fontSize={14} fontWeight={800} fill="#EDF0F7">{pct}%</text>
+        <text x={cx} y={cy+10} textAnchor="middle" fontSize={8} fill="#626B85">avance</text>
+      </svg>
+      <div>
+        <div style={{ fontSize:13, fontWeight:700, color:'#EDF0F7', marginBottom:4 }}>✈ Viaje a Japón</div>
+        <div style={{ fontSize:11, color:'#626B85', marginBottom:4, fontFamily:'var(--font-mono)' }}>$ 3,100 / $ 5,000</div>
+        <div style={{ fontSize:11, color:'#FF8BB5', fontWeight:600 }}>faltan 142 días</div>
+      </div>
+    </div>
+  );
+}
+
+function GastosFijosMock() {
+  const items = [
+    { icon:'🏠', name:'Renta', date:'04 dic', amount:'-$12,500' },
+    { icon:'📺', name:'Netflix', date:'12 dic', amount:'-$15.99' },
+    { icon:'📶', name:'Internet', date:'18 dic', amount:'-$599' },
+  ];
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+      {items.map((g,i)=>(
+        <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 12px', background:'#0A0D18', borderRadius:9, border:'1px solid #1A1F2E' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:14 }}>{g.icon}</span>
+            <span style={{ fontSize:12.5, color:'#C8D0E4', fontWeight:500 }}>{g.name}</span>
+          </div>
+          <div style={{ textAlign:'right' }}>
+            <div style={{ fontSize:10, color:'#424A62', marginBottom:2 }}>{g.date}</div>
+            <div style={{ fontSize:12, fontWeight:700, color:'#FF6B83', fontFamily:'var(--font-mono)' }}>{g.amount}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DivisasMock() {
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
+      {[
+        { pair:'USD/CRC', rate:'512.34', delta:'+0.42', up:true },
+        { pair:'USD/MXN', rate:'17.18',  delta:'-0.09', up:false },
+        { pair:'USD/COP', rate:'4,128',  delta:'-2.10', up:false },
+        { pair:'USD/PEN', rate:'3.762',  delta:'+0.014', up:true },
+        { pair:'EUR/USD', rate:'1.0842', delta:'+0.002', up:true },
+        { pair:'USD/ARS', rate:'987.50', delta:'+1.30',  up:true },
+      ].map(r=>(
+        <div key={r.pair} style={{ padding:'10px 12px', background:'#0A0D18', border:'1px solid #1A1F2E', borderRadius:10 }}>
+          <div style={{ fontSize:10, fontWeight:700, color:'#5B9BFF', letterSpacing:'0.04em', marginBottom:4 }}>{r.pair}</div>
+          <div style={{ fontSize:13, fontWeight:800, color:'#EDF0F7', fontFamily:'var(--font-mono)', marginBottom:3 }}>{r.rate}</div>
+          <div style={{ fontSize:10, fontWeight:600, color: r.up?'#4FE0A9':'#FF6B83' }}>{r.up?'▲':'▼'} {r.delta}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ReportesMock() {
+  const months = ['E','F','M','A','M','J','J','A','S','O','N','D'];
+  const inc =    [70, 80, 75, 85, 78, 90, 82, 88, 80, 92, 85, 95];
+  const exp =    [55, 60, 58, 65, 52, 68, 60, 70, 58, 72, 62, 68];
+  const maxV = 100;
+  return (
+    <div>
+      <div style={{ display:'flex', alignItems:'flex-end', gap:4, height:60, marginBottom:6 }}>
+        {months.map((m,i)=>(
+          <div key={m} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+            <div style={{ width:'100%', display:'flex', gap:1, alignItems:'flex-end', height:52 }}>
+              <div style={{ flex:1, background:'#4FE0A9', borderRadius:'2px 2px 0 0', height:`${(inc[i]/maxV)*52}px`, opacity:0.8 }} />
+              <div style={{ flex:1, background:'#FF6B83', borderRadius:'2px 2px 0 0', height:`${(exp[i]/maxV)*52}px`, opacity:0.8 }} />
+            </div>
+            <span style={{ fontSize:8, color:'#424A62' }}>{m}</span>
           </div>
         ))}
       </div>
-    </section>
-  );
-}
-
-/* ── Features ───────────────────────────────────────────────────────── */
-const FEATURES = [
-  { icon: 'wallet',   color: '#5B9BFF', title: 'Cuentas multi-moneda',      desc: 'Agrega cuentas bancarias, de ahorros, efectivo y tarjetas. Cada cuenta maneja su propia moneda: CRC, USD, MXN y más.' },
-  { icon: 'swap',     color: '#4FE0A9', title: 'Movimientos categorizados', desc: 'Registra ingresos y gastos con categorías inteligentes. Filtra por fecha, tipo y cuenta. Historial completo siempre disponible.' },
-  { icon: 'chart',    color: '#9F7BFF', title: 'Presupuestos mensuales',    desc: 'Define límites por categoría y visualiza tu progreso con barras de avance y alertas cuando te acercas al límite.' },
-  { icon: 'target',   color: '#FF8BB5', title: 'Metas de ahorro',           desc: 'Crea objetivos con fechas límite. Abona desde cualquier cuenta — si las monedas difieren, CoinDev convierte automáticamente.' },
-  { icon: 'repeat',   color: '#F2C94C', title: 'Gastos fijos',              desc: 'Alquiler, Netflix, servicios... todos tus pagos recurrentes en un solo lugar. Nunca más olvides un pago importante.' },
-  { icon: 'trending', color: '#5BE5D1', title: 'Reportes y análisis',       desc: 'Gráfica de evolución anual, desglose por categoría y comparativa mensual. Entiende tus finanzas con datos reales.' },
-];
-
-function Features() {
-  return (
-    <section id="features" style={{ padding: '96px 24px' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <SectionBadge text="Módulos" />
-        <h2 style={sectionTitle}>Todo lo que necesitas para controlar tu dinero</h2>
-        <p style={sectionSub}>Seis módulos diseñados para trabajar juntos. Sin complicaciones, sin curva de aprendizaje.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 18 }}>
-          {FEATURES.map(f => (
-            <div key={f.title} style={{ background: '#10141F', border: '1px solid #232A3D', borderRadius: 20, padding: '28px', transition: 'border-color 200ms, transform 200ms' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = f.color + '55'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#232A3D'; (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: f.color + '18', display: 'grid', placeItems: 'center', marginBottom: 18 }}>
-                <Icon name={f.icon} size={20} color={f.color} />
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#EDF0F7', marginBottom: 8, letterSpacing: '-0.02em' }}>{f.title}</div>
-              <div style={{ fontSize: 13.5, color: '#626B85', lineHeight: 1.65 }}>{f.desc}</div>
-            </div>
-          ))}
+      <div style={{ display:'flex', gap:14 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+          <div style={{ width:8, height:8, borderRadius:2, background:'#4FE0A9' }} />
+          <span style={{ fontSize:10, color:'#626B85' }}>Ingresos</span>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+          <div style={{ width:8, height:8, borderRadius:2, background:'#FF6B83' }} />
+          <span style={{ fontSize:10, color:'#626B85' }}>Gastos</span>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
-/* ── Manual ─────────────────────────────────────────────────────────── */
-const MODULES = [
-  {
-    id: 'cuentas', icon: 'wallet', color: '#5B9BFF', title: 'Cuentas',
-    intro: 'Las cuentas son la base de CoinDev. Representan tus activos financieros reales y definen la moneda de tus movimientos.',
-    steps: [
-      { t: 'Crear una cuenta', d: 'Ve a "Cuentas" y toca "+". Elige el tipo (banco, ahorros, efectivo o tarjeta de crédito), asígnale nombre, color, moneda nativa y saldo inicial. Toma menos de 1 minuto.' },
-      { t: 'Tipos de cuenta', d: 'Cuenta bancaria: cuentas corrientes. Ahorros: cuentas de ahorro. Efectivo: dinero físico. Tarjeta de crédito: define el límite y los últimos 4 dígitos para identificarla.' },
-      { t: 'Moneda por cuenta', d: 'Cada cuenta tiene su propia moneda. Los movimientos heredan esa moneda. El dashboard convierte todo a CRC usando el tipo de cambio en tiempo real para el total.' },
-      { t: 'Editar y gestionar', d: 'Usa el menú (⋯) de cada cuenta para editar nombre, color o límite de crédito. La moneda no puede cambiarse después de crear la cuenta.' },
-    ],
-    tips: ['Crea una cuenta por cada cuenta bancaria real', 'El saldo inicial debe reflejar el saldo actual hoy', 'Usa colores distintos para diferenciar visualmente tus cuentas'],
-  },
-  {
-    id: 'movimientos', icon: 'swap', color: '#4FE0A9', title: 'Movimientos',
-    intro: 'El historial completo de tu vida financiera. Cada ingreso y gasto categorizado y disponible siempre.',
-    steps: [
-      { t: 'Registrar un movimiento', d: 'Toca el botón "+" o usa el triple-tap en "Inicio" como atajo rápido. Elige tipo (ingreso/gasto), cuenta, monto, categoría y fecha. Opcionalmente agrega descripción.' },
-      { t: 'Categorías disponibles', d: 'Ingresos: Salario, Freelance, Inversiones, Bonos, Otros. Gastos: Alquiler, Supermercado, Comida, Transporte, Salud, Educación, Entretenimiento, Suscripciones, Ropa, Tecnología, Servicios, Tarjeta, Mascotas, Viajes, Otros.' },
-      { t: 'Gastos fijos', d: 'Activa "Gasto fijo" al registrar para marcarlo como recurrente. CoinDev lo vincula automáticamente al módulo de Gastos Fijos y te avisa en los próximos ciclos.' },
-      { t: 'Filtros y búsqueda', d: 'En Movimientos filtra por tipo, mes y cuenta. La barra de búsqueda encuentra movimientos por descripción o categoría en tiempo real.' },
-    ],
-    tips: ['Registra en el momento para no olvidar', 'Usa la descripción para detalles como # de factura', 'Los montos se muestran en la moneda nativa de la cuenta'],
-  },
-  {
-    id: 'presupuestos', icon: 'chart', color: '#9F7BFF', title: 'Presupuestos',
-    intro: 'Decide cuánto quieres gastar por categoría cada mes y monitorea en tiempo real si vas bien o te estás pasando.',
-    steps: [
-      { t: 'Crear un presupuesto', d: 'Ve a Presupuestos y toca "+". Selecciona la categoría, la moneda del presupuesto y el límite mensual. Un presupuesto por categoría.' },
-      { t: 'Barra de progreso', d: 'Cada presupuesto muestra el gasto actual vs. el límite con una barra de progreso. Amarillo al superar 80%, rojo si excedes el límite.' },
-      { t: 'Cálculo automático', d: 'CoinDev suma automáticamente todos los gastos de esa categoría en el mes actual. Sin intervención manual de tu parte.' },
-      { t: 'Editar presupuestos', d: 'Usa el menú (⋯) para editar el límite mensual. Para cambiar la categoría, elimina y crea uno nuevo.' },
-    ],
-    tips: ['Empieza con las categorías donde más gastas', 'Revisa semanalmente para ajustar el ritmo', 'Un presupuesto de "Varios" te ayuda a capturar gastos inesperados'],
-  },
-  {
-    id: 'metas', icon: 'target', color: '#FF8BB5', title: 'Metas de ahorro',
-    intro: 'Define tus objetivos financieros y ve exactamente cuánto falta y cuánto deberías ahorrar por mes para llegar.',
-    steps: [
-      { t: 'Crear una meta', d: 'Ve a Metas y toca "+". Elige ícono y nombre, selecciona la moneda de la meta, el monto objetivo y opcionalmente una fecha límite.' },
-      { t: 'Abonar a una meta', d: 'Toca "Abonar" en cualquier meta activa. Selecciona la cuenta de origen e ingresa el monto. Si la cuenta tiene moneda distinta a la meta, verás la equivalencia antes de confirmar.' },
-      { t: 'Conversión automática', d: 'Si tu cuenta es CRC y tu meta en USD (o al revés), CoinDev muestra el equivalente usando el tipo de cambio en tiempo real y pide confirmación antes de procesar.' },
-      { t: 'Estados de la meta', d: 'Activa, Pausada o Completada. Cambia el estado desde edición. Historial de todos los abonos disponible en la card expandida.' },
-    ],
-    tips: ['Metas específicas ("Viaje a Europa 2026") funcionan mejor que genéricas', 'CoinDev calcula el ahorro mensual necesario para llegar a tiempo', 'El historial de abonos te muestra tu progreso real'],
-  },
-  {
-    id: 'gastos-fijos', icon: 'repeat', color: '#F2C94C', title: 'Gastos fijos',
-    intro: 'Todos tus pagos recurrentes en un solo lugar — alquiler, suscripciones, servicios. Nunca más olvides un vencimiento.',
-    steps: [
-      { t: '¿Qué es un gasto fijo?', d: 'Es cualquier pago que se repite: mensual, semanal o personalizado. Al crear un movimiento y activar "Gasto fijo", aparece automáticamente en este módulo.' },
-      { t: 'Ver vencimientos', d: 'La pantalla muestra todos los gastos recurrentes con nombre, monto, frecuencia y fecha del próximo pago. Los próximos a vencer se destacan visualmente.' },
-      { t: 'Frecuencias', d: 'Mensual: mismo día de cada mes. Semanal: mismo día de cada semana. Personalizado: define los días exactos entre pagos (ej: cada 15 días).' },
-      { t: 'Gestionar gastos fijos', d: 'Edita monto o frecuencia desde el menú de opciones. Si cancelas una suscripción en la vida real, elimínala de aquí para mantener datos limpios.' },
-    ],
-    tips: ['Revisa esta sección al inicio de cada mes', 'Agrupa los vencimientos por fecha para planificar tu flujo de caja', 'Si cancelas Netflix, elimínalo de inmediato de la lista'],
-  },
-  {
-    id: 'reportes', icon: 'trending', color: '#5BE5D1', title: 'Reportes',
-    intro: 'Entiende cómo ha evolucionado tu dinero en los últimos 12 meses con gráficas claras y datos reales.',
-    steps: [
-      { t: 'Evolución anual', d: 'La gráfica de barras muestra mes a mes tus ingresos (verde) vs gastos (rojo) en los últimos 12 meses. Identifica de un vistazo los meses buenos y malos.' },
-      { t: 'Totales del período', d: 'Arriba de la gráfica: ingresos totales acumulados, gastos totales y balance neto del año. Todo en CRC para comparación uniforme.' },
-      { t: 'Filtro mensual', d: 'Toca cualquier mes en la gráfica para ver el detalle de ese período: desglose por categoría y lista de movimientos de ese mes.' },
-      { t: 'Interpretación', d: 'Verde > Rojo = mes positivo (ahorraste). Rojo > Verde = gastaste más que lo que ganaste. Patrón consistente de ahorro = finanzas saludables.' },
-    ],
-    tips: ['Revisa los reportes una vez al mes', 'Compara el mismo mes de años distintos para ver tu progreso', 'Usa los datos para ajustar presupuestos el mes siguiente'],
-  },
-];
-
-function Manual() {
-  const [activeId, setActiveId] = useState('cuentas');
-  const active = MODULES.find(m => m.id === activeId)!;
-
-  return (
-    <section id="manual" style={{ padding: '96px 24px', background: '#0C111B', borderTop: '1px solid #232A3D', borderBottom: '1px solid #232A3D' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <SectionBadge text="Manual de usuario" />
-        <h2 style={sectionTitle}>Aprende a usar cada módulo</h2>
-        <p style={sectionSub}>Guía completa con paso a paso, ejemplos y tips para aprovechar CoinDev al máximo desde el primer día.</p>
-
-        {/* Module tabs */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 40 }}>
-          {MODULES.map(m => (
-            <button key={m.id} onClick={() => setActiveId(m.id)} style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              padding: '8px 16px', borderRadius: 999,
-              background: activeId === m.id ? m.color + '18' : '#10141F',
-              border: `1.5px solid ${activeId === m.id ? m.color + '55' : '#232A3D'}`,
-              color: activeId === m.id ? m.color : '#9098AE',
-              fontSize: 13, fontWeight: activeId === m.id ? 600 : 400,
-              cursor: 'pointer', transition: 'all 140ms',
-            }}>
-              <Icon name={m.icon} size={14} color={activeId === m.id ? m.color : undefined} />
-              {m.title}
-            </button>
-          ))}
-        </div>
-
-        {/* Content card */}
-        <div style={{ background: '#10141F', border: '1px solid #232A3D', borderRadius: 24, padding: '36px', maxWidth: 820, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid #232A3D' }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: active.color + '18', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-              <Icon name={active.icon} size={24} color={active.color} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: 22, fontWeight: 700, color: '#EDF0F7', letterSpacing: '-0.03em', marginBottom: 6 }}>{active.title}</h3>
-              <p style={{ fontSize: 13.5, color: '#626B85', lineHeight: 1.55 }}>{active.intro}</p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 28 }}>
-            {active.steps.map((step, i) => (
-              <div key={i} style={{ display: 'flex', gap: 16 }}>
-                <div style={{ width: 28, height: 28, borderRadius: '50%', background: active.color + '18', display: 'grid', placeItems: 'center', flexShrink: 0, marginTop: 2 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: active.color }}>{i + 1}</span>
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#EDF0F7', marginBottom: 5 }}>{step.t}</div>
-                  <div style={{ fontSize: 13.5, color: '#9098AE', lineHeight: 1.65 }}>{step.d}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ background: active.color + '0C', border: `1px solid ${active.color}22`, borderRadius: 14, padding: '16px 20px' }}>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: active.color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>💡 Tips profesionales</div>
-            {active.tips.map((tip, i) => (
-              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < active.tips.length - 1 ? 8 : 0 }}>
-                <Icon name="check" size={14} color={active.color} />
-                <span style={{ fontSize: 13, color: '#9098AE', lineHeight: 1.55 }}>{tip}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ── How it works ───────────────────────────────────────────────────── */
-function HowItWorks() {
-  const steps = [
-    { n: '01', icon: 'wallet', color: '#5B9BFF', title: 'Crea tus cuentas', desc: 'Agrega cada cuenta bancaria, tarjeta o cartera con su saldo actual y moneda. Solo toma 2 minutos.' },
-    { n: '02', icon: 'swap',   color: '#4FE0A9', title: 'Registra movimientos', desc: 'Cada vez que ganes o gastes, agrégalo. Con categorías inteligentes verás el patrón de tus finanzas en días.' },
-    { n: '03', icon: 'chart',  color: '#9F7BFF', title: 'Controla y planifica', desc: 'Revisa reportes, ajusta presupuestos y ahorra hacia tus metas. Tus finanzas, finalmente bajo control.' },
+/* ─── Security ───────────────────────────────────────────────────────── */
+function Security() {
+  const items = [
+    { icon:'lock',    color:'#5B9BFF', title:'Row-Level Security', desc:'Tus datos solo son accesibles por vos. Ni el equipo de CoinDev puede leerlos. RLS de Supabase aplicado en cada tabla.' },
+    { icon:'shield',  color:'#4FE0A9', title:'Cifrado en tránsito', desc:'Toda comunicación va por HTTPS/TLS. Nunca enviamos datos sensibles en texto plano.' },
+    { icon:'bell',    color:'#9F7BFF', title:'Sesiones persistentes seguras', desc:'Tus sesiones se mantienen activas de forma segura. Si no usás la app por mucho tiempo, te pedirá autenticarte de nuevo.' },
+    { icon:'zap',     color:'#F2C94C', title:'Sin acceso a tus cuentas bancarias', desc:'CoinDev es 100% manual — vos ingresás los datos. No pedimos credenciales bancarias ni acceso a tu banco.' },
   ];
   return (
-    <section style={{ padding: '96px 24px' }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-        <SectionBadge text="Cómo funciona" />
-        <h2 style={sectionTitle}>En 3 pasos, listo</h2>
-        <p style={sectionSub}>Sin configuraciones complicadas. En menos de 5 minutos tienes CoinDev funcionando con datos reales.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
-          {steps.map((s, i) => (
-            <div key={i} style={{ background: '#10141F', border: '1px solid #232A3D', borderRadius: 20, padding: '32px 28px' }}>
-              <div style={{ fontSize: 52, fontWeight: 800, letterSpacing: '-0.04em', background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1, marginBottom: 20 }}>{s.n}</div>
-              <div style={{ width: 40, height: 40, borderRadius: 12, background: s.color + '18', display: 'grid', placeItems: 'center', marginBottom: 16 }}>
-                <Icon name={s.icon} size={18} color={s.color} />
+    <section id="seguridad" style={{ padding:'100px 28px', background:'#0A0D18', borderTop:'1px solid #1A1F2E', borderBottom:'1px solid #1A1F2E' }}>
+      <div style={{ maxWidth:1100, margin:'0 auto' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
+          <div style={{ width:28, height:1, background:'#4FE0A9' }} />
+          <span style={{ fontSize:11, fontWeight:700, color:'#4FE0A9', textTransform:'uppercase', letterSpacing:'0.12em' }}>SEGURIDAD</span>
+        </div>
+        <h2 style={{ fontSize:'clamp(26px,3vw,42px)', fontWeight:800, letterSpacing:'-0.04em', color:'#EDF0F7', marginBottom:12 }}>Tus datos son tuyos. Sin excepciones.</h2>
+        <p style={{ fontSize:15, color:'#626B85', maxWidth:520, lineHeight:1.7, marginBottom:56 }}>CoinDev está construida con seguridad desde la base, no como parche.</p>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:20 }}>
+          {items.map(s=>(
+            <div key={s.title} style={{ background:'#0D1120', border:'1px solid #1A1F2E', borderRadius:16, padding:'24px' }}>
+              <div style={{ width:40, height:40, borderRadius:10, background:s.color+'16', display:'grid', placeItems:'center', marginBottom:16 }}>
+                <Ic n={s.icon} size={18} col={s.color} />
               </div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: '#EDF0F7', marginBottom: 10, letterSpacing: '-0.02em' }}>{s.title}</div>
-              <div style={{ fontSize: 13.5, color: '#626B85', lineHeight: 1.65 }}>{s.desc}</div>
+              <div style={{ fontSize:15, fontWeight:700, color:'#EDF0F7', marginBottom:8, letterSpacing:'-0.02em' }}>{s.title}</div>
+              <div style={{ fontSize:13, color:'#626B85', lineHeight:1.65 }}>{s.desc}</div>
             </div>
           ))}
         </div>
@@ -470,99 +640,104 @@ function HowItWorks() {
   );
 }
 
-/* ── Pricing ────────────────────────────────────────────────────────── */
-const PLAN_FEATURES = [
-  'Cuentas ilimitadas en cualquier moneda',
-  'Movimientos y categorías ilimitados',
-  'Presupuestos mensuales por categoría',
-  'Metas de ahorro con conversión automática',
-  'Gastos fijos y recurrentes',
-  'Reportes y análisis 12 meses',
-  'Tipo de cambio en tiempo real (USD/CRC)',
-  'PWA — funciona como app nativa en iOS/Android',
-  'Soporte por email en español e inglés',
-  'Datos cifrados y privados (Row-Level Security)',
-];
-
+/* ─── Pricing ────────────────────────────────────────────────────────── */
 function Pricing() {
+  const features = [
+    'Cuentas ilimitadas en 18 monedas LATAM',
+    'Movimientos y categorías sin límite',
+    'Presupuestos mensuales con alertas',
+    'Metas de ahorro con conversión automática',
+    'Gastos fijos y recurrentes',
+    'Reportes de evolución 12 meses',
+    'Tipos de cambio en tiempo real',
+    'PWA — app nativa en iOS y Android',
+    'Soporte en español e inglés',
+    'Datos cifrados con RLS',
+  ];
   return (
-    <section id="pricing" style={{ padding: '96px 24px', background: '#0C111B', borderTop: '1px solid #232A3D' }}>
-      <div style={{ maxWidth: 520, margin: '0 auto', textAlign: 'center' }}>
-        <SectionBadge text="Precio" />
-        <h2 style={sectionTitle}>Un plan. Todo incluido.</h2>
-        <p style={sectionSub}>Sin niveles confusos, sin límites ocultos. Una tarifa fija y acceso completo desde el día uno.</p>
+    <section id="pricing" style={{ padding:'100px 28px', background:'#06080E' }}>
+      <div style={{ maxWidth:1100, margin:'0 auto' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
+          <div style={{ width:28, height:1, background:'#5B9BFF' }} />
+          <span style={{ fontSize:11, fontWeight:700, color:'#5B9BFF', textTransform:'uppercase', letterSpacing:'0.12em' }}>PRECIO</span>
+        </div>
+        <h2 style={{ fontSize:'clamp(26px,3vw,42px)', fontWeight:800, letterSpacing:'-0.04em', color:'#EDF0F7', marginBottom:12 }}>Un plan. Sin complicaciones.</h2>
+        <p style={{ fontSize:15, color:'#626B85', maxWidth:460, lineHeight:1.7, marginBottom:56 }}>Todo incluido desde el primer día. Empezá gratis por 7 días sin tarjeta.</p>
 
-        <div style={{ background: '#10141F', border: '1px solid #232A3D', borderRadius: 24, padding: '40px 36px', position: 'relative', overflow: 'hidden', boxShadow: '0 0 0 1px rgba(91,155,255,0.08), 0 32px 80px -16px rgba(0,0,0,0.7)', textAlign: 'left' }}>
-          {/* Top gradient line */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)' }} />
-
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#626B85', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Plan Pro · Todo incluido</div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 4, marginBottom: 8 }}>
-              <span style={{ fontSize: 22, fontWeight: 700, color: '#626B85', alignSelf: 'flex-start', marginTop: 10 }}>$</span>
-              <span style={{ fontSize: 68, fontWeight: 800, letterSpacing: '-0.05em', color: '#EDF0F7', lineHeight: 1 }}>4.99</span>
-              <span style={{ fontSize: 18, color: '#626B85', marginBottom: 10 }}>/mes</span>
-            </div>
-            <div style={{ fontSize: 13.5, color: '#626B85', marginBottom: 22 }}>≈ ₡2,500 CRC · Cancela cuando quieras</div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 18px', borderRadius: 999, background: 'rgba(79,224,169,0.1)', border: '1px solid rgba(79,224,169,0.2)' }}>
-              <Icon name="zap" size={14} color="#4FE0A9" />
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#4FE0A9' }}>7 días de prueba gratuita · Sin tarjeta</span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
-            {PLAN_FEATURES.map(f => (
-              <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(79,224,169,0.12)', display: 'grid', placeItems: 'center', flexShrink: 0, marginTop: 1 }}>
-                  <Icon name="check" size={10} color="#4FE0A9" />
-                </div>
-                <span style={{ fontSize: 13.5, color: '#9098AE', lineHeight: 1.5 }}>{f}</span>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:40, alignItems:'start', maxWidth:900 }}>
+          {/* Price card */}
+          <div style={{ background:'#0D1120', border:'1px solid #1A1F2E', borderRadius:20, overflow:'hidden', position:'relative' }}>
+            <div style={{ height:3, background:'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', position:'absolute', top:0, left:0, right:0 }} />
+            <div style={{ padding:'36px 32px' }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'#626B85', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:20 }}>Plan Pro</div>
+              <div style={{ display:'flex', alignItems:'flex-end', gap:4, marginBottom:6 }}>
+                <span style={{ fontSize:18, fontWeight:700, color:'#626B85', alignSelf:'flex-start', marginTop:10 }}>$</span>
+                <span style={{ fontSize:72, fontWeight:800, letterSpacing:'-0.05em', color:'#EDF0F7', lineHeight:1 }}>4.99</span>
+                <span style={{ fontSize:18, color:'#626B85', marginBottom:12 }}>/mes</span>
               </div>
-            ))}
+              <div style={{ fontSize:13, color:'#424A62', marginBottom:28 }}>≈ ₡2,550 CRC · Cancelá cuando quieras</div>
+              <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'7px 16px', borderRadius:999, background:'rgba(79,224,169,0.1)', border:'1px solid rgba(79,224,169,0.25)', marginBottom:28 }}>
+                <Ic n="zap" size={13} col="#4FE0A9" />
+                <span style={{ fontSize:12.5, fontWeight:600, color:'#4FE0A9' }}>7 días gratis · Sin tarjeta requerida</span>
+              </div>
+              <a href={CHECKOUT_URL} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, width:'100%', padding:'15px', borderRadius:10, background:'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color:'#06080E', fontSize:14.5, fontWeight:700, textDecoration:'none', boxShadow:'0 8px 28px rgba(91,155,255,0.3)' }}>
+                Empezar prueba gratuita <Ic n="arrow" size={15} col="#06080E" />
+              </a>
+              <p style={{ marginTop:12, fontSize:11.5, color:'#2E3650', textAlign:'center' }}>Pagos seguros con Lemon Squeezy</p>
+            </div>
           </div>
 
-          <a href={CHECKOUT_URL} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px', borderRadius: 14, background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color: '#0C0E14', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 32px rgba(91,155,255,0.3)' }}>
-            Comenzar prueba gratuita <Icon name="arrow" size={16} color="#0C0E14" />
-          </a>
-          <p style={{ marginTop: 14, fontSize: 12, color: '#424A62', textAlign: 'center' }}>
-            Pago seguro procesado por Lemon Squeezy · Sin compromisos
-          </p>
+          {/* Features list */}
+          <div style={{ paddingTop:8 }}>
+            <div style={{ fontSize:13, fontWeight:700, color:'#626B85', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:20 }}>Todo incluido</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              {features.map(f=>(
+                <div key={f} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                  <div style={{ width:18, height:18, borderRadius:'50%', background:'rgba(79,224,169,0.12)', display:'grid', placeItems:'center', flexShrink:0, marginTop:1 }}>
+                    <Ic n="check" size={10} col="#4FE0A9" />
+                  </div>
+                  <span style={{ fontSize:14, color:'#9098AE', lineHeight:1.5 }}>{f}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+      <style>{`@media(max-width:700px){ .pricing-grid{ grid-template-columns:1fr!important; } }`}</style>
     </section>
   );
 }
 
-/* ── FAQ ────────────────────────────────────────────────────────────── */
+/* ─── FAQ ────────────────────────────────────────────────────────────── */
 const FAQS = [
-  { q: '¿Necesito tarjeta para la prueba gratuita?', a: 'No. Los 7 días de prueba son 100% gratis y no requieren ningún dato de pago. Al finalizar, se te invitará a suscribirte para continuar.' },
-  { q: '¿Puedo cancelar en cualquier momento?', a: 'Sí, sin preguntas ni penalizaciones. Tu suscripción se cancela de inmediato desde tu panel de Lemon Squeezy. Tus datos permanecen hasta el final del período pagado.' },
-  { q: '¿Mis datos financieros están seguros?', a: 'Absolutamente. CoinDev usa Supabase con Row-Level Security (RLS). Tus datos son estrictamente privados — ni el equipo de CoinDev puede acceder a ellos.' },
-  { q: '¿Funciona en mi teléfono?', a: 'CoinDev es una Progressive Web App (PWA). Instálala desde tu navegador en iOS o Android y funciona como una app nativa, desde la pantalla de inicio.' },
-  { q: '¿Qué monedas soporta?', a: 'Soporta 18 monedas: CRC, USD, MXN, GTQ, HNL, NIO, COP, PEN, BOB, CLP, ARS, UYU, PYG, DOP, SVC, BZD, VES y EUR. El tipo de cambio USD/CRC se actualiza en tiempo real.' },
-  { q: '¿Pierdo mis datos si cancelo?', a: 'No. Tus datos se conservan aunque tu cuenta expire. Al reactivar, todo estará exactamente como lo dejaste: cuentas, movimientos, metas y presupuestos.' },
+  { q:'¿Necesito tarjeta para la prueba?',          a:'No. Los 7 días son completamente gratis y sin datos de pago. Al finalizar, se te invitará a suscribirte.' },
+  { q:'¿Puedo cancelar cuando quiera?',              a:'Sí, desde tu panel de Lemon Squeezy en cualquier momento. Sin penalizaciones ni períodos mínimos.' },
+  { q:'¿Mis datos financieros están seguros?',       a:'Absolutamente. Usamos Supabase con Row-Level Security (RLS). Tus datos solo son accesibles por vos.' },
+  { q:'¿Funciona como app en mi celular?',           a:'Sí. CoinDev es una PWA. Instalala desde el navegador en iOS o Android y funciona como app nativa.' },
+  { q:'¿Qué monedas soporta?',                       a:'18 monedas: CRC, USD, MXN, GTQ, HNL, NIO, COP, PEN, BOB, CLP, ARS, UYU, PYG, DOP, SVC, BZD, VES y EUR.' },
+  { q:'¿Pierdo datos si cancelo o pauso?',           a:'No. Tus datos se conservan siempre. Al reactivar, todo está exactamente como lo dejaste.' },
 ];
 
 function FAQ() {
-  const [open, setOpen] = useState<number | null>(null);
+  const [open, setOpen] = useState<number|null>(null);
   return (
-    <section id="faq" style={{ padding: '96px 24px' }}>
-      <div style={{ maxWidth: 700, margin: '0 auto' }}>
-        <SectionBadge text="FAQ" />
-        <h2 style={sectionTitle}>Preguntas frecuentes</h2>
-        <p style={sectionSub}>Todo lo que necesitas saber antes de empezar.</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {FAQS.map((f, i) => (
-            <div key={i} style={{ background: '#10141F', border: `1px solid ${open === i ? '#5B9BFF44' : '#232A3D'}`, borderRadius: 16, overflow: 'hidden', transition: 'border-color 200ms' }}>
-              <button onClick={() => setOpen(open === i ? null : i)} style={{ width: '100%', padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                <span style={{ fontSize: 14.5, fontWeight: 600, color: '#EDF0F7', lineHeight: 1.4 }}>{f.q}</span>
-                <span style={{ transform: open === i ? 'rotate(90deg)' : 'none', transition: 'transform 200ms', flexShrink: 0, color: '#626B85' }}>
-                  <Icon name="arrow" size={16} />
+    <section id="faq" style={{ padding:'100px 28px', background:'#0A0D18', borderTop:'1px solid #1A1F2E' }}>
+      <div style={{ maxWidth:720, margin:'0 auto' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
+          <div style={{ width:28, height:1, background:'#9F7BFF' }} />
+          <span style={{ fontSize:11, fontWeight:700, color:'#9F7BFF', textTransform:'uppercase', letterSpacing:'0.12em' }}>FAQ</span>
+        </div>
+        <h2 style={{ fontSize:'clamp(24px,3vw,38px)', fontWeight:800, letterSpacing:'-0.04em', color:'#EDF0F7', marginBottom:40 }}>Preguntas frecuentes</h2>
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {FAQS.map((f,i)=>(
+            <div key={i} style={{ border:`1px solid ${open===i?'#2A3448':'#1A1F2E'}`, borderRadius:14, overflow:'hidden', transition:'border-color 200ms' }}>
+              <button onClick={()=>setOpen(open===i?null:i)} style={{ width:'100%', padding:'18px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, background:'none', border:'none', cursor:'pointer', textAlign:'left' }}>
+                <span style={{ fontSize:14.5, fontWeight:600, color:'#EDF0F7', lineHeight:1.35 }}>{f.q}</span>
+                <span style={{ flexShrink:0, color:'#424A62', transform:open===i?'rotate(90deg)':'none', transition:'transform 200ms' }}>
+                  <Ic n="arrow" size={16} />
                 </span>
               </button>
-              {open === i && (
-                <div style={{ padding: '0 20px 20px', fontSize: 13.5, color: '#9098AE', lineHeight: 1.7 }}>{f.a}</div>
-              )}
+              {open===i && <div style={{ padding:'0 20px 20px', fontSize:13.5, color:'#9098AE', lineHeight:1.7 }}>{f.a}</div>}
             </div>
           ))}
         </div>
@@ -571,25 +746,25 @@ function FAQ() {
   );
 }
 
-/* ── Final CTA ──────────────────────────────────────────────────────── */
+/* ─── Final CTA ──────────────────────────────────────────────────────── */
 function FinalCTA() {
   return (
-    <section style={{ padding: '80px 24px', background: '#0C111B', borderTop: '1px solid #232A3D', textAlign: 'center' }}>
-      <div style={{ maxWidth: 560, margin: '0 auto' }}>
+    <section style={{ padding:'80px 28px', background:'#06080E', textAlign:'center' }}>
+      <div style={{ maxWidth:560, margin:'0 auto' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/icon-192.png" alt="CoinDev" width={64} height={64} style={{ borderRadius: 16, marginBottom: 24 }} />
-        <h2 style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', color: '#EDF0F7', marginBottom: 16, lineHeight: 1.1 }}>
-          Empieza hoy. Gratis.<br />
-          <span style={{ background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sin excusas.</span>
+        <img src="/icon-192.png" alt="CoinDev" width={60} height={60} style={{ borderRadius:16, marginBottom:24 }} />
+        <h2 style={{ fontSize:'clamp(28px,4vw,46px)', fontWeight:800, letterSpacing:'-0.04em', color:'#EDF0F7', marginBottom:16, lineHeight:1.08 }}>
+          Empezá hoy. Gratis.<br />
+          <span style={{ background:'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
+            Sin excusas.
+          </span>
         </h2>
-        <p style={{ fontSize: 16, color: '#626B85', marginBottom: 32, lineHeight: 1.65 }}>
-          7 días gratis, sin tarjeta. Cancela cuando quieras. Tus datos, siempre tuyos — incluso si cancelas.
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <a href={CHECKOUT_URL} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 999, background: 'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color: '#0C0E14', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 32px rgba(91,155,255,0.25)' }}>
-            Comenzar prueba gratuita <Icon name="arrow" size={16} color="#0C0E14" />
+        <p style={{ fontSize:16, color:'#626B85', marginBottom:32, lineHeight:1.65 }}>7 días gratis, sin tarjeta. Cancelá cuando quieras. Tus datos, siempre tuyos.</p>
+        <div style={{ display:'flex', justifyContent:'center', flexWrap:'wrap', gap:12 }}>
+          <a href={CHECKOUT_URL} style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'14px 28px', borderRadius:10, background:'linear-gradient(135deg,#5BE5D1,#5B9BFF,#9F7BFF)', color:'#06080E', fontSize:15, fontWeight:700, textDecoration:'none', boxShadow:'0 8px 28px rgba(91,155,255,0.28)' }}>
+            Crear cuenta gratis <Ic n="arrow" size={16} col="#06080E" />
           </a>
-          <Link href="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 999, background: '#10141F', color: '#9098AE', border: '1px solid #232A3D', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
+          <Link href="/login" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'14px 24px', borderRadius:10, background:'#0D1120', color:'#9098AE', border:'1px solid #1A1F2E', fontSize:15, fontWeight:600, textDecoration:'none' }}>
             Ya tengo cuenta
           </Link>
         </div>
@@ -598,47 +773,44 @@ function FinalCTA() {
   );
 }
 
-/* ── Footer ─────────────────────────────────────────────────────────── */
+/* ─── Footer ─────────────────────────────────────────────────────────── */
 function Footer() {
-  const year = new Date().getFullYear();
   return (
-    <footer style={{ borderTop: '1px solid #232A3D', padding: '40px 24px 32px' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 32, marginBottom: 32 }}>
+    <footer style={{ borderTop:'1px solid #1A1F2E', padding:'40px 28px 28px' }}>
+      <div style={{ maxWidth:1200, margin:'0 auto' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:32, marginBottom:36 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon-192.png" alt="CoinDev" width={24} height={24} style={{ borderRadius: 6 }} />
-              <span style={{ fontSize: 16, fontWeight: 800, color: '#EDF0F7', letterSpacing: '-0.03em' }}>CoinDev</span>
+              <img src="/icon-192.png" alt="CoinDev" width={22} height={22} style={{ borderRadius:6 }} />
+              <span style={{ fontSize:15, fontWeight:800, color:'#EDF0F7', letterSpacing:'-0.03em' }}><span>Coin</span><span style={{ color:'#5B9BFF' }}>Dev</span></span>
             </div>
-            <p style={{ fontSize: 13, color: '#424A62', maxWidth: 260, lineHeight: 1.6 }}>
-              Finanzas personales diseñadas para LATAM. Control total de tu dinero, en tu idioma.
-            </p>
+            <p style={{ fontSize:12.5, color:'#2E3650', maxWidth:240, lineHeight:1.65 }}>Finanzas personales diseñadas para LATAM. Tu dinero, bajo control total.</p>
           </div>
-          <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
+          <div style={{ display:'flex', gap:40, flexWrap:'wrap' }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#424A62', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>Producto</div>
-              {[{h:'#features',l:'Características'},{h:'#manual',l:'Manual'},{h:'#pricing',l:'Precio'},{h:'#faq',l:'FAQ'}].map(x => (
-                <a key={x.h} href={x.h} style={{ display: 'block', fontSize: 13, color: '#626B85', textDecoration: 'none', marginBottom: 8, transition: 'color 140ms' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#9098AE')}
-                  onMouseLeave={e => (e.currentTarget.style.color = '#626B85')}>{x.l}</a>
+              <div style={{ fontSize:10.5, fontWeight:700, color:'#2E3650', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14 }}>Producto</div>
+              {[{h:'#modulos',l:'Módulos'},{h:'#seguridad',l:'Seguridad'},{h:'#pricing',l:'Precio'},{h:'#faq',l:'FAQ'}].map(x=>(
+                <a key={x.h} href={x.h} style={{ display:'block', fontSize:13, color:'#424A62', textDecoration:'none', marginBottom:8 }}
+                  onMouseEnter={e=>(e.currentTarget.style.color='#9098AE')}
+                  onMouseLeave={e=>(e.currentTarget.style.color='#424A62')}>{x.l}</a>
               ))}
             </div>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#424A62', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 14 }}>Cuenta</div>
-              {[{h:'/login',l:'Iniciar sesión'},{h:'/register',l:'Registrarse'},{h:CHECKOUT_URL,l:'Prueba gratis'}].map(x => (
-                <a key={x.h} href={x.h} style={{ display: 'block', fontSize: 13, color: '#626B85', textDecoration: 'none', marginBottom: 8, transition: 'color 140ms' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#9098AE')}
-                  onMouseLeave={e => (e.currentTarget.style.color = '#626B85')}>{x.l}</a>
+              <div style={{ fontSize:10.5, fontWeight:700, color:'#2E3650', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14 }}>Cuenta</div>
+              {[{h:'/login',l:'Iniciar sesión'},{h:'/register',l:'Registrarse'},{h:CHECKOUT_URL,l:'Prueba gratis'}].map(x=>(
+                <a key={x.h} href={x.h} style={{ display:'block', fontSize:13, color:'#424A62', textDecoration:'none', marginBottom:8 }}
+                  onMouseEnter={e=>(e.currentTarget.style.color='#9098AE')}
+                  onMouseLeave={e=>(e.currentTarget.style.color='#424A62')}>{x.l}</a>
               ))}
             </div>
           </div>
         </div>
-        <div style={{ borderTop: '1px solid #1D2336', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <span style={{ fontSize: 12, color: '#424A62' }}>© {year} CoinDev. Todos los derechos reservados.</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="lock" size={12} color="#424A62" />
-            <span style={{ fontSize: 12, color: '#424A62' }}>Pagos seguros con Lemon Squeezy</span>
+        <div style={{ borderTop:'1px solid #1A1F2E', paddingTop:20, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10 }}>
+          <span style={{ fontSize:12, color:'#2E3650' }}>© {new Date().getFullYear()} CoinDev. Todos los derechos reservados.</span>
+          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <Ic n="lock" size={11} col="#2E3650" />
+            <span style={{ fontSize:12, color:'#2E3650' }}>Pagos seguros con Lemon Squeezy</span>
           </div>
         </div>
       </div>
@@ -646,38 +818,33 @@ function Footer() {
   );
 }
 
-/* ── Helpers ────────────────────────────────────────────────────────── */
-function SectionBadge({ text }: { text: string }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-      <div style={{ display: 'inline-flex', padding: '4px 12px', borderRadius: 999, background: '#10141F', border: '1px solid #232A3D' }}>
-        <span style={{ fontSize: 11.5, fontWeight: 600, color: '#626B85', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{text}</span>
-      </div>
-    </div>
-  );
-}
-
-const sectionTitle: React.CSSProperties = {
-  fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, letterSpacing: '-0.04em',
-  color: '#EDF0F7', textAlign: 'center', marginBottom: 14, lineHeight: 1.1,
-};
-const sectionSub: React.CSSProperties = {
-  fontSize: 'clamp(14px,2vw,17px)', color: '#626B85', textAlign: 'center',
-  maxWidth: 520, margin: '0 auto 56px', lineHeight: 1.65,
-};
-
-/* ── Page ───────────────────────────────────────────────────────────── */
+/* ─── Page ───────────────────────────────────────────────────────────── */
 export default function LandingPage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#07090F', color: '#EDF0F7' }}>
-      <style>{`html { scroll-behavior: smooth; } * { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
+    <div style={{ minHeight:'100vh', background:'#06080E', color:'#EDF0F7', fontFamily:'var(--font-sans)' }}>
+      <style>{`
+        html { scroll-behavior: smooth; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+        .mod-top   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .mod-bot3  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .mod-bot2  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; max-width: 900px; }
+        @media(max-width:860px){
+          .hero-grid  { grid-template-columns: 1fr !important; }
+          .hero-right { display: none !important; }
+          .mod-top    { grid-template-columns: 1fr !important; }
+          .mod-bot3   { grid-template-columns: 1fr !important; }
+          .mod-bot2   { grid-template-columns: 1fr !important; }
+          .pricing-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+      <Ticker />
       <Navbar />
       <main>
         <Hero />
-        <Stats />
-        <Features />
-        <Manual />
-        <HowItWorks />
+        <Modules />
+        <Security />
         <Pricing />
         <FAQ />
         <FinalCTA />
