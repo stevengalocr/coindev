@@ -25,8 +25,9 @@ export default function MovimientosPage() {
 
 function MovimientosInner() {
   const { t, lang } = useApp();
-  const { movements, accounts, loading, deleteTransaction } = useData();
+  const { movements, accounts, loading, deleteTransaction, liveUsdRate } = useData();
   const accCurrencyMap = Object.fromEntries(accounts.map(a => [a.id, a.currency ?? 'CRC']));
+  const toCRC = (amount: number, cur: string) => cur === 'USD' ? amount * liveUsdRate : amount;
   const toast = useToast();
   const searchParams = useSearchParams();
 
@@ -67,7 +68,10 @@ function MovimientosInner() {
     (groups[k] = groups[k] || []).push(m);
   });
 
-  const total = list.reduce((s, m) => s + (m.type === 'expense' ? -m.amount : m.amount), 0);
+  const total = list.reduce((s, m) => {
+    const crc = toCRC(m.amount, accCurrencyMap[m.account] ?? 'CRC');
+    return s + (m.type === 'expense' ? -crc : crc);
+  }, 0);
   const todayMidnight = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
 
   function daysAgo(d: Date): number {
@@ -220,7 +224,10 @@ function MovimientosInner() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {Object.entries(groups).map(([day, items]) => {
-              const daySum = items.reduce((s, m) => s + (m.type === 'expense' ? -m.amount : m.amount), 0);
+              const daySum = items.reduce((s, m) => {
+                const crc = toCRC(m.amount, accCurrencyMap[m.account] ?? 'CRC');
+                return s + (m.type === 'expense' ? -crc : crc);
+              }, 0);
               return (
                 <div key={day}>
                   {sort === 'date' && (

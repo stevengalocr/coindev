@@ -366,6 +366,13 @@ export async function insertTransaction(tx: NewTransaction): Promise<void> {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
+  // Fetch account currency and balance before inserting
+  const { data: acc } = await sb
+    .from('accounts')
+    .select('current_balance, currency')
+    .eq('id', tx.account_id)
+    .single();
+
   const category_id = CAT_TO_DB[tx.cat] ?? null;
   const { error } = await sb.from('transactions').insert({
     user_id: user.id,
@@ -373,7 +380,7 @@ export async function insertTransaction(tx: NewTransaction): Promise<void> {
     category_id,
     type: tx.type,
     amount: tx.amount,
-    currency: 'CRC',
+    currency: acc?.currency ?? 'CRC',
     description: tx.description,
     notes: tx.cat,
     date: tx.date,
@@ -385,11 +392,6 @@ export async function insertTransaction(tx: NewTransaction): Promise<void> {
   if (error) throw error;
 
   // Update account balance
-  const { data: acc } = await sb
-    .from('accounts')
-    .select('current_balance')
-    .eq('id', tx.account_id)
-    .single();
   if (acc) {
     const delta = tx.type === 'income' ? tx.amount : -tx.amount;
     await sb
@@ -448,16 +450,17 @@ export async function fetchGoalContributions(goalId: string): Promise<DbGoalCont
 export async function addGoalContribution(
   goalId: string,
   accountId: string,
-  amount: number,
+  goalAmount: number,   // amount in goal's currency (credited to goal)
+  accountAmount: number, // amount in account's currency (debited from account)
   note?: string
 ): Promise<void> {
   const sb = createClient();
-  // Insert contribution record
+  // Insert contribution record (stores goal-currency amount for history display)
   const { error: contribErr } = await sb
     .from('goal_contributions')
-    .insert({ goal_id: goalId, account_id: accountId, amount, note: note ?? null });
+    .insert({ goal_id: goalId, account_id: accountId, amount: goalAmount, note: note ?? null });
   if (contribErr) throw contribErr;
-  // Increase goal current_amount
+  // Increase goal current_amount by goalAmount
   const { data: goal, error: goalErr } = await sb
     .from('savings_goals')
     .select('current_amount')
@@ -466,10 +469,10 @@ export async function addGoalContribution(
   if (goalErr) throw goalErr;
   const { error: updateGoalErr } = await sb
     .from('savings_goals')
-    .update({ current_amount: Number(goal.current_amount) + amount })
+    .update({ current_amount: Number(goal.current_amount) + goalAmount })
     .eq('id', goalId);
   if (updateGoalErr) throw updateGoalErr;
-  // Decrease account balance
+  // Decrease account balance by accountAmount (in account's own currency)
   const { data: acc, error: accErr } = await sb
     .from('accounts')
     .select('current_balance')
@@ -478,7 +481,7 @@ export async function addGoalContribution(
   if (accErr) throw accErr;
   const { error: updateAccErr } = await sb
     .from('accounts')
-    .update({ current_balance: Number(acc.current_balance) - amount })
+    .update({ current_balance: Number(acc.current_balance) - accountAmount })
     .eq('id', accountId);
   if (updateAccErr) throw updateAccErr;
 }

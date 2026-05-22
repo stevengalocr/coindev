@@ -73,8 +73,9 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
     setSaving(true);
     setError('');
     try {
-      const finalAmt = needsConversion ? convertToGoalCurrency(amt) : amt;
-      await addContribution(goal.id, accountId, finalAmt, note.trim() || undefined);
+      const goalAmt = needsConversion ? convertToGoalCurrency(amt) : amt;
+      // goalAmt credits the goal (goal currency); amt debits the account (account currency)
+      await addContribution(goal.id, accountId, goalAmt, amt, note.trim() || undefined);
       onClose();
       onSuccess?.();
     } catch (e) {

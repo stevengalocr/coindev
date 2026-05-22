@@ -38,7 +38,7 @@ function monthsRemaining(target: Date): number {
 
 export default function MetasPage() {
   const { t, lang } = useApp();
-  const { goals, accounts, loading, deleteGoal } = useData();
+  const { goals, accounts, loading, deleteGoal, liveUsdRate } = useData();
   const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<SavingsGoal | null>(null);
@@ -50,8 +50,9 @@ export default function MetasPage() {
   const [contributions, setContributions] = useState<Record<string, DbGoalContribution[]>>({});
   const [loadingContribs, setLoadingContribs] = useState<Record<string, boolean>>({});
 
-  const totalTarget  = goals.reduce((s, g) => s + g.target, 0);
-  const totalCurrent = goals.reduce((s, g) => s + g.current, 0);
+  const toCRC = (amount: number, cur: string) => cur === 'USD' ? amount * liveUsdRate : amount;
+  const totalTarget  = goals.reduce((s, g) => s + toCRC(g.target,  g.currency ?? 'CRC'), 0);
+  const totalCurrent = goals.reduce((s, g) => s + toCRC(g.current, g.currency ?? 'CRC'), 0);
   const overallPct   = totalTarget > 0 ? Math.round((totalCurrent / totalTarget) * 100) : 0;
   const activeGoals  = goals.filter(g => g.status === 'active');
   const otherGoals   = goals.filter(g => g.status !== 'active');

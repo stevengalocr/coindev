@@ -70,7 +70,7 @@ export default function DashboardPage() {
   const { income, expense, net } = aggregate(filteredCRC, savingsAcc ? toCRC(savingsAcc.balance, savingsAcc.currency ?? 'CRC') : 0);
 
   const byCat: Record<string, number> = {};
-  if (!loading) filtered.filter(m => m.type === 'expense').forEach(m => { byCat[m.cat] = (byCat[m.cat] || 0) + m.amount; });
+  if (!loading) filteredCRC.filter(m => m.type === 'expense').forEach(m => { byCat[m.cat] = (byCat[m.cat] || 0) + m.amount; });
   const donutData = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 5)
     .map(([catId, value]) => ({ value, color: CAT[catId]?.color || '#888', cat: catId }));
 

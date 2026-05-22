@@ -65,7 +65,7 @@ interface DataState {
   deleteBudget: (cat: string) => Promise<void>;
   updateGoal: (id: string, data: { name?: string; description?: string | null; icon?: string; target_amount?: number; target_date?: string | null; status?: string }) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
-  addContribution: (goalId: string, accountId: string, amount: number, note?: string) => Promise<void>;
+  addContribution: (goalId: string, accountId: string, goalAmount: number, accountAmount: number, note?: string) => Promise<void>;
 }
 
 const DataCtx = createContext<DataState | null>(null);
@@ -207,8 +207,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await load();
   }, [load]);
 
-  const addContribution = useCallback(async (goalId: string, accountId: string, amount: number, note?: string) => {
-    await addGoalContribution(goalId, accountId, amount, note);
+  const addContribution = useCallback(async (goalId: string, accountId: string, goalAmount: number, accountAmount: number, note?: string) => {
+    await addGoalContribution(goalId, accountId, goalAmount, accountAmount, note);
     await load();
   }, [load]);
 

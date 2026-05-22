@@ -65,6 +65,7 @@ export function AddGoalModal({ open, onClose, onSuccess, initialData }: Props) {
       setStatus('active');
     }
     setError('');
+    setSaving(false);
   }, [open, initialData]);
 
   if (!open) return null;
@@ -230,14 +231,14 @@ export function AddGoalModal({ open, onClose, onSuccess, initialData }: Props) {
             </div>
           </GField>
 
-          {/* Fecha límite */}
+          {/* Fecha objetivo */}
           <GField label={lang === 'es' ? 'Fecha objetivo (opcional)' : 'Target date (optional)'}>
             <input
-              style={inputStyle}
+              style={{ ...inputStyle, colorScheme: 'dark' }}
               onFocus={e => e.currentTarget.style.borderColor='var(--blue)'}
               onBlur={e => e.currentTarget.style.borderColor='var(--border)'}
               type="date"
-              min={new Date().toISOString().slice(0,10)}
+              min={new Date().toLocaleDateString('en-CA')}
               value={targetDate}
               onChange={e => setTargetDate(e.target.value)}
             />
