@@ -15,7 +15,14 @@ type SortKey = 'amount_desc' | 'amount_asc' | 'name' | 'next_due';
 
 export default function GastosFijosPage() {
   const { t, lang } = useApp();
-  const { movements, loading, deleteTransaction } = useData();
+  const { movements, accounts, liveUsdRate, loading, deleteTransaction } = useData();
+
+  function getAccCurrency(accountId: string): string {
+    return accounts.find(a => a.id === accountId)?.currency ?? 'CRC';
+  }
+  function toCRC(amount: number, currency: string): number {
+    return currency === 'USD' ? amount * liveUsdRate : amount;
+  }
   const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<Movement | null>(null);
@@ -63,8 +70,8 @@ export default function GastosFijosPage() {
   else if (sort === 'name') items = items.sort((a, b) => a.desc.localeCompare(b.desc));
   else if (sort === 'next_due') items = items.sort((a, b) => nextDueDate(a).getTime() - nextDueDate(b).getTime());
 
-  const total = items.reduce((s, m) => s + m.amount, 0);
-  const income = movements.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0);
+  const total = items.reduce((s, m) => s + toCRC(m.amount, getAccCurrency(m.account)), 0);
+  const income = movements.filter(m => m.type === 'income').reduce((s, m) => s + toCRC(m.amount, getAccCurrency(m.account)), 0);
   const ratio = income > 0 ? total / income : 0;
   const perDay = total / 30;
   const ratioColor = ratio > 0.6 ? 'var(--expense)' : ratio > 0.45 ? 'var(--warn)' : 'var(--income)';
@@ -82,7 +89,7 @@ export default function GastosFijosPage() {
   }
 
   return (
-    <div>
+    <div className="page-enter">
       {menuId !== null && (
         <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
       )}
@@ -185,9 +192,10 @@ export default function GastosFijosPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {items.map(m => {
               const c = CAT[m.cat];
+              const accCur = getAccCurrency(m.account);
               return (
                 <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color 150ms', position: 'relative' }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
@@ -204,8 +212,8 @@ export default function GastosFijosPage() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <MoneyText amount={m.amount} currency="CRC" size={15} weight={600} />
-                    <div className="mono" style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>{fmtMoney(m.amount / 30, 'CRC')}/d</div>
+                    <MoneyText amount={m.amount} currency={accCur} size={15} weight={600} />
+                    <div className="mono" style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>{fmtMoney(m.amount / 30, accCur)}/d</div>
                   </div>
                   <div style={{ position: 'relative' }}>
                     <button

@@ -91,7 +91,7 @@ export default function MetasPage() {
   }, [contributionGoal, expandedId, loadContribs]);
 
   return (
-    <div>
+    <div className="page-enter">
       {menuId !== null && (
         <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
       )}

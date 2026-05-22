@@ -55,7 +55,7 @@ export default function CuentasPage() {
   }
 
   return (
-    <div>
+    <div className="page-enter">
       {menuId !== null && (
         <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
       )}
@@ -149,7 +149,7 @@ export default function CuentasPage() {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
           {filtered.map(acc => (
             <AccountCard
               key={acc.id}

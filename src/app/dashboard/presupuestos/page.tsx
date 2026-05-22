@@ -13,7 +13,7 @@ import { useToast } from '@/components/ui/Toast';
 
 export default function PresupuestosPage() {
   const { t, lang } = useApp();
-  const { budgets, loading, deleteBudget } = useData();
+  const { budgets, loading, deleteBudget, liveUsdRate } = useData();
   const toast = useToast();
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -22,8 +22,12 @@ export default function PresupuestosPage() {
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const totalLimit = budgets.reduce((s, b) => s + b.limit, 0);
-  const totalSpent = budgets.reduce((s, b) => s + b.spent, 0);
+  function toCRC(amount: number, currency?: string): number {
+    return currency === 'USD' ? amount * liveUsdRate : amount;
+  }
+
+  const totalLimit = budgets.reduce((s, b) => s + toCRC(b.limit, b.currency), 0);
+  const totalSpent = budgets.reduce((s, b) => s + toCRC(b.spent, b.currency), 0);
   const overallPct = totalLimit > 0 ? (totalSpent / totalLimit) * 100 : 0;
 
   const now = new Date();
@@ -43,7 +47,7 @@ export default function PresupuestosPage() {
   }
 
   return (
-    <div>
+    <div className="page-enter">
       {menuId !== null && (
         <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
       )}
@@ -139,7 +143,7 @@ export default function PresupuestosPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {budgets.map(b => {
               const c = CAT[b.cat];
               const pct = Math.min((b.spent / b.limit) * 100, 100);

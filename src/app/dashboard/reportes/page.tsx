@@ -238,7 +238,7 @@ export default function ReportesPage() {
   }
 
   return (
-    <div>
+    <div className="page-enter">
       <style>{`
         @media (max-width: 640px) {
           .rep-summary { grid-template-columns: 1fr !important; }
@@ -367,7 +367,34 @@ export default function ReportesPage() {
       )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>Cargando…</div>
+        <div className="stagger">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 20 }} className="rep-summary">
+            {[1,2,3].map(i => (
+              <div key={i} className="cd-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div className="cd-skeleton" style={{ height: 11, width: '55%' }} />
+                <div className="cd-skeleton" style={{ height: 28, width: '70%', borderRadius: 8 }} />
+                <div className="cd-skeleton" style={{ height: 11, width: '40%' }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }} className="rep-grid">
+            {[1,2].map(i => (
+              <div key={i} className="cd-card" style={{ padding: '20px 22px', minHeight: 200, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="cd-skeleton" style={{ height: 15, width: '45%', borderRadius: 6 }} />
+                <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                  <div className="cd-skeleton" style={{ width: 120, height: 120, borderRadius: 60 }} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {[1,2,3,4].map(j => <div key={j} className="cd-skeleton" style={{ height: 12 }} />)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="cd-card" style={{ padding: '20px 24px', minHeight: 180, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="cd-skeleton" style={{ height: 15, width: '30%', borderRadius: 6 }} />
+            <div className="cd-skeleton" style={{ flex: 1, borderRadius: 8 }} />
+          </div>
+        </div>
       ) : (
         <>
           {/* Summary row */}

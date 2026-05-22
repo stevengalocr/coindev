@@ -102,7 +102,13 @@ button, input, textarea, select {
 
 .cd-divider { height: 1px; background: var(--border); }
 
-button { cursor: pointer; border: 0; background: none; color: inherit; font: inherit; padding: 0; }
+/* touch-action: manipulation removes the 300ms tap delay on mobile */
+button { cursor: pointer; border: 0; background: none; color: inherit; font: inherit; padding: 0; touch-action: manipulation; }
+
+/* Prevent iOS auto-zoom on focused inputs (requires font-size ≥ 16px) */
+@media (max-width: 768px) {
+  input:not([type="range"]), select, textarea { font-size: 16px !important; }
+}
 
 .grain::before {
   content: "";
@@ -121,16 +127,46 @@ button { cursor: pointer; border: 0; background: none; color: inherit; font: inh
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes cd-slide-up {
+  from { opacity: 0; transform: translateY(48px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cd-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
 .page-enter {
   animation: cd-fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cd-modal-sheet {
+  animation: cd-slide-up 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cd-skeleton {
+  background: var(--surface-3);
+  border-radius: 6px;
+  animation: cd-pulse 1.5s ease-in-out infinite;
 }
 
 .cd-card {
   transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
-.cd-card:hover {
-  box-shadow: var(--shadow-pop);
-  border-color: var(--border-strong);
+
+/* Only apply hover lift on pointer devices — avoids sticky hover on touch */
+@media (hover: hover) {
+  .cd-card:hover {
+    box-shadow: var(--shadow-pop);
+    border-color: var(--border-strong);
+  }
+}
+
+/* Keypad button press feedback */
+.cd-keypad-btn:active {
+  background: var(--surface-3) !important;
+  transform: scale(0.93);
 }
 
 /* Stagger children inside a page container */
@@ -149,10 +185,14 @@ button { cursor: pointer; border: 0; background: none; color: inherit; font: inh
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
+  .cd-modal-sheet,
   .stagger > * {
     animation: none;
   }
   .cd-card {
     transition: none;
+  }
+  .cd-skeleton {
+    animation: none;
   }
 }

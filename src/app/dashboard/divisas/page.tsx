@@ -38,11 +38,7 @@ function CurrencyBadge({ cc, size = 36 }: { cc: string; size?: number }) {
 
 function Skeleton({ w, h, radius = 6 }: { w: number | string; h: number; radius?: number }) {
   return (
-    <div style={{
-      width: w, height: h, borderRadius: radius,
-      background: 'var(--surface-3)',
-      animation: 'cd-pulse 1.5s ease-in-out infinite',
-    }} />
+    <div className="cd-skeleton" style={{ width: w, height: h, borderRadius: radius }} />
   );
 }
 
@@ -93,9 +89,8 @@ export default function DivisasPage() {
   })();
 
   return (
-    <div>
+    <div className="page-enter">
       <style>{`
-        @keyframes cd-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @media (max-width: 600px) { .fx-sparkline { display: none !important; } }
       `}</style>
 

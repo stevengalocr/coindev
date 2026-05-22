@@ -129,7 +129,8 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
         background: 'var(--surface)', borderRadius: '24px 24px 0 0',
         border: '1px solid var(--border)', borderBottom: 0,
         boxShadow: 'var(--shadow-pop)', maxHeight: '92vh', overflowY: 'auto',
-      }} className="no-scrollbar">
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }} className="no-scrollbar cd-modal-sheet">
         <div style={{ display: 'grid', placeItems: 'center', padding: '12px 0 4px' }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
         </div>
@@ -166,7 +167,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
           {/* Keypad */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 7, marginBottom: 20 }}>
             {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'].map(k => (
-              <button key={k} onClick={() => {
+              <button key={k} className="cd-keypad-btn" onClick={() => {
                 if (k === '⌫') setAmount(a => a.slice(0, -1));
                 else if (k === '.' && amount.includes('.')) return;
                 else setAmount(a => (a + k).slice(0, 12));
@@ -174,7 +175,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
                 padding: '14px 0', borderRadius: 12,
                 background: k === '⌫' ? 'var(--surface-3)' : 'var(--surface-2)',
                 border: '1px solid var(--border)', color: 'var(--text)', fontSize: 19, fontWeight: 500,
-                fontFamily: 'var(--font-mono)', transition: 'background 80ms',
+                fontFamily: 'var(--font-mono)', transition: 'background 80ms, transform 80ms',
               }}>
                 {k}
               </button>
@@ -219,7 +220,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
                   type="date"
                   value={date}
                   onChange={e => setDate(e.target.value)}
-                  style={{ background: 'transparent', border: 0, color: 'var(--text)', fontSize: 13.5, fontWeight: 500, textAlign: 'right', outline: 'none', fontFamily: 'var(--font-sans)', cursor: 'pointer' }}
+                  style={{ background: 'transparent', border: 0, color: 'var(--text)', fontSize: 13.5, fontWeight: 500, textAlign: 'right', outline: 'none', fontFamily: 'var(--font-sans)', cursor: 'pointer', colorScheme: 'dark' }}
                 />
               </div>
             </div>
@@ -227,7 +228,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0', minHeight: 46 }}>
               <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, width: 90, flexShrink: 0 }}>{t.description}</div>
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
-                <input value={desc} onChange={e => setDesc(e.target.value)} placeholder={t.descriptionHint} style={{ flex: 1, background: 'transparent', border: 0, outline: 'none', color: 'var(--text)', fontSize: 13.5, fontWeight: 500, textAlign: 'right', fontFamily: 'var(--font-sans)' }} />
+                <input value={desc} onChange={e => setDesc(e.target.value)} placeholder={t.descriptionHint} style={{ flex: 1, background: 'transparent', border: 0, outline: 'none', color: 'var(--text)', fontSize: 13.5, fontWeight: 500, textAlign: 'right', fontFamily: 'var(--font-sans)', minWidth: 0 }} />
               </div>
             </div>
             <div className="cd-divider" />
