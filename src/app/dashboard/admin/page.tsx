@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useData } from '@/hooks/useData';
 import { useApp } from '@/hooks/useApp';
 import { Icon } from '@/components/ui/Icon';
-import { fetchAllProfiles, updateUserPlanStatus, adminDeleteUser, fetchAllFeedback, updateFeedbackStatus, type DbProfile, type DbFeedback } from '@/lib/db';
+import { fetchAllProfiles, updateUserPlanStatus, adminDeleteUser, fetchAllFeedback, updateFeedbackStatus, deleteFeedback, type DbProfile, type DbFeedback } from '@/lib/db';
 
 const ADMIN_EMAIL = 'stevengalocr@gmail.com';
 const TRIAL_DAYS = 7;
@@ -50,9 +50,8 @@ export default function AdminPage() {
   const [editNotes, setEditNotes] = useState<Record<string, string>>({});
   const [notesOpen, setNotesOpen] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [fbReply, setFbReply] = useState<Record<string, string>>({});
-  const [fbReplyOpen, setFbReplyOpen] = useState<string | null>(null);
   const [fbFilter, setFbFilter] = useState<'pendiente' | 'resuelto'>('pendiente');
+  const [confirmDeleteFb, setConfirmDeleteFb] = useState<string | null>(null);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -65,9 +64,6 @@ export default function AdminPage() {
       const notes: Record<string, string> = {};
       data.forEach(p => { notes[p.id] = p.admin_notes ?? ''; });
       setEditNotes(notes);
-      const replies: Record<string, string> = {};
-      fb.forEach(f => { replies[f.id] = f.admin_reply ?? ''; });
-      setFbReply(replies);
     } catch (e) {
       console.error(e);
     } finally {
@@ -325,101 +321,118 @@ export default function AdminPage() {
         const resueltos  = feedbacks.filter(f => f.status === 'resuelto');
         const visible    = fbFilter === 'pendiente' ? pendientes : resueltos;
         return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {/* Filter pills */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            {([
-              { id: 'pendiente', label: `Pendientes (${pendientes.length})` },
-              { id: 'resuelto',  label: `Resueltos (${resueltos.length})`  },
-            ] as const).map(f => (
-              <button key={f.id} onClick={() => setFbFilter(f.id)} style={{
-                padding: '7px 16px', borderRadius: 999, fontSize: 13, fontWeight: fbFilter === f.id ? 700 : 500,
-                background: fbFilter === f.id ? (f.id === 'resuelto' ? 'var(--income-soft)' : 'rgba(91,155,255,0.12)') : 'var(--surface)',
-                border: `1px solid ${fbFilter === f.id ? (f.id === 'resuelto' ? 'rgba(16,185,129,0.3)' : 'rgba(91,155,255,0.3)') : 'var(--border)'}`,
-                color: fbFilter === f.id ? (f.id === 'resuelto' ? 'var(--income)' : 'var(--blue)') : 'var(--text-3)',
-                transition: 'all 140ms',
-              }}>{f.label}</button>
-            ))}
-          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-          {loading ? (
-            [1,2,3].map(i => (
-              <div key={i} className="cd-card" style={{ padding: '16px 20px', height: 80, background: 'var(--surface-3)' }} />
-            ))
-          ) : visible.length === 0 ? (
-            <div className="cd-card" style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-3)', fontSize: 14 }}>
-              {fbFilter === 'pendiente' ? 'No hay reportes pendientes.' : 'No hay reportes resueltos.'}
+            {/* Filter pills */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              {([
+                { id: 'pendiente', label: `Pendientes (${pendientes.length})` },
+                { id: 'resuelto',  label: `Resueltos (${resueltos.length})`  },
+              ] as const).map(f => (
+                <button key={f.id} onClick={() => setFbFilter(f.id)} style={{
+                  padding: '7px 16px', borderRadius: 999, fontSize: 13, fontWeight: fbFilter === f.id ? 700 : 500,
+                  background: fbFilter === f.id ? (f.id === 'resuelto' ? 'var(--income-soft)' : 'rgba(91,155,255,0.12)') : 'var(--surface)',
+                  border: `1px solid ${fbFilter === f.id ? (f.id === 'resuelto' ? 'rgba(16,185,129,0.3)' : 'rgba(91,155,255,0.3)') : 'var(--border)'}`,
+                  color: fbFilter === f.id ? (f.id === 'resuelto' ? 'var(--income)' : 'var(--blue)') : 'var(--text-3)',
+                  transition: 'all 140ms',
+                }}>{f.label}</button>
+              ))}
             </div>
-          ) : visible.map(fb => {
-            const typeColor = FEEDBACK_COLORS[fb.type] ?? '#9CA3AF';
-            const sFb = STATUS_FB[fb.status] ?? STATUS_FB.nuevo;
-            const date = new Date(fb.created_at).toLocaleDateString('es-CR', { day: 'numeric', month: 'short', year: 'numeric' });
-            return (
-              <div key={fb.id} className="cd-card" style={{ padding: '16px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: `color-mix(in oklab, ${typeColor} 12%, var(--surface-3))`, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: typeColor }}>{FEEDBACK_LABELS[fb.type]?.slice(0,3).toUpperCase()}</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{fb.title}</span>
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: sFb.color, background: sFb.bg, padding: '2px 8px', borderRadius: 999 }}>{sFb.label}</span>
+
+            {/* List */}
+            {loading ? (
+              [1,2,3].map(i => (
+                <div key={i} className="cd-skeleton" style={{ height: 90, borderRadius: 'var(--r-lg)' }} />
+              ))
+            ) : visible.length === 0 ? (
+              <div className="cd-card" style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-3)', fontSize: 14 }}>
+                {fbFilter === 'pendiente' ? 'No hay reportes pendientes.' : 'No hay reportes resueltos.'}
+              </div>
+            ) : visible.map(fb => {
+              const typeColor = FEEDBACK_COLORS[fb.type] ?? '#9CA3AF';
+              const sFb = STATUS_FB[fb.status] ?? STATUS_FB.nuevo;
+              const date = new Date(fb.created_at).toLocaleDateString('es-CR', { day: 'numeric', month: 'short', year: 'numeric' });
+              const isDeleting = confirmDeleteFb === fb.id;
+              return (
+                <div key={fb.id} className="cd-card" style={{ padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+
+                    {/* Type icon */}
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: `color-mix(in oklab, ${typeColor} 14%, var(--surface-2))`, border: `1px solid color-mix(in oklab, ${typeColor} 25%, transparent)`, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: typeColor, letterSpacing: '0.04em' }}>{FEEDBACK_LABELS[fb.type]?.slice(0,3).toUpperCase()}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-3)' }}>{fb.email} · {date}</div>
-                    <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 6, whiteSpace: 'pre-wrap' }}>{fb.description}</div>
-                    {fb.admin_reply && (
-                      <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'var(--income-soft)', border: '1px solid rgba(16,185,129,0.2)', fontSize: 12, color: 'var(--income)' }}>
-                        ↩ {fb.admin_reply}
+
+                    {/* Content */}
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{fb.title}</span>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: sFb.color, background: sFb.bg, padding: '2px 9px', borderRadius: 999 }}>{sFb.label}</span>
                       </div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <select value={fb.status} onChange={async e => {
-                      const s = e.target.value as DbFeedback['status'];
-                      await updateFeedbackStatus(fb.id, s);
-                      setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, status: s } : f));
-                    }} style={{ appearance: 'none', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 28px 6px 10px', fontSize: 12, color: 'var(--text)', fontFamily: 'var(--font-sans)', cursor: 'pointer', outline: 'none' }}>
-                      <option value="nuevo">Nuevo</option>
-                      <option value="en_revision">En revisión</option>
-                      <option value="resuelto">Resuelto</option>
-                    </select>
-                    <button onClick={() => setFbReplyOpen(fbReplyOpen === fb.id ? null : fb.id)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text-2)', cursor: 'pointer' }}>
-                      <Icon name="edit" size={12} stroke={1.7} />
-                      Responder
-                    </button>
+                      <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 6 }}>{fb.email} · {date}</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-2)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{fb.description}</div>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end', flexShrink: 0 }}>
+                      {/* Status selector */}
+                      <div style={{ position: 'relative' }}>
+                        <select
+                          value={fb.status}
+                          onChange={async e => {
+                            const s = e.target.value as DbFeedback['status'];
+                            await updateFeedbackStatus(fb.id, s);
+                            setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, status: s } : f));
+                          }}
+                          style={{ appearance: 'none', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '7px 30px 7px 12px', fontSize: 12, fontWeight: 500, color: 'var(--text)', fontFamily: 'var(--font-sans)', cursor: 'pointer', outline: 'none' }}
+                        >
+                          <option value="nuevo">Nuevo</option>
+                          <option value="en_revision">En revisión</option>
+                          <option value="resuelto">Resuelto</option>
+                        </select>
+                        <Icon name="chevron-down" size={11} style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)', pointerEvents: 'none' }} />
+                      </div>
+
+                      {/* Delete — two-step confirm */}
+                      {isDeleting ? (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            onClick={async () => {
+                              setSaving(fb.id + '_del');
+                              try {
+                                await deleteFeedback(fb.id);
+                                setFeedbacks(prev => prev.filter(f => f.id !== fb.id));
+                                setConfirmDeleteFb(null);
+                              } catch (e) { console.error(e); }
+                              finally { setSaving(null); }
+                            }}
+                            disabled={saving === fb.id + '_del'}
+                            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, background: 'var(--expense-soft)', border: '1px solid rgba(239,68,68,0.3)', fontSize: 12, fontWeight: 700, color: 'var(--expense)', cursor: 'pointer' }}
+                          >
+                            <Icon name="trash" size={12} stroke={2} />
+                            {saving === fb.id + '_del' ? 'Eliminando…' : '¿Confirmar?'}
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteFb(null)}
+                            style={{ padding: '7px 10px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text-3)', cursor: 'pointer' }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteFb(fb.id)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--expense)', cursor: 'pointer' }}
+                        >
+                          <Icon name="trash" size={12} stroke={1.7} />
+                          Eliminar
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-                {fbReplyOpen === fb.id && (
-                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
-                    <textarea
-                      value={fbReply[fb.id] ?? ''}
-                      onChange={e => setFbReply(prev => ({ ...prev, [fb.id]: e.target.value }))}
-                      placeholder="Respuesta al usuario…"
-                      rows={2}
-                      style={{ width: '100%', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', color: 'var(--text)', fontSize: 13, fontFamily: 'var(--font-sans)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
-                    />
-                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                      <button onClick={async () => {
-                        setSaving(fb.id + '_reply');
-                        try {
-                          await updateFeedbackStatus(fb.id, fb.status, fbReply[fb.id]);
-                          setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, admin_reply: fbReply[fb.id] } : f));
-                          setFbReplyOpen(null);
-                        } catch(e) { console.error(e); }
-                        finally { setSaving(null); }
-                      }} disabled={saving === fb.id + '_reply'} style={{ padding: '7px 16px', borderRadius: 8, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 12.5, fontWeight: 700, border: 0, cursor: 'pointer' }}>
-                        {saving === fb.id + '_reply' ? 'Guardando…' : 'Guardar respuesta'}
-                      </button>
-                      <button onClick={() => setFbReplyOpen(null)} style={{ padding: '7px 16px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 12.5, cursor: 'pointer' }}>
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
         );
       })()}
     </div>

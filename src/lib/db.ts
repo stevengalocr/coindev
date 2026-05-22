@@ -677,11 +677,14 @@ export async function fetchAllFeedback(): Promise<DbFeedback[]> {
 export async function updateFeedbackStatus(
   id: string,
   status: DbFeedback['status'],
-  admin_reply?: string
 ): Promise<void> {
   const sb = createClient();
-  const patch: Record<string, unknown> = { status };
-  if (admin_reply !== undefined) patch.admin_reply = admin_reply;
-  const { error } = await sb.from('feedback').update(patch).eq('id', id);
+  const { error } = await sb.from('feedback').update({ status }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteFeedback(id: string): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.from('feedback').delete().eq('id', id);
   if (error) throw error;
 }
