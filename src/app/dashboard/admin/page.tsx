@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useData } from '@/hooks/useData';
 import { useApp } from '@/hooks/useApp';
 import { Icon } from '@/components/ui/Icon';
+import { useToast } from '@/components/ui/Toast';
 import { fetchAllProfiles, updateUserPlanStatus, adminDeleteUser, fetchAllFeedback, updateFeedbackStatus, deleteFeedback, type DbProfile, type DbFeedback } from '@/lib/db';
 
 const ADMIN_EMAIL = 'stevengalocr@gmail.com';
@@ -53,6 +54,7 @@ export default function AdminPage() {
   const [fbFilter, setFbFilter] = useState<'pendiente' | 'resuelto'>('pendiente');
   const [confirmDeleteFb, setConfirmDeleteFb] = useState<string | null>(null);
 
+  const toast = useToast();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const load = useCallback(async () => {
@@ -78,8 +80,10 @@ export default function AdminPage() {
     try {
       await updateUserPlanStatus(userId, newStatus);
       setProfiles(prev => prev.map(p => p.id === userId ? { ...p, plan_status: newStatus } : p));
+      toast('Estado actualizado', 'success');
     } catch (e) {
       console.error(e);
+      toast('Error al actualizar estado', 'error');
     } finally {
       setSaving(null);
     }
@@ -255,7 +259,11 @@ export default function AdminPage() {
                               await adminDeleteUser(p.id);
                               setProfiles(prev => prev.filter(u => u.id !== p.id));
                               setConfirmDelete(null);
-                            } catch (e) { console.error(e); }
+                              toast('Usuario eliminado', 'success');
+                            } catch (e) {
+                              console.error(e);
+                              toast('Error al eliminar usuario', 'error');
+                            }
                             finally { setSaving(null); }
                           }}
                           disabled={saving === p.id + '_del'}
@@ -380,8 +388,14 @@ export default function AdminPage() {
                           value={fb.status}
                           onChange={async e => {
                             const s = e.target.value as DbFeedback['status'];
-                            await updateFeedbackStatus(fb.id, s);
-                            setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, status: s } : f));
+                            try {
+                              await updateFeedbackStatus(fb.id, s);
+                              setFeedbacks(prev => prev.map(f => f.id === fb.id ? { ...f, status: s } : f));
+                              toast('Estado actualizado', 'success');
+                            } catch (err) {
+                              console.error(err);
+                              toast('Error al actualizar estado', 'error');
+                            }
                           }}
                           style={{ appearance: 'none', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '7px 30px 7px 12px', fontSize: 12, fontWeight: 500, color: 'var(--text)', fontFamily: 'var(--font-sans)', cursor: 'pointer', outline: 'none' }}
                         >
@@ -402,8 +416,13 @@ export default function AdminPage() {
                                 await deleteFeedback(fb.id);
                                 setFeedbacks(prev => prev.filter(f => f.id !== fb.id));
                                 setConfirmDeleteFb(null);
-                              } catch (e) { console.error(e); }
-                              finally { setSaving(null); }
+                                toast('Reporte eliminado', 'success');
+                              } catch (e) {
+                                console.error(e);
+                                toast('Error al eliminar reporte', 'error');
+                              } finally {
+                                setSaving(null);
+                              }
                             }}
                             disabled={saving === fb.id + '_del'}
                             style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, background: 'var(--expense-soft)', border: '1px solid rgba(239,68,68,0.3)', fontSize: 12, fontWeight: 700, color: 'var(--expense)', cursor: 'pointer' }}
