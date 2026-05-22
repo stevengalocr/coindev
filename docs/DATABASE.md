@@ -124,6 +124,9 @@ Perfil del usuario. Complementa `auth.users` con preferencias de la app.
 | `theme` | text | `'dark'` | Tema de la UI: dark / light |
 | `language` | text | `'es'` | Idioma: es / en |
 | `onboarding_done` | boolean | `false` | Onboarding completado |
+| `plan_status` | text | `'trial'` | Estado del plan: trial / active / expired / cancelled |
+| `trial_started_at` | timestamptz | `now()` | Inicio del período de prueba |
+| `admin_notes` | text | NULL | Notas internas del admin |
 | `created_at` | timestamptz | `now()` | — |
 | `updated_at` | timestamptz | `now()` | — |
 | `deleted_at` | timestamptz | NULL | Soft delete |
@@ -395,32 +398,65 @@ Caché de tipos de cambio obtenidos de la Currency API. No tiene `user_id` — e
 
 ---
 
+### `feedback`
+Reportes enviados por usuarios (bugs, mejoras, consultas). Solo el admin puede leer, actualizar y eliminar.
+
+| Columna | Tipo | Default | Descripción |
+|---------|------|---------|-------------|
+| `id` | uuid PK | `gen_random_uuid()` | — |
+| `user_id` | uuid FK → auth.users NOT NULL | — | Usuario que envió el reporte |
+| `email` | text NOT NULL | — | Email del usuario |
+| `type` | text NOT NULL | — | `bug` / `mejora` / `consulta` |
+| `title` | text NOT NULL | — | Título del reporte |
+| `description` | text NOT NULL | — | Descripción detallada |
+| `status` | text | `'nuevo'` | `nuevo` / `en_revision` / `resuelto` |
+| `admin_reply` | text | NULL | Reservado (no usado actualmente) |
+| `created_at` | timestamptz | `now()` | Fecha del reporte |
+
+---
+
 ## Row Level Security (RLS)
 
-Todas las tablas con datos de usuario tienen RLS habilitado. La política general es:
+Todas las tablas con datos de usuario tienen RLS habilitado.
 
-```sql
--- Patrón usado en accounts, transactions, budgets, savings_goals, fixed_expenses, notifications
-USING (auth.uid() = user_id)
-```
+| Tabla | Política | Operación | Condición |
+|-------|----------|-----------|-----------|
+| `accounts` | acceso solo del dueño | ALL | `auth.uid() = user_id` |
+| `budgets` | acceso solo del dueño | ALL | `auth.uid() = user_id` |
+| `categories` | propias y del sistema | SELECT | `user_id IS NULL OR auth.uid() = user_id` |
+| `categories` | solo puede crear/editar/eliminar las propias | ALL | `auth.uid() = user_id AND is_system = false` |
+| `exchange_rates` | lectura pública | SELECT | `true` |
+| `feedback` | Admin can delete all feedback | DELETE | `email = 'stevengalocr@gmail.com'` en `profiles` |
+| `feedback` | Admin can read all feedback | SELECT | `email = 'stevengalocr@gmail.com'` en `profiles` |
+| `feedback` | Admin can update all feedback | UPDATE | `email = 'stevengalocr@gmail.com'` en `profiles` |
+| `feedback` | Users can insert own feedback | INSERT | `auth.uid() = user_id` |
+| `feedback` | Users can read own feedback | SELECT | `auth.uid() = user_id` |
+| `fixed_expenses` | acceso solo del dueño | ALL | `auth.uid() = user_id` |
+| `goal_contributions` | Users manage own contributions | ALL | `goal_id IN (SELECT id FROM savings_goals)` |
+| `notifications` | acceso solo del dueño | ALL | `auth.uid() = user_id` |
+| `profiles` | admin_read_all_profiles | SELECT | `auth.jwt() ->> 'email' = 'stevengalocr@gmail.com'` |
+| `profiles` | admin_update_all_profiles | UPDATE | `auth.jwt() ->> 'email' = 'stevengalocr@gmail.com'` |
+| `profiles` | usuario ve y edita solo el suyo | ALL | `auth.uid() = id` |
+| `savings_goals` | acceso solo del dueño | ALL | `auth.uid() = user_id` |
+| `transactions` | acceso solo del dueño | ALL | `auth.uid() = user_id` |
 
-Para `categories`:
-```sql
--- El usuario ve sus propias categorías + las del sistema
-USING (user_id = auth.uid() OR user_id IS NULL)
-```
+> El usuario admin (`stevengalocr@gmail.com`) tiene acceso de lectura/escritura a todos los `profiles` y acceso completo a todos los `feedback`. La escritura en `exchange_rates` solo es posible desde el service role (Edge Functions).
 
-Para `goal_contributions`:
-```sql
--- El usuario accede a aportes de sus propias metas
-USING (goal_id IN (SELECT id FROM savings_goals WHERE user_id = auth.uid()))
-```
+---
 
-Para `exchange_rates`:
-```sql
--- Lectura pública, escritura solo desde service role
-SELECT FOR ALL USING (true)
-```
+## Triggers
+
+| Trigger | Tabla | Evento | Función |
+|---------|-------|--------|---------|
+| `trg_accounts_updated_at` | accounts | BEFORE UPDATE | `set_updated_at()` |
+| `trg_budgets_updated_at` | budgets | BEFORE UPDATE | `set_updated_at()` |
+| `trg_categories_updated_at` | categories | BEFORE UPDATE | `set_updated_at()` |
+| `trg_fixed_expenses_updated_at` | fixed_expenses | BEFORE UPDATE | `set_updated_at()` |
+| `trg_profiles_updated_at` | profiles | BEFORE UPDATE | `set_updated_at()` |
+| `trg_goals_updated_at` | savings_goals | BEFORE UPDATE | `set_updated_at()` |
+| `trg_transactions_updated_at` | transactions | BEFORE UPDATE | `set_updated_at()` |
+| `trg_update_balance` | transactions | AFTER INSERT/UPDATE | `update_account_balance()` — ajusta `accounts.current_balance` |
+| `trg_budget_alert` | transactions | AFTER INSERT | `check_budget_alert()` — inserta notificación si supera `alert_at_pct` |
 
 ---
 
