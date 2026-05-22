@@ -49,7 +49,7 @@ export default function PresupuestosPage() {
   return (
     <div className="page-enter">
       {menuId !== null && (
-        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, cursor: 'pointer' }} />
       )}
 
       <ConfirmModal
@@ -181,7 +181,7 @@ export default function PresupuestosPage() {
                     <div style={{ position: 'relative', marginLeft: 4 }}>
                       <button
                         onClick={e => { e.stopPropagation(); setMenuId(menuId === b.cat ? null : b.cat); }}
-                        style={{ color: 'var(--text-3)', padding: 6 }}
+                        style={{ color: 'var(--text-3)', padding: 8 }}
                       >
                         <Icon name="more" size={16} />
                       </button>

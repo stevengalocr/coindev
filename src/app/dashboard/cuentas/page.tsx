@@ -57,7 +57,7 @@ export default function CuentasPage() {
   return (
     <div className="page-enter">
       {menuId !== null && (
-        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, cursor: 'pointer' }} />
       )}
 
       <ConfirmModal
@@ -229,7 +229,7 @@ function AccountCard({ acc, lang, t, recent, menuId, onMenuToggle, onEdit, onDel
             </div>
           </div>
           <div style={{ position: 'relative' }}>
-            <button onClick={e => { e.stopPropagation(); onMenuToggle(acc.id); }} style={{ color: 'var(--text-3)', padding: 4, flexShrink: 0 }}>
+            <button onClick={e => { e.stopPropagation(); onMenuToggle(acc.id); }} style={{ color: 'var(--text-3)', padding: 8, flexShrink: 0 }}>
               <Icon name="more" size={16} />
             </button>
             {menuId === acc.id && (

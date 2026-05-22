@@ -110,11 +110,6 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'flex-end' }}>
       <style>{`
-        @keyframes cd-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .cd-modal-sheet { animation: cd-slide-up 260ms cubic-bezier(0.2,0.8,0.2,1); }
-        @media (min-width: 640px) {
-          .cd-modal-sheet { animation: none !important; }
-        }
         .cd-sheet-inp {
           width: 100%; background: var(--surface-2); border: 1.5px solid var(--border);
           border-radius: var(--r-md); padding: 11px 14px; color: var(--text);
@@ -124,7 +119,7 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
         .cd-sheet-inp:focus { border-color: var(--blue); }
         .cd-sheet-inp::placeholder { color: var(--text-4); }
       `}</style>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(3,6,15,0.7)', backdropFilter: 'blur(4px)' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(3,6,15,0.7)', backdropFilter: 'blur(4px)', cursor: 'pointer' }} />
       <div className="cd-modal-sheet no-scrollbar" style={{
         position: 'relative', width: '100%', maxWidth: 520, margin: '0 auto',
         background: 'var(--bg-2)', borderRadius: '24px 24px 0 0',

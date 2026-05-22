@@ -91,7 +91,7 @@ export default function GastosFijosPage() {
   return (
     <div className="page-enter">
       {menuId !== null && (
-        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, cursor: 'pointer' }} />
       )}
 
       <ConfirmModal
@@ -218,7 +218,7 @@ export default function GastosFijosPage() {
                   <div style={{ position: 'relative' }}>
                     <button
                       onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); }}
-                      style={{ color: 'var(--text-3)', marginLeft: 4, padding: 6 }}
+                      style={{ color: 'var(--text-3)', marginLeft: 4, padding: 8 }}
                     >
                       <Icon name="more" size={15} />
                     </button>

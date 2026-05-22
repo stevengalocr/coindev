@@ -123,7 +123,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(3,6,15,0.7)', backdropFilter: 'blur(4px)' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(3,6,15,0.7)', backdropFilter: 'blur(4px)', cursor: 'pointer' }} />
       <div style={{
         position: 'relative', zIndex: 1, width: '100%', maxWidth: 520,
         background: 'var(--surface)', borderRadius: '24px 24px 0 0',
@@ -135,8 +135,8 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
         </div>
 
-        <div style={{ padding: '8px 24px 40px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div style={{ padding: '8px 20px 20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <button onClick={onClose} style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-2)', padding: '4px 0' }}>{t.cancel}</button>
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
               {isEditing ? (lang === 'es' ? 'Editar movimiento' : 'Edit movement') : t.newMovement}
@@ -148,16 +148,16 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, background: 'var(--surface-2)', borderRadius: 14, padding: 4, marginBottom: 20, border: '1px solid var(--border)' }}>
             {([{ id: 'expense', label: t.expenseType, color: 'var(--expense)' }, { id: 'income', label: t.incomeType, color: 'var(--income)' }] as const).map(opt => (
               <button key={opt.id} onClick={() => { setType(opt.id); setCat(opt.id === 'income' ? 'salary' : 'groceries'); }}
-                style={{ padding: '11px 12px', borderRadius: 10, fontSize: 14, fontWeight: 600, color: type === opt.id ? '#0A0F1C' : 'var(--text-2)', background: type === opt.id ? opt.color : 'transparent', transition: 'all 150ms' }}>
+                style={{ padding: '9px 12px', borderRadius: 10, fontSize: 14, fontWeight: 600, color: type === opt.id ? '#0A0F1C' : 'var(--text-2)', background: type === opt.id ? opt.color : 'transparent', transition: 'all 150ms' }}>
                 {opt.label}
               </button>
             ))}
           </div>
 
           {/* Amount */}
-          <div style={{ textAlign: 'center', padding: '4px 0 16px' }}>
+          <div style={{ textAlign: 'center', padding: '2px 0 8px' }}>
             <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500 }}>{t.amount}</div>
-            <div className="mono" style={{ marginTop: 6, fontSize: 48, fontWeight: 600, letterSpacing: '-0.03em', color: 'var(--text)' }}>
+            <div className="mono" style={{ marginTop: 6, fontSize: 42, fontWeight: 600, letterSpacing: '-0.03em', color: 'var(--text)' }}>
               <span style={{ color: 'var(--text-3)' }}>{symbol}</span>
               <span>{amount || '0'}</span>
             </div>
@@ -165,14 +165,14 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
           </div>
 
           {/* Keypad */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 7, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 7, marginBottom: 14 }}>
             {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'].map(k => (
               <button key={k} className="cd-keypad-btn" onClick={() => {
                 if (k === '⌫') setAmount(a => a.slice(0, -1));
                 else if (k === '.' && amount.includes('.')) return;
                 else setAmount(a => (a + k).slice(0, 12));
               }} style={{
-                padding: '14px 0', borderRadius: 12,
+                padding: '12px 0', borderRadius: 12,
                 background: k === '⌫' ? 'var(--surface-3)' : 'var(--surface-2)',
                 border: '1px solid var(--border)', color: 'var(--text)', fontSize: 19, fontWeight: 500,
                 fontFamily: 'var(--font-mono)', transition: 'background 80ms, transform 80ms',
@@ -183,7 +183,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
           </div>
 
           {/* Category */}
-          <div style={{ marginBottom: 14 }}>
+          <div style={{ marginBottom: 10 }}>
             <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 8 }}>{t.category}</div>
             <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 4 }} className="no-scrollbar">
               {cats.map(c => (
@@ -202,7 +202,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
           </div>
 
           {/* Fields */}
-          <div className="cd-card" style={{ padding: '2px 16px', marginBottom: 16 }}>
+          <div className="cd-card" style={{ padding: '2px 16px', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0', minHeight: 46 }}>
               <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, width: 90, flexShrink: 0 }}>{t.account}</div>
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>

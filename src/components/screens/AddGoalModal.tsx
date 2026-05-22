@@ -113,15 +113,14 @@ export function AddGoalModal({ open, onClose, onSuccess, initialData }: Props) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'flex-end' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(3,6,15,0.7)', backdropFilter: 'blur(4px)' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(3,6,15,0.7)', backdropFilter: 'blur(4px)', cursor: 'pointer' }} />
       <div style={{
         position: 'relative', width: '100%', maxWidth: 520, margin: '0 auto',
         background: 'var(--bg-2)', borderRadius: '24px 24px 0 0',
         borderTop: '1px solid var(--border)',
         maxHeight: '90vh', overflowY: 'auto',
-        animation: 'cd-slide-up 260ms cubic-bezier(0.2,0.8,0.2,1)',
-      }} className="no-scrollbar">
-        <style>{`@keyframes cd-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
+        padding: '0 0 env(safe-area-inset-bottom,0)',
+      }} className="cd-modal-sheet no-scrollbar">
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
         </div>

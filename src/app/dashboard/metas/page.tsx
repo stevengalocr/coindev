@@ -93,7 +93,7 @@ export default function MetasPage() {
   return (
     <div className="page-enter">
       {menuId !== null && (
-        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
+        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, cursor: 'pointer' }} />
       )}
 
       <ConfirmModal
@@ -321,7 +321,7 @@ function GoalCard({ goal, currency, lang, t, accounts, menuId, expanded, contrib
           {statusLabel(goal.status, lang)}
         </span>
         <div style={{ position: 'relative', flexShrink: 0 }}>
-          <button onClick={e => { e.stopPropagation(); onMenuToggle(goal.id); }} style={{ color: 'var(--text-3)', padding: 4 }}>
+          <button onClick={e => { e.stopPropagation(); onMenuToggle(goal.id); }} style={{ color: 'var(--text-3)', padding: 8 }}>
             <Icon name="more" size={15} />
           </button>
           {menuId === goal.id && (
