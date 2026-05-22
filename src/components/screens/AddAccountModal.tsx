@@ -120,12 +120,13 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
         .cd-sheet-inp::placeholder { color: var(--text-4); }
       `}</style>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(3,6,15,0.7)', backdropFilter: 'blur(4px)', cursor: 'pointer' }} />
-      <div className="cd-modal-sheet no-scrollbar" style={{
+      <div className="cd-modal-sheet" style={{
         position: 'relative', width: '100%', maxWidth: 520, margin: '0 auto',
         background: 'var(--bg-2)', borderRadius: '24px 24px 0 0',
-        borderTop: '1px solid var(--border)', padding: '0 0 env(safe-area-inset-bottom,0)',
-        maxHeight: '92vh', overflowY: 'auto',
+        borderTop: '1px solid var(--border)',
+        maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
+      <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 0 max(env(safe-area-inset-bottom, 0px), 16px)' }}>
 
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
@@ -252,6 +253,7 @@ export function AddAccountModal({ open, onClose, onSuccess, initialData }: Props
                 : (lang === 'es' ? 'Crear cuenta' : 'Create account')}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

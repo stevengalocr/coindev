@@ -76,9 +76,9 @@ export function AddBudgetModal({ open, onClose, onSuccess, initialData }: Props)
         position: 'relative', width: '100%', maxWidth: 520, margin: '0 auto',
         background: 'var(--bg-2)', borderRadius: '24px 24px 0 0',
         borderTop: '1px solid var(--border)',
-        maxHeight: '85vh', overflowY: 'auto',
-        padding: '0 0 env(safe-area-inset-bottom,0)',
-      }} className="cd-modal-sheet no-scrollbar">
+        maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      }} className="cd-modal-sheet">
+      <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 0 max(env(safe-area-inset-bottom, 0px), 16px)' }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
         </div>
@@ -248,6 +248,7 @@ export function AddBudgetModal({ open, onClose, onSuccess, initialData }: Props)
             </>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

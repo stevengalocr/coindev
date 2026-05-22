@@ -92,9 +92,9 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
         position: 'relative', width: '100%', maxWidth: 520, margin: '0 auto',
         background: 'var(--bg-2)', borderRadius: '24px 24px 0 0',
         borderTop: '1px solid var(--border)',
-        maxHeight: '88vh', overflowY: 'auto',
-        padding: '0 0 env(safe-area-inset-bottom,0)',
-      }} className="cd-modal-sheet no-scrollbar">
+        maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      }} className="cd-modal-sheet">
+      <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 0 max(env(safe-area-inset-bottom, 0px), 16px)' }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
         </div>
@@ -129,7 +129,7 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
                 type="number" min="1"
                 value={amount}
                 onChange={e => { setAmount(e.target.value); setConfirmingConversion(false); }}
-                autoFocus
+
               />
             </div>
           </div>
@@ -219,6 +219,7 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
                 : (lang === 'es' ? 'Confirmar abono' : 'Confirm deposit')}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

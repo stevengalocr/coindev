@@ -39,12 +39,10 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Default account when accounts load (only in creation mode)
   useEffect(() => {
     if (accounts.length > 0 && !accId && !initialData) setAccId(accounts[0].id);
   }, [accounts, accId, initialData]);
 
-  // Sync state when modal opens or initialData changes
   useEffect(() => {
     if (!open) return;
     if (initialData) {
@@ -124,18 +122,21 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(3,6,15,0.7)', backdropFilter: 'blur(4px)', cursor: 'pointer' }} />
+
+      {/* Sheet — animated wrapper, NOT scrollable (prevents iOS Safari scroll-on-transform bug) */}
       <div style={{
         position: 'relative', zIndex: 1, width: '100%', maxWidth: 520,
         background: 'var(--surface)', borderRadius: '24px 24px 0 0',
         border: '1px solid var(--border)', borderBottom: 0,
-        boxShadow: 'var(--shadow-pop)', maxHeight: '92vh', overflowY: 'auto',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }} className="no-scrollbar cd-modal-sheet">
-        <div style={{ display: 'grid', placeItems: 'center', padding: '12px 0 4px' }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
-        </div>
+        boxShadow: 'var(--shadow-pop)', maxHeight: '92vh',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      }} className="cd-modal-sheet">
 
-        <div style={{ padding: '8px 20px 20px' }}>
+        {/* ── STICKY HEADER: handle + nav + type toggle ── */}
+        <div style={{ flexShrink: 0, padding: '12px 20px 0' }}>
+          <div style={{ display: 'grid', placeItems: 'center', marginBottom: 8 }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
+          </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <button onClick={onClose} style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-2)', padding: '4px 0' }}>{t.cancel}</button>
             <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
@@ -143,9 +144,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
             </div>
             <div style={{ width: 60 }} />
           </div>
-
-          {/* Type toggle */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, background: 'var(--surface-2)', borderRadius: 14, padding: 4, marginBottom: 20, border: '1px solid var(--border)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, background: 'var(--surface-2)', borderRadius: 14, padding: 4, marginBottom: 12, border: '1px solid var(--border)' }}>
             {([{ id: 'expense', label: t.expenseType, color: 'var(--expense)' }, { id: 'income', label: t.incomeType, color: 'var(--income)' }] as const).map(opt => (
               <button key={opt.id} onClick={() => { setType(opt.id); setCat(opt.id === 'income' ? 'salary' : 'groceries'); }}
                 style={{ padding: '9px 12px', borderRadius: 10, fontSize: 14, fontWeight: 600, color: type === opt.id ? '#0A0F1C' : 'var(--text-2)', background: type === opt.id ? opt.color : 'transparent', transition: 'all 150ms' }}>
@@ -153,6 +152,10 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
               </button>
             ))}
           </div>
+        </div>
+
+        {/* ── SCROLLABLE BODY: amount + keypad + category + fields + error ── */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '4px 20px 0' }} className="no-scrollbar">
 
           {/* Amount */}
           <div style={{ textAlign: 'center', padding: '2px 0 8px' }}>
@@ -241,7 +244,6 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
               </div>
             </div>
 
-            {/* Recurrence picker — only when fixed is on */}
             {fixed && (
               <>
                 <div className="cd-divider" />
@@ -324,7 +326,10 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
           </div>
 
           {error && <p style={{ fontSize: 13, color: 'var(--expense)', marginBottom: 12, padding: '8px 12px', background: 'var(--expense-soft)', borderRadius: 8 }}>{error}</p>}
+        </div>
 
+        {/* ── STICKY FOOTER: save button ── */}
+        <div style={{ flexShrink: 0, padding: '12px 20px', paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}>
           <button onClick={handleSave} disabled={!amount || amount === '0' || saving} style={{
             width: '100%', padding: '15px 18px', borderRadius: 14,
             background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)',
