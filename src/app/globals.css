@@ -122,6 +122,15 @@ button { cursor: pointer; border: 0; background: none; color: inherit; font: inh
 }
 
 /* ── Dashboard micro-animations ─────────────────────────────────── */
+
+/* Page container fade — opacity ONLY (no transform: position:fixed children
+   would be re-contained to this element if transform is present) */
+@keyframes cd-page-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* List item slide-up — safe with transform (no position:fixed children) */
 @keyframes cd-fade-up {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -138,7 +147,7 @@ button { cursor: pointer; border: 0; background: none; color: inherit; font: inh
 }
 
 .page-enter {
-  animation: cd-fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: cd-page-in 0.22s ease both;
 }
 
 .cd-modal-sheet {
