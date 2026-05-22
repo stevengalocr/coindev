@@ -137,12 +137,11 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
           <div style={{ display: 'grid', placeItems: 'center', marginBottom: 8 }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border-strong)' }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <button onClick={onClose} style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-2)', padding: '4px 0' }}>{t.cancel}</button>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>
               {isEditing ? (lang === 'es' ? 'Editar movimiento' : 'Edit movement') : t.newMovement}
             </div>
-            <div style={{ width: 60 }} />
+            <button onClick={onClose} style={{ color: 'var(--text-3)', padding: 4 }}><Icon name="x" size={18} /></button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, background: 'var(--surface-2)', borderRadius: 14, padding: 4, marginBottom: 12, border: '1px solid var(--border)' }}>
             {([{ id: 'expense', label: t.expenseType, color: 'var(--expense)' }, { id: 'income', label: t.incomeType, color: 'var(--income)' }] as const).map(opt => (
