@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { Icon } from '@/components/ui/Icon';
+import { LATAM_CURRENCIES, getCurrencyMeta } from '@/lib/data';
 
 const GOAL_ICONS = [
   { id: 'target',     label_es: 'Meta',        label_en: 'Goal',       color: '#3B82F6' },
@@ -36,6 +37,7 @@ export function AddGoalModal({ open, onClose, onSuccess, initialData }: Props) {
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [icon, setIcon] = useState(initialData?.icon ?? 'target');
   const [target, setTarget] = useState(initialData?.target.toString() ?? '');
+  const [currency, setCurrency] = useState(initialData?.currency ?? 'CRC');
   const [targetDate, setTargetDate] = useState(
     initialData?.targetDate ? initialData.targetDate.toISOString().slice(0, 10) : ''
   );
@@ -50,6 +52,7 @@ export function AddGoalModal({ open, onClose, onSuccess, initialData }: Props) {
       setDescription(initialData.description ?? '');
       setIcon(initialData.icon);
       setTarget(initialData.target.toString());
+      setCurrency(initialData.currency ?? 'CRC');
       setTargetDate(initialData.targetDate ? initialData.targetDate.toISOString().slice(0, 10) : '');
       setStatus(initialData.status);
     } else {
@@ -57,6 +60,7 @@ export function AddGoalModal({ open, onClose, onSuccess, initialData }: Props) {
       setDescription('');
       setIcon('target');
       setTarget('');
+      setCurrency('CRC');
       setTargetDate('');
       setStatus('active');
     }
@@ -86,6 +90,7 @@ export function AddGoalModal({ open, onClose, onSuccess, initialData }: Props) {
           description: description.trim() || undefined,
           icon,
           target_amount: amt,
+          currency,
           target_date: targetDate || undefined,
         });
         setName(''); setDescription(''); setIcon('target'); setTarget(''); setTargetDate('');
@@ -185,10 +190,34 @@ export function AddGoalModal({ open, onClose, onSuccess, initialData }: Props) {
             />
           </GField>
 
+          {/* Moneda */}
+          <GField label={lang === 'es' ? 'Moneda' : 'Currency'}>
+            <div style={{ position: 'relative' }}>
+              <select
+                value={currency}
+                onChange={e => setCurrency(e.target.value)}
+                style={{ ...inputStyle, appearance: 'none', paddingRight: 36, cursor: 'pointer' }}
+                onFocus={e => e.currentTarget.style.borderColor='var(--blue)'}
+                onBlur={e => e.currentTarget.style.borderColor='var(--border)'}
+                disabled={isEditing}
+              >
+                {LATAM_CURRENCIES.map(c => (
+                  <option key={c.code} value={c.code} style={{ background: '#10141F' }}>
+                    {c.code} — {c.symbol} — {lang === 'es' ? c.name_es : c.name_en}
+                  </option>
+                ))}
+              </select>
+              <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--blue)' }}>{getCurrencyMeta(currency).symbol}</span>
+                <Icon name="chevron-down" size={13} style={{ color: 'var(--text-3)' }} />
+              </div>
+            </div>
+          </GField>
+
           {/* Monto objetivo */}
           <GField label={lang === 'es' ? 'Monto objetivo' : 'Target amount'}>
             <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>₡</span>
+              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>{getCurrencyMeta(currency).symbol}</span>
               <input
                 style={{ ...inputStyle, paddingLeft: 28 }}
                 onFocus={e => e.currentTarget.style.borderColor='var(--blue)'}

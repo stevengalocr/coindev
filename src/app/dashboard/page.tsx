@@ -9,7 +9,7 @@ import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph, AccountGlyph } from '@/components/shell/CategoryGlyph';
 import { PeriodChips } from '@/components/shell/PeriodChips';
 import { Donut, YearChart, HeroSwoosh } from '@/components/shell/Charts';
-import { CAT, filterMovs, aggregate, fmtMoney, FX, type Period, type Account } from '@/lib/data';
+import { CAT, filterMovs, aggregate, fmtMoney, type Period, type Account } from '@/lib/data';
 import { OnboardingWizard } from '@/components/screens/OnboardingWizard';
 
 function clamp(v: number, lo = 0, hi = 1) { return Math.max(lo, Math.min(hi, v)); }
@@ -50,8 +50,8 @@ function SectionCard({ title, right, children }: { title: string; right?: React.
 }
 
 export default function DashboardPage() {
-  const { t, currency, lang } = useApp();
-  const { movements, budgets, accounts, yearEvolution, loading } = useData();
+  const { t, lang } = useApp();
+  const { movements, budgets, accounts, yearEvolution, liveUsdRate, loading } = useData();
   const [period, setPeriod] = useState<Period>('month');
 
   const now2 = new Date();
@@ -60,13 +60,14 @@ export default function DashboardPage() {
 
   const filtered = filterMovs(movements, period);
   const savingsAcc = accounts.find(a => a.kind === 'savings');
-  const { income, expense, net } = aggregate(filtered, savingsAcc?.balance ?? 0);
-  const savings = net;
-  // Convert each account balance to CRC before summing (handles USD accounts)
-  const totalBalance = accounts.reduce((s, a) => {
-    const balanceCRC = a.currency === 'USD' ? a.balance / FX.USD : a.balance;
-    return s + balanceCRC;
-  }, 0);
+  // Convert account balances to CRC for aggregated total display
+  const toCRC = (amount: number, cur: string) => cur === 'USD' ? amount * liveUsdRate : amount;
+  const totalBalance = accounts.reduce((s, a) => s + toCRC(a.balance, a.currency ?? 'CRC'), 0);
+  // Build account currency map for movement display
+  const accCurrencyMap = Object.fromEntries(accounts.map(a => [a.id, a.currency ?? 'CRC']));
+  // Aggregate movements converting each to CRC
+  const filteredCRC = filtered.map(m => ({ ...m, amount: toCRC(m.amount, accCurrencyMap[m.account] ?? 'CRC') }));
+  const { income, expense, net } = aggregate(filteredCRC, savingsAcc ? toCRC(savingsAcc.balance, savingsAcc.currency ?? 'CRC') : 0);
 
   const byCat: Record<string, number> = {};
   if (!loading) filtered.filter(m => m.type === 'expense').forEach(m => { byCat[m.cat] = (byCat[m.cat] || 0) + m.amount; });
@@ -131,24 +132,24 @@ export default function DashboardPage() {
               {t.netBalance}
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
-              <MoneyText amount={totalBalance} currency={currency} size={36} weight={700} />
+              <MoneyText amount={totalBalance} currency="CRC" size={36} weight={700} />
               <DeltaBadge text={`${net >= 0 ? '+' : ''}${pct(net, income)}% ${t.ofIncome}`} positive={net >= 0} />
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 6 }}>
               {lang === 'es' ? `${accounts.length} cuenta${accounts.length !== 1 ? 's' : ''} · Flujo del período: ` : `${accounts.length} account${accounts.length !== 1 ? 's' : ''} · Period flow: `}
               <span style={{ fontWeight: 600, color: net >= 0 ? 'var(--income)' : 'var(--expense)' }}>
-                {net >= 0 ? '+' : ''}{fmtMoney(net, currency)}
+                {net >= 0 ? '+' : ''}{fmtMoney(net, 'CRC')}
               </span>
             </div>
             <div style={{ display: 'flex', gap: 20, marginTop: 18 }}>
               <div>
                 <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 3 }}>{t.income}</div>
-                <MoneyText amount={income} currency={currency} size={14} weight={600} type="income" />
+                <MoneyText amount={income} currency="CRC" size={14} weight={600} type="income" />
               </div>
               <div style={{ width: 1, background: 'var(--border)' }} />
               <div>
                 <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 3 }}>{t.expense}</div>
-                <MoneyText amount={expense} currency={currency} size={14} weight={600} type="expense" />
+                <MoneyText amount={expense} currency="CRC" size={14} weight={600} type="expense" />
               </div>
             </div>
           </div>
@@ -162,7 +163,7 @@ export default function DashboardPage() {
             </div>
             <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-2)' }}>{t.income}</span>
           </div>
-          <MoneyText amount={income} currency={currency} size={24} weight={700} />
+          <MoneyText amount={income} currency="CRC" size={24} weight={700} />
           <div style={{ marginTop: 8 }}><DeltaBadge text={`${filtered.filter(m => m.type === 'income').length} mov.`} positive /></div>
         </div>
 
@@ -174,7 +175,7 @@ export default function DashboardPage() {
             </div>
             <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-2)' }}>{t.expense}</span>
           </div>
-          <MoneyText amount={expense} currency={currency} size={24} weight={700} />
+          <MoneyText amount={expense} currency="CRC" size={24} weight={700} />
           <div style={{ marginTop: 8 }}><DeltaBadge text={`${filtered.filter(m => m.type === 'expense').length} mov.`} positive={false} /></div>
         </div>
 
@@ -195,7 +196,7 @@ export default function DashboardPage() {
             </div>
           }
         >
-          <YearChart data={yearEvolution} currency={currency} big />
+          <YearChart data={yearEvolution} currency="CRC" big />
         </SectionCard>
 
         <SectionCard title={t.budgetsTitle}>
@@ -214,7 +215,7 @@ export default function DashboardPage() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 12, color: 'var(--text-2)' }}>
                         <span>{lang === 'es' ? 'Total gastado' : 'Total spent'}</span>
                         <span className="mono" style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>
-                          {fmtMoney(total, currency)} / {fmtMoney(totalLimit, currency)}
+                          {fmtMoney(total, 'CRC')} / {fmtMoney(totalLimit, 'CRC')}
                         </span>
                       </div>
                       <Bar ratio={total / totalLimit} height={8} />
@@ -286,7 +287,7 @@ export default function DashboardPage() {
                       <div style={{ fontSize: 11.5, color: 'var(--text-4)', whiteSpace: 'nowrap' }}>
                         {m.date.toLocaleDateString('es-CR', { day: 'numeric', month: 'short' })}
                       </div>
-                      <MoneyText amount={m.amount} currency={currency} size={13.5} weight={600} sign type={m.type} style={{ textAlign: 'right', whiteSpace: 'nowrap' }} />
+                      <MoneyText amount={m.amount} currency={accCurrencyMap[m.account] ?? 'CRC'} size={13.5} weight={600} sign type={m.type} style={{ textAlign: 'right', whiteSpace: 'nowrap' }} />
                     </div>
                   </div>
                 );
@@ -303,7 +304,7 @@ export default function DashboardPage() {
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
               <div style={{ flexShrink: 0 }}>
-                <Donut data={donutData} size={148} stroke={22} centerLabel={t.expense} centerValue={fmtMoney(donutData.reduce((s, d) => s + d.value, 0), currency)} />
+                <Donut data={donutData} size={148} stroke={22} centerLabel={t.expense} centerValue={fmtMoney(donutData.reduce((s, d) => s + d.value, 0), 'CRC')} />
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 9 }}>
                 {donutData.map((d, i) => {
@@ -364,7 +365,7 @@ export default function DashboardPage() {
                   <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{acc.tail || kindLabel[acc.kind]}</div>
                 </div>
                 <div style={{ position: 'relative', zIndex: 1 }}>
-                  <MoneyText amount={Math.abs(acc.balance)} currency={currency} size={22} weight={700} type={isCredit ? 'expense' : undefined} />
+                  <MoneyText amount={Math.abs(acc.balance)} currency={acc.currency ?? 'CRC'} size={22} weight={700} type={isCredit ? 'expense' : undefined} />
                   {isCredit && acc.limit && (
                     <div style={{ marginTop: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>

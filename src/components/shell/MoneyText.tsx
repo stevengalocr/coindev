@@ -1,10 +1,10 @@
 'use client';
 
-import { fmtMoney, type Currency } from '@/lib/data';
+import { fmtMoney } from '@/lib/data';
 
 interface Props {
   amount: number;
-  currency?: Currency;
+  currency?: string;
   size?: number;
   weight?: number;
   sign?: boolean;

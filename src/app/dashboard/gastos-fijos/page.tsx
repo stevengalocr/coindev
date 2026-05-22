@@ -14,7 +14,7 @@ import { useToast } from '@/components/ui/Toast';
 type SortKey = 'amount_desc' | 'amount_asc' | 'name' | 'next_due';
 
 export default function GastosFijosPage() {
-  const { t, currency, lang } = useApp();
+  const { t, lang } = useApp();
   const { movements, loading, deleteTransaction } = useData();
   const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
@@ -167,11 +167,11 @@ export default function GastosFijosPage() {
             <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 100% 0%, color-mix(in oklab, var(--violet) 22%, transparent), transparent 60%)', pointerEvents: 'none' }} />
             <div style={{ position: 'relative' }}>
               <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 4 }}>{t.monthly}</div>
-              <MoneyText amount={total} currency={currency} size={36} weight={600} />
+              <MoneyText amount={total} currency="CRC" size={36} weight={600} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginTop: 20 }}>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>{t.perDay}</div>
-                  <span className="mono" style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(perDay, currency)}</span>
+                  <span className="mono" style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(perDay, 'CRC')}</span>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>{t.ofIncome}</div>
@@ -204,8 +204,8 @@ export default function GastosFijosPage() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <MoneyText amount={m.amount} currency={currency} size={15} weight={600} />
-                    <div className="mono" style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>{fmtMoney(m.amount / 30, currency)}/d</div>
+                    <MoneyText amount={m.amount} currency="CRC" size={15} weight={600} />
+                    <div className="mono" style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>{fmtMoney(m.amount / 30, 'CRC')}/d</div>
                   </div>
                   <div style={{ position: 'relative' }}>
                     <button

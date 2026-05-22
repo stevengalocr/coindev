@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
-import { CAT, filterMovs, fmtMoney, aggregate, FX, type Period } from '@/lib/data';
+import { CAT, filterMovs, fmtMoney, aggregate, type Period } from '@/lib/data';
 import { PeriodChips } from '@/components/shell/PeriodChips';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { Donut, YearChart } from '@/components/shell/Charts';
@@ -19,7 +19,7 @@ function periodLabel(period: Period, lang: string): string {
 }
 
 export default function ReportesPage() {
-  const { t, currency, lang } = useApp();
+  const { t, lang } = useApp();
   const { movements, accounts, yearEvolution, loading, liveUsdRate } = useData();
   const [period, setPeriod] = useState<Period>('month');
   const [exporting, setExporting] = useState<'csv' | 'pdf' | null>(null);
@@ -54,7 +54,7 @@ export default function ReportesPage() {
   // ── CSV Export ──────────────────────────────────────────────────────
   function handleExportCSV() {
     setExporting('csv');
-    const fmt = (n: number) => fmtMoney(n, currency);
+    const fmt = (n: number) => fmtMoney(n, 'CRC');
     const rows: string[][] = [
       ['CoinDev - ' + (lang === 'es' ? 'Reporte Financiero' : 'Financial Report')],
       [lang === 'es' ? 'Período' : 'Period', pLabel],
@@ -105,7 +105,7 @@ export default function ReportesPage() {
       const { default: autoTable } = await import('jspdf-autotable');
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const fmt = (n: number) => fmtMoney(n, currency);
+      const fmt = (n: number) => fmtMoney(n, 'CRC');
       const pageW = doc.internal.pageSize.getWidth();
       let y = 18;
 
@@ -379,7 +379,7 @@ export default function ReportesPage() {
             ].map(({ label, amount, color, pct }) => (
               <div key={label} className="cd-card" style={{ padding: '18px 20px' }}>
                 <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 500, marginBottom: 10 }}>{label}</div>
-                <MoneyText amount={Math.abs(amount)} currency={currency} size={22} weight={600} style={{ color }} />
+                <MoneyText amount={Math.abs(amount)} currency="CRC" size={22} weight={600} style={{ color }} />
                 {pct !== null && (
                   <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-3)' }}>
                     <span style={{ color: pct >= 20 ? 'var(--income)' : pct >= 10 ? 'var(--warn)' : 'var(--expense)', fontWeight: 600 }}>
@@ -398,7 +398,7 @@ export default function ReportesPage() {
               <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 18 }}>{t.distribution}</div>
               {donutData.length > 0 ? (
                 <div style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <Donut data={donutData} size={160} stroke={22} centerLabel={t.expense} centerValue={fmtMoney(totalExp, currency)} />
+                  <Donut data={donutData} size={160} stroke={22} centerLabel={t.expense} centerValue={fmtMoney(totalExp, 'CRC')} />
                   <div style={{ flex: 1, minWidth: 160, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {donutData.slice(0, 6).map(d => (
                       <div key={d.cat} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -406,7 +406,7 @@ export default function ReportesPage() {
                         <span style={{ flex: 1, fontSize: 12.5, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {CAT[d.cat]?.[`label_${lang}` as 'label_es'] ?? d.cat}
                         </span>
-                        <span className="mono" style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{fmtMoney(d.value, currency)}</span>
+                        <span className="mono" style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{fmtMoney(d.value, 'CRC')}</span>
                         <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)', width: 32, textAlign: 'right' }}>
                           {Math.round((d.value / totalExp) * 100)}%
                         </span>
@@ -433,7 +433,7 @@ export default function ReportesPage() {
                     <div key={desc} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: i < topMerchants.length - 1 ? '1px solid var(--border)' : 'none' }}>
                       <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 600, color: 'var(--text-3)' }} className="mono">{i + 1}</div>
                       <div style={{ flex: 1, fontSize: 13, color: 'var(--text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{desc}</div>
-                      <MoneyText amount={amt} currency={currency} size={13} weight={600} />
+                      <MoneyText amount={amt} currency="CRC" size={13} weight={600} />
                     </div>
                   ))}
                 </div>
@@ -455,7 +455,7 @@ export default function ReportesPage() {
                 ))}
               </div>
             </div>
-            <YearChart data={yearEvolution} currency={currency} big />
+            <YearChart data={yearEvolution} currency="CRC" big />
           </div>
         </>
       )}

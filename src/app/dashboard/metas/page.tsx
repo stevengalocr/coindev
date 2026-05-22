@@ -37,7 +37,7 @@ function monthsRemaining(target: Date): number {
 }
 
 export default function MetasPage() {
-  const { t, currency, lang } = useApp();
+  const { t, lang } = useApp();
   const { goals, accounts, loading, deleteGoal } = useData();
   const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
@@ -194,11 +194,11 @@ export default function MetasPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }} className="goals-summary">
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 6 }}>{t.target}</div>
-                  <MoneyText amount={totalTarget} currency={currency} size={26} weight={600} />
+                  <MoneyText amount={totalTarget} currency="CRC" size={26} weight={600} />
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 6 }}>{t.achieved}</div>
-                  <MoneyText amount={totalCurrent} currency={currency} size={26} weight={600} style={{ color: 'var(--income)' }} />
+                  <MoneyText amount={totalCurrent} currency="CRC" size={26} weight={600} style={{ color: 'var(--income)' }} />
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500, marginBottom: 6 }}>
@@ -224,7 +224,7 @@ export default function MetasPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginBottom: 24 }}>
                 {activeGoals.map(g => (
                   <GoalCard
-                    key={g.id} goal={g} currency={currency} lang={lang} t={t}
+                    key={g.id} goal={g} currency={g.currency ?? 'CRC'} lang={lang} t={t}
                     accounts={accounts}
                     menuId={menuId}
                     expanded={expandedId === g.id}
@@ -250,7 +250,7 @@ export default function MetasPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
                 {otherGoals.map(g => (
                   <GoalCard
-                    key={g.id} goal={g} currency={currency} lang={lang} t={t}
+                    key={g.id} goal={g} currency={g.currency ?? 'CRC'} lang={lang} t={t}
                     accounts={accounts}
                     menuId={menuId}
                     expanded={expandedId === g.id}
@@ -281,7 +281,7 @@ export default function MetasPage() {
 interface CardProps {
   goal: SavingsGoal;
   t: Record<string, string>;
-  currency: 'CRC' | 'USD';
+  currency: string;
   lang: string;
   accounts: import('@/lib/data').Account[];
   menuId: string | null;

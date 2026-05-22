@@ -3,16 +3,14 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { I18N, type Lang, type Currency, type T } from '@/lib/data';
+import { I18N, type Lang, type T } from '@/lib/data';
 
 interface AppState {
   lang: Lang;
-  currency: Currency;
   theme: 'dark' | 'light';
   t: T;
   liveUsdRate: number;
   setLang: (l: Lang) => void;
-  setCurrency: (c: Currency) => void;
   setTheme: (t: 'dark' | 'light') => void;
   signOut: () => Promise<void>;
 }
@@ -22,7 +20,6 @@ const AppCtx = createContext<AppState | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [lang, setLangState] = useState<Lang>('es');
-  const [currency, setCurrencyState] = useState<Currency>('CRC');
   const [theme, setThemeState] = useState<'dark' | 'light'>('dark');
   const [liveUsdRate, setLiveUsdRate] = useState(510);
 
@@ -39,7 +36,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setLang = useCallback((l: Lang) => setLangState(l), []);
-  const setCurrency = useCallback((c: Currency) => setCurrencyState(c), []);
   const setTheme = useCallback((t: 'dark' | 'light') => {
     setThemeState(t);
     document.documentElement.setAttribute('data-theme', t);
@@ -52,7 +48,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   return (
-    <AppCtx.Provider value={{ lang, currency, theme, t: I18N[lang], liveUsdRate, setLang, setCurrency, setTheme, signOut }}>
+    <AppCtx.Provider value={{ lang, theme, t: I18N[lang], liveUsdRate, setLang, setTheme, signOut }}>
       {children}
     </AppCtx.Provider>
   );

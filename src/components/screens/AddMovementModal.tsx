@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
-import { CATEGORIES } from '@/lib/data';
+import { CATEGORIES, getCurrencyMeta } from '@/lib/data';
 import { Icon } from '@/components/ui/Icon';
 
 interface Props {
@@ -23,15 +23,12 @@ function toLocalDateStr(d: Date): string {
 }
 
 export function AddMovementModal({ open, onClose, onSuccess, initialFixed = false, initialType = 'expense', initialData }: Props) {
-  const { t, currency, lang, liveUsdRate } = useApp();
+  const { t, lang } = useApp();
   const { accounts, addTransaction, updateTransaction } = useData();
   const isEditing = !!initialData;
 
-  const toCRC = (v: number) => currency === 'USD' ? Math.round(v * liveUsdRate) : v;
-  const fromCRC = (v: number) => currency === 'USD' ? parseFloat((v / liveUsdRate).toFixed(2)) : v;
-
   const [type, setType] = useState<'expense' | 'income'>(initialData?.type ?? initialType);
-  const [amount, setAmount] = useState(initialData ? String(fromCRC(initialData.amount)) : '');
+  const [amount, setAmount] = useState(initialData ? String(initialData.amount) : '');
   const [cat, setCat] = useState(initialData?.cat ?? (initialType === 'income' ? 'salary' : 'groceries'));
   const [accId, setAccId] = useState(initialData?.account ?? '');
   const [desc, setDesc] = useState(initialData?.desc ?? '');
@@ -52,7 +49,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
     if (!open) return;
     if (initialData) {
       setType(initialData.type);
-      setAmount(String(fromCRC(initialData.amount)));
+      setAmount(String(initialData.amount));
       setCat(initialData.cat);
       setAccId(initialData.account);
       setDesc(initialData.desc);
@@ -72,7 +69,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
     }
     setError('');
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initialData, initialFixed, initialType, currency, liveUsdRate]);
+  }, [open, initialData, initialFixed, initialType]);
 
   useEffect(() => {
     if (!open) return;
@@ -82,7 +79,10 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
   }, [open, onClose]);
 
   const cats = CATEGORIES.filter(c => c.type === type);
-  const symbol = currency === 'USD' ? '$' : '₡';
+  const selectedAcc = accounts.find(a => a.id === accId);
+  const accCurrency = selectedAcc?.currency ?? 'CRC';
+  const currencyMeta = getCurrencyMeta(accCurrency);
+  const symbol = currencyMeta.symbol;
 
   async function handleSave() {
     if (!amount || amount === '0') return;
@@ -90,18 +90,18 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
     setSaving(true);
     setError('');
     try {
-      const crcAmount = toCRC(parseFloat(amount));
+      const rawAmount = parseFloat(amount);
       if (isEditing && initialData) {
         await updateTransaction(
           initialData.id,
-          { type, cat, amount: crcAmount, account_id: accId, date, description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'), is_fixed: fixed, recurrence_type: fixed ? recType : null, recurrence_value: fixed && recType ? recValue : null },
+          { type, cat, amount: rawAmount, account_id: accId, date, description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'), is_fixed: fixed, recurrence_type: fixed ? recType : null, recurrence_value: fixed && recType ? recValue : null },
           { type: initialData.type, amount: initialData.amount, account: initialData.account }
         );
       } else {
         await addTransaction({
           type,
           cat,
-          amount: crcAmount,
+          amount: rawAmount,
           account_id: accId,
           date,
           description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'),
@@ -160,7 +160,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
               <span style={{ color: 'var(--text-3)' }}>{symbol}</span>
               <span>{amount || '0'}</span>
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 4 }}>{currency}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 4 }}>{accCurrency}</div>
           </div>
 
           {/* Keypad */}

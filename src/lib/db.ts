@@ -113,6 +113,7 @@ export interface DbBudget {
   id: string;
   category_id: string;
   limit_amount: number;
+  currency: string;
   period: string;
 }
 
@@ -181,7 +182,7 @@ export function toBudget(b: DbBudget, movements: Movement[]): Budget {
   const spent = movements
     .filter(m => m.type === 'expense' && m.cat === catSlug && m.date >= monthStart)
     .reduce((s, m) => s + m.amount, 0);
-  return { cat: catSlug, limit: Number(b.limit_amount), spent };
+  return { cat: catSlug, limit: Number(b.limit_amount), spent, currency: b.currency ?? 'CRC' };
 }
 
 // ── Queries ─────────────────────────────────────────────────────────
@@ -262,7 +263,7 @@ export async function fetchBudgets(): Promise<DbBudget[]> {
   const sb = createClient();
   const { data } = await sb
     .from('budgets')
-    .select('id,category_id,limit_amount,period')
+    .select('id,category_id,limit_amount,currency,period')
     .eq('is_active', true)
     .eq('period', 'monthly');
   return (data ?? []) as DbBudget[];
@@ -301,6 +302,7 @@ export async function insertAccount(data: NewAccount): Promise<void> {
 export interface NewBudget {
   cat: string;
   limit_amount: number;
+  currency?: string;
 }
 
 export async function insertBudget(data: NewBudget): Promise<void> {
@@ -313,6 +315,7 @@ export async function insertBudget(data: NewBudget): Promise<void> {
     user_id: user.id,
     category_id,
     limit_amount: data.limit_amount,
+    currency: data.currency ?? 'CRC',
     period: 'monthly',
     is_active: true,
   });
@@ -569,7 +572,7 @@ export async function deleteTransaction(id: string, type: 'income' | 'expense', 
   }
 }
 
-export async function updateAccount(id: string, data: { name?: string; type?: string; color?: string; credit_limit?: number | null; last_digits?: string | null }): Promise<void> {
+export async function updateAccount(id: string, data: { name?: string; type?: string; color?: string; currency?: string; credit_limit?: number | null; last_digits?: string | null }): Promise<void> {
   const sb = createClient();
   const { error } = await sb.from('accounts').update(data).eq('id', id);
   if (error) throw error;

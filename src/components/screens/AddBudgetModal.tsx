@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
-import { CAT, CATEGORIES } from '@/lib/data';
+import { CAT, CATEGORIES, LATAM_CURRENCIES, getCurrencyMeta } from '@/lib/data';
 import { Icon } from '@/components/ui/Icon';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 
@@ -26,6 +26,7 @@ export function AddBudgetModal({ open, onClose, onSuccess, initialData }: Props)
 
   const [cat, setCat] = useState(initialData?.cat ?? available[0]?.id ?? '');
   const [limit, setLimit] = useState(initialData?.limit.toString() ?? '');
+  const [currency, setCurrency] = useState(initialData?.currency ?? 'CRC');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -34,9 +35,11 @@ export function AddBudgetModal({ open, onClose, onSuccess, initialData }: Props)
     if (initialData) {
       setCat(initialData.cat);
       setLimit(initialData.limit.toString());
+      setCurrency(initialData.currency ?? 'CRC');
     } else {
       setCat(available[0]?.id ?? '');
       setLimit('');
+      setCurrency('CRC');
     }
     setError('');
   }, [open, initialData]);
@@ -52,8 +55,8 @@ export function AddBudgetModal({ open, onClose, onSuccess, initialData }: Props)
       if (isEditing) {
         await updateBudget(cat, amt);
       } else {
-        await addBudget({ cat, limit_amount: amt });
-        setLimit(''); setCat(available[0]?.id ?? '');
+        await addBudget({ cat, limit_amount: amt, currency });
+        setLimit(''); setCat(available[0]?.id ?? ''); setCurrency('CRC');
       }
       onClose();
       onSuccess?.();
@@ -111,7 +114,7 @@ export function AddBudgetModal({ open, onClose, onSuccess, initialData }: Props)
                   {lang === 'es' ? 'Límite mensual' : 'Monthly limit'}
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>₡</span>
+                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>{getCurrencyMeta(currency).symbol}</span>
                   <input
                     style={{
                       width: '100%', background: 'var(--surface-2)', border: '1.5px solid var(--border)',
@@ -173,13 +176,45 @@ export function AddBudgetModal({ open, onClose, onSuccess, initialData }: Props)
                 </div>
               </div>
 
+              {/* Moneda */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  {lang === 'es' ? 'Moneda' : 'Currency'}
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={currency}
+                    onChange={e => setCurrency(e.target.value)}
+                    style={{
+                      width: '100%', background: 'var(--surface-2)', border: '1.5px solid var(--border)',
+                      borderRadius: 'var(--r-md)', padding: '11px 36px 11px 14px',
+                      color: 'var(--text)', fontSize: 14, fontFamily: 'var(--font-sans)', outline: 'none',
+                      transition: 'border-color 150ms', boxSizing: 'border-box',
+                      appearance: 'none', cursor: 'pointer',
+                    }}
+                    onFocus={e => e.currentTarget.style.borderColor = 'var(--blue)'}
+                    onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                  >
+                    {LATAM_CURRENCIES.map(c => (
+                      <option key={c.code} value={c.code} style={{ background: '#10141F' }}>
+                        {c.code} — {c.symbol} — {lang === 'es' ? c.name_es : c.name_en}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--blue)' }}>{getCurrencyMeta(currency).symbol}</span>
+                    <Icon name="chevron-down" size={13} style={{ color: 'var(--text-3)' }} />
+                  </div>
+                </div>
+              </div>
+
               {/* Límite */}
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   {lang === 'es' ? 'Límite mensual' : 'Monthly limit'}
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>₡</span>
+                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-3)', pointerEvents: 'none' }}>{getCurrencyMeta(currency).symbol}</span>
                   <input
                     style={{
                       width: '100%', background: 'var(--surface-2)', border: '1.5px solid var(--border)',

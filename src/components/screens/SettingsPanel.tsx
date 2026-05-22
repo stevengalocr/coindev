@@ -8,7 +8,7 @@ import { Icon } from '@/components/ui/Icon';
 interface Props { open: boolean; onClose: () => void }
 
 export function SettingsPanel({ open, onClose }: Props) {
-  const { t, lang, currency, theme, setLang, setCurrency, setTheme, signOut } = useApp();
+  const { t, lang, theme, setLang, setTheme, signOut } = useApp();
   const { profile, saveProfile } = useData();
 
   const displayName = profile?.full_name ?? '';
@@ -44,11 +44,6 @@ export function SettingsPanel({ open, onClose }: Props) {
   async function handleLang(val: 'es' | 'en') {
     setLang(val);
     await saveProfile({ language: val });
-  }
-
-  async function handleCurrency(val: 'CRC' | 'USD') {
-    setCurrency(val);
-    await saveProfile({ default_currency: val });
   }
 
   async function handleSaveProfile() {
@@ -212,23 +207,6 @@ export function SettingsPanel({ open, onClose }: Props) {
                     <button key={opt.id} onClick={() => handleLang(opt.id)} style={{ padding: '12px', borderRadius: 'var(--r-md)', border: `1.5px solid ${active ? 'var(--blue)' : 'var(--border)'}`, background: active ? 'color-mix(in oklab, var(--blue) 11%, var(--surface))' : 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13, fontWeight: active ? 600 : 400, color: active ? 'var(--text)' : 'var(--text-3)', transition: 'all 140ms' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 20, borderRadius: 5, background: active ? 'color-mix(in oklab, var(--blue) 20%, var(--surface-3))' : 'var(--surface-3)', fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)', color: active ? 'var(--blue)' : 'var(--text-3)', letterSpacing: '0.04em' }}>{opt.cc}</span>
                       {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </Section>
-
-            <Section title={t.mainCurrency}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {([{ id: 'CRC', symbol: '₡', sub: 'Colón CR' }, { id: 'USD', symbol: '$', sub: 'Dólar US' }] as const).map(opt => {
-                  const active = currency === opt.id;
-                  return (
-                    <button key={opt.id} onClick={() => handleCurrency(opt.id)} style={{ padding: '12px 10px', borderRadius: 'var(--r-md)', border: `1.5px solid ${active ? 'var(--blue)' : 'var(--border)'}`, background: active ? 'color-mix(in oklab, var(--blue) 11%, var(--surface))' : 'var(--surface)', display: 'flex', alignItems: 'center', gap: 10, transition: 'all 140ms' }}>
-                      <span className="mono" style={{ fontSize: 20, color: active ? 'var(--blue)' : 'var(--text-3)', fontWeight: 700, lineHeight: 1 }}>{opt.symbol}</span>
-                      <div style={{ textAlign: 'left' }}>
-                        <div style={{ fontSize: 12.5, fontWeight: active ? 600 : 400, color: active ? 'var(--text)' : 'var(--text-3)' }}>{opt.id}</div>
-                        <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{opt.sub}</div>
-                      </div>
                     </button>
                   );
                 })}

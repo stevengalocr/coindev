@@ -15,8 +15,8 @@ import { useToast } from '@/components/ui/Toast';
 type SortKey = 'balance_desc' | 'balance_asc' | 'name' | 'type';
 
 export default function CuentasPage() {
-  const { t, currency, lang } = useApp();
-  const { accounts, movements, loading, deleteAccount } = useData();
+  const { t, lang } = useApp();
+  const { accounts, movements, liveUsdRate, loading, deleteAccount } = useData();
   const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<Account | null>(null);
@@ -28,7 +28,10 @@ export default function CuentasPage() {
 
   const SHOW_SEARCH = accounts.length >= 4;
 
-  const total = accounts.reduce((s, a) => s + a.balance, 0);
+  const total = accounts.reduce((s, a) => {
+    const crc = (a.currency ?? 'CRC') === 'USD' ? a.balance * liveUsdRate : a.balance;
+    return s + crc;
+  }, 0);
 
   let filtered = query
     ? accounts.filter(a => a.name.toLowerCase().includes(query.toLowerCase()))
@@ -80,7 +83,7 @@ export default function CuentasPage() {
               <span style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
                 {t.netBalance}
               </span>
-              <MoneyText amount={total} currency={currency} size={24} weight={600} />
+              <MoneyText amount={total} currency="CRC" size={24} weight={600} />
             </div>
           )}
           {loading && <div style={{ marginTop: 6, height: 18, width: 140, borderRadius: 4, background: 'var(--surface-3)' }} />}
@@ -151,7 +154,6 @@ export default function CuentasPage() {
             <AccountCard
               key={acc.id}
               acc={acc}
-              currency={currency}
               lang={lang}
               t={t}
               recent={movements.filter(m => m.account === acc.id).slice(0, 3)}
@@ -194,8 +196,8 @@ export default function CuentasPage() {
   );
 }
 
-function AccountCard({ acc, currency, lang, t, recent, menuId, onMenuToggle, onEdit, onDelete }: {
-  acc: Account; currency: string; lang: string; t: any;
+function AccountCard({ acc, lang, t, recent, menuId, onMenuToggle, onEdit, onDelete }: {
+  acc: Account; lang: string; t: any;
   recent: import('@/lib/data').Movement[];
   menuId: string | null;
   onMenuToggle: (id: string) => void;
@@ -246,7 +248,7 @@ function AccountCard({ acc, currency, lang, t, recent, menuId, onMenuToggle, onE
         {/* Balance */}
         <MoneyText
           amount={Math.abs(acc.balance)}
-          currency={currency as any}
+          currency={acc.currency ?? 'CRC'}
           size={26}
           weight={600}
           style={{ color: acc.balance < 0 ? 'var(--expense)' : 'var(--text)' }}
@@ -257,7 +259,7 @@ function AccountCard({ acc, currency, lang, t, recent, menuId, onMenuToggle, onE
           <div style={{ marginTop: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-3)', marginBottom: 5 }}>
               <span>{lang === 'es' ? 'Utilizado' : 'Used'}</span>
-              <span className="mono">{fmtMoney(used, currency as any)} / {fmtMoney(acc.limit, currency as any)}</span>
+              <span className="mono">{fmtMoney(used, acc.currency ?? 'CRC')} / {fmtMoney(acc.limit, acc.currency ?? 'CRC')}</span>
             </div>
             <div style={{ height: 5, background: 'var(--surface-3)', borderRadius: 999, overflow: 'hidden' }}>
               <div style={{ width: `${Math.min(pct, 100)}%`, height: '100%', background: pct > 80 ? 'var(--expense)' : pct > 60 ? 'var(--warn)' : acc.color, borderRadius: 999, transition: 'width 600ms ease' }} />
@@ -272,7 +274,7 @@ function AccountCard({ acc, currency, lang, t, recent, menuId, onMenuToggle, onE
               <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', fontSize: 12, color: 'var(--text-2)', borderBottom: i < recent.length - 1 ? '1px solid var(--border)' : 'none' }}>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>{m.desc}</span>
                 <span className="mono" style={{ fontSize: 11.5, color: m.type === 'income' ? 'var(--income)' : 'var(--expense)', fontWeight: 600, flexShrink: 0 }}>
-                  {m.type === 'income' ? '+' : '−'}{fmtMoney(m.amount, currency as any)}
+                  {m.type === 'income' ? '+' : '−'}{fmtMoney(m.amount, acc.currency ?? 'CRC')}
                 </span>
               </div>
             ))}

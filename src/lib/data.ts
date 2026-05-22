@@ -199,25 +199,57 @@ export const I18N = {
 
 export type Lang = 'es' | 'en';
 export type T = typeof I18N['es'] | typeof I18N['en'];
-export type Currency = 'CRC' | 'USD';
+export type Currency = string;
 
 export const FX = { CRC: 1, USD: 1 / 510 };
 
+export interface LatamCurrency {
+  code: string;
+  symbol: string;
+  name_es: string;
+  name_en: string;
+  decimals: number;
+}
+
+export const LATAM_CURRENCIES: LatamCurrency[] = [
+  { code: 'CRC', symbol: '₡',    name_es: 'Colón costarricense',   name_en: 'Costa Rican colón',     decimals: 0 },
+  { code: 'USD', symbol: '$',    name_es: 'Dólar americano',        name_en: 'US Dollar',             decimals: 2 },
+  { code: 'MXN', symbol: 'MX$', name_es: 'Peso mexicano',          name_en: 'Mexican peso',          decimals: 2 },
+  { code: 'COP', symbol: 'COP$',name_es: 'Peso colombiano',        name_en: 'Colombian peso',        decimals: 0 },
+  { code: 'ARS', symbol: '$',    name_es: 'Peso argentino',         name_en: 'Argentine peso',        decimals: 2 },
+  { code: 'BRL', symbol: 'R$',  name_es: 'Real brasileño',         name_en: 'Brazilian real',        decimals: 2 },
+  { code: 'CLP', symbol: 'CLP$',name_es: 'Peso chileno',           name_en: 'Chilean peso',          decimals: 0 },
+  { code: 'PEN', symbol: 'S/.',  name_es: 'Sol peruano',            name_en: 'Peruvian sol',          decimals: 2 },
+  { code: 'GTQ', symbol: 'Q',   name_es: 'Quetzal guatemalteco',   name_en: 'Guatemalan quetzal',    decimals: 2 },
+  { code: 'HNL', symbol: 'L',   name_es: 'Lempira hondureño',      name_en: 'Honduran lempira',      decimals: 2 },
+  { code: 'NIO', symbol: 'C$',  name_es: 'Córdoba nicaragüense',   name_en: 'Nicaraguan córdoba',    decimals: 2 },
+  { code: 'PAB', symbol: 'B/.', name_es: 'Balboa panameño',        name_en: 'Panamanian balboa',     decimals: 2 },
+  { code: 'DOP', symbol: 'RD$', name_es: 'Peso dominicano',        name_en: 'Dominican peso',        decimals: 2 },
+  { code: 'BOB', symbol: 'Bs.', name_es: 'Boliviano',              name_en: 'Bolivian boliviano',    decimals: 2 },
+  { code: 'PYG', symbol: '₲',   name_es: 'Guaraní paraguayo',      name_en: 'Paraguayan guaraní',    decimals: 0 },
+  { code: 'UYU', symbol: '$U',  name_es: 'Peso uruguayo',          name_en: 'Uruguayan peso',        decimals: 2 },
+  { code: 'VES', symbol: 'Bs.S',name_es: 'Bolívar venezolano',     name_en: 'Venezuelan bolívar',    decimals: 2 },
+  { code: 'EUR', symbol: '€',   name_es: 'Euro',                   name_en: 'Euro',                  decimals: 2 },
+];
+
+export function getCurrencyMeta(code: string): LatamCurrency {
+  return LATAM_CURRENCIES.find(c => c.code === code) ?? LATAM_CURRENCIES[0];
+}
+
 export function fmtMoney(
-  crcAmount: number,
-  currency: Currency = 'CRC',
-  opts: { showCurrency?: boolean; decimals?: number; sign?: boolean } = {}
+  amount: number,
+  currency: string = 'CRC',
+  opts: { decimals?: number; sign?: boolean } = {}
 ): string {
-  const v = crcAmount * FX[currency];
-  const { decimals = currency === 'USD' ? 2 : 0, sign = false } = opts;
-  const abs = Math.abs(v);
-  const n = abs.toLocaleString(currency === 'USD' ? 'en-US' : 'es-CR', {
+  const meta = getCurrencyMeta(currency);
+  const { decimals = meta.decimals, sign = false } = opts;
+  const abs = Math.abs(amount);
+  const n = abs.toLocaleString(currency === 'CRC' ? 'es-CR' : 'en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
-  const symbol = currency === 'USD' ? '$' : '₡';
-  const prefix = sign ? (v >= 0 ? '+' : '−') : v < 0 ? '−' : '';
-  return `${prefix}${symbol}${n}`;
+  const prefix = sign ? (amount >= 0 ? '+' : '−') : amount < 0 ? '−' : '';
+  return `${prefix}${meta.symbol}${n}`;
 }
 
 export interface Category {
@@ -336,14 +368,15 @@ export interface Budget {
   cat: string;
   limit: number;
   spent: number;
+  currency: string;
 }
 
 export const BUDGETS: Budget[] = [
-  { cat: 'groceries', limit: 150000, spent: 110100 },
-  { cat: 'food',      limit: 80000,  spent: 36450  },
-  { cat: 'transport', limit: 50000,  spent: 29700  },
-  { cat: 'fun',       limit: 60000,  spent: 55700  },
-  { cat: 'health',    limit: 40000,  spent: 32000  },
+  { cat: 'groceries', limit: 150000, spent: 110100, currency: 'CRC' },
+  { cat: 'food',      limit: 80000,  spent: 36450,  currency: 'CRC' },
+  { cat: 'transport', limit: 50000,  spent: 29700,  currency: 'CRC' },
+  { cat: 'fun',       limit: 60000,  spent: 55700,  currency: 'CRC' },
+  { cat: 'health',    limit: 40000,  spent: 32000,  currency: 'CRC' },
 ];
 
 export const YEAR_EVOLUTION = [
