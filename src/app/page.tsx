@@ -593,7 +593,7 @@ function Nav() {
             <>
               <Link href="/login" className="btn btn-ghost" id="nav-login">Iniciar sesión</Link>
               <style>{`@media(max-width:640px){#nav-login{display:none;}}`}</style>
-              <a href={LS_URL} className="btn btn-primary lemonsqueezy-button">Crear cuenta →</a>
+              <Link href="/register" className="btn btn-primary">Crear cuenta →</Link>
             </>
           )}
           <button className="btn btn-ghost" id="mob-btn"
@@ -609,7 +609,7 @@ function Nav() {
           {links.map(l => <a key={l.href} href={l.href} className="mob-nav-link" onClick={() => setMob(false)}>{l.label}</a>)}
           <div style={{ marginTop:16, display:'flex', flexDirection:'column', gap:10 }}>
             <Link href="/login" className="btn btn-ghost" style={{ justifyContent:'center' }}>Iniciar sesión</Link>
-            <a href={LS_URL} className="btn btn-primary lemonsqueezy-button" style={{ justifyContent:'center' }}>Crear cuenta gratis →</a>
+            <Link href="/register" className="btn btn-primary" style={{ justifyContent:'center' }}>Crear cuenta gratis →</Link>
           </div>
         </div>
       )}
@@ -740,12 +740,12 @@ function Hero() {
               de cambio en vivo — todo en un solo lugar.
             </p>
             <div className="hero-ctas">
-              <a href={LS_URL}
-                className="btn btn-primary btn-lg lemonsqueezy-button"
+              <Link href="/register"
+                className="btn btn-primary btn-lg"
                 aria-label="Crear cuenta gratuita en CoinDev">
                 Empezar gratis
                 <Ic n="arrow" size={15} col="#fff" />
-              </a>
+              </Link>
               <a href="#producto" className="btn btn-ghost btn-lg">Ver el producto</a>
             </div>
             <div className="hero-meta">
@@ -1009,7 +1009,7 @@ function ConverterSection() {
             <Reveal delay={0.14}><p className="sec-p">Cobrás en tu moneda local, pagás suscripciones en dólares, viajás por la región. CoinDev convierte, registra y suma todo automáticamente con tipos de cambio en tiempo real.</p></Reveal>
             <Reveal delay={0.2}>
               <div className="hero-ctas" style={{ marginTop:28 }}>
-                <a href={LS_URL} className="btn btn-primary lemonsqueezy-button">Probalo gratis</a>
+                <Link href="/register" className="btn btn-primary">Probalo gratis</Link>
                 <Link href="/login" className="btn btn-ghost">Iniciar sesión</Link>
               </div>
               <div className="hero-meta" style={{ marginTop:24 }}>
@@ -1181,14 +1181,11 @@ function Pricing() {
                 <Ic n="zap" size={13} col="var(--green)" />
                 <span style={{ fontSize:12.5, fontWeight:600, color:'var(--green)' }}>7 días gratis · Sin tarjeta requerida</span>
               </div>
-              <a href={LS_URL}
-                className="btn btn-primary lemonsqueezy-button"
+              <Link href="/register"
+                className="btn btn-primary"
                 style={{ width:'100%', justifyContent:'center', padding:'15px', fontSize:14.5, borderRadius:12 }}>
                 Empezar prueba gratuita <Ic n="arrow" size={15} col="#fff" />
-              </a>
-              <p className="mono" style={{ marginTop:14, fontSize:11.5, color:'var(--ink-faint)', textAlign:'center' }}>
-                Pagos seguros con Lemon Squeezy
-              </p>
+              </Link>
             </div>
           </Reveal>
 
@@ -1262,9 +1259,9 @@ function FinalCTA() {
         </Reveal>
         <Reveal delay={0.18}>
           <div style={{ display:'inline-flex', gap:12, flexWrap:'wrap', justifyContent:'center' }}>
-            <a href={LS_URL} className="btn btn-primary btn-lg lemonsqueezy-button">
+            <Link href="/register" className="btn btn-primary btn-lg">
               Crear cuenta gratis →
-            </a>
+            </Link>
             <Link href="/login" className="btn btn-ghost btn-lg">Iniciar sesión</Link>
           </div>
           <div>
@@ -1304,7 +1301,7 @@ function Footer() {
             <h5>Cuenta</h5>
             <Link href="/login">Iniciar sesión</Link>
             <Link href="/register">Registrarse</Link>
-            <a href={LS_URL} className="lemonsqueezy-button">Prueba gratis</a>
+            <Link href="/register">Prueba gratis</Link>
           </div>
           <div className="foot-col">
             <h5>Legal</h5>
