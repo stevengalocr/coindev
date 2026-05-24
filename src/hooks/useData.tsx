@@ -55,7 +55,7 @@ interface DataState {
   addAccount: (data: NewAccount) => Promise<void>;
   addBudget: (data: NewBudget) => Promise<void>;
   addGoal: (data: NewSavingsGoal) => Promise<void>;
-  saveProfile: (patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme'>>) => Promise<void>;
+  saveProfile: (patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme' | 'avatar_url'>>) => Promise<void>;
   refetch: () => Promise<void>;
   updateTransaction: (id: string, data: Parameters<typeof updateTransaction>[1], old: { type: 'income' | 'expense'; amount: number; account: string; date?: string }) => Promise<void>;
   deleteTransaction: (id: string, type: 'income' | 'expense', amount: number, accountId: string) => Promise<void>;
@@ -213,7 +213,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [load]);
 
   const saveProfile = useCallback(async (
-    patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme'>>
+    patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme' | 'avatar_url'>>
   ) => {
     await upsertProfile(patch);
     setProfile(prev => prev ? { ...prev, ...patch } : null);

@@ -15,6 +15,7 @@ export function SettingsPanel({ open, onClose }: Props) {
   const nameParts = displayName.trim().split(' ');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [avatar, setAvatar] = useState(profile?.avatar_url ?? '');
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
 
@@ -24,7 +25,8 @@ export function SettingsPanel({ open, onClose }: Props) {
       setFirstName(parts[0] ?? '');
       setLastName(parts.slice(1).join(' ') ?? '');
     }
-  }, [profile?.full_name]);
+    setAvatar(profile?.avatar_url ?? '');
+  }, [profile?.full_name, profile?.avatar_url]);
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +53,7 @@ export function SettingsPanel({ open, onClose }: Props) {
     if (!full_name) return;
     setSavingProfile(true);
     try {
-      await saveProfile({ full_name });
+      await saveProfile({ full_name, avatar_url: avatar || null });
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 2000);
     } finally {
@@ -59,7 +61,11 @@ export function SettingsPanel({ open, onClose }: Props) {
     }
   }
 
-  const profileDirty = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') !== (profile?.full_name ?? '');
+  const profileDirty =
+    [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') !== (profile?.full_name ?? '') ||
+    avatar !== (profile?.avatar_url ?? '');
+
+  const AVATARS = ['😊','🧑‍💼','🦊','🐼','🦁','🌟','🎯','💎','🚀','🌊','🔥','⚡','🌙','🌺','🎨','🤖'];
 
   if (!open) return null;
 
@@ -88,7 +94,9 @@ export function SettingsPanel({ open, onClose }: Props) {
 
             {/* Profile avatar + summary */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px', background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)' }}>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--gradient-hero)', display: 'grid', placeItems: 'center', fontSize: 17, fontWeight: 700, color: 'var(--btn-hero-text)', flexShrink: 0 }}>{initials}</div>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--gradient-hero)', display: 'grid', placeItems: 'center', fontSize: avatar ? 26 : 17, fontWeight: 700, color: 'var(--btn-hero-text)', flexShrink: 0 }}>
+                {avatar || initials}
+              </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentName}</div>
                 <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
@@ -100,6 +108,40 @@ export function SettingsPanel({ open, onClose }: Props) {
             {/* Account / Profile edit */}
             <Section title={lang === 'es' ? 'Mi cuenta' : 'My account'}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Avatar picker */}
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, marginBottom: 8 }}>
+                    {lang === 'es' ? 'Ícono de perfil' : 'Profile icon'}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {AVATARS.map(em => (
+                      <button
+                        key={em}
+                        onClick={() => setAvatar(avatar === em ? '' : em)}
+                        style={{
+                          width: 36, height: 36, borderRadius: 10, fontSize: 20,
+                          border: `1.5px solid ${avatar === em ? 'var(--blue)' : 'var(--border)'}`,
+                          background: avatar === em ? 'color-mix(in oklab, var(--blue) 12%, var(--surface))' : 'var(--surface)',
+                          display: 'grid', placeItems: 'center', cursor: 'pointer', transition: 'all 130ms',
+                        }}
+                      >
+                        {em}
+                      </button>
+                    ))}
+                    {avatar && (
+                      <button
+                        onClick={() => setAvatar('')}
+                        style={{
+                          width: 36, height: 36, borderRadius: 10, fontSize: 11, fontWeight: 600,
+                          border: '1.5px solid var(--border)', background: 'var(--surface)',
+                          color: 'var(--text-3)', cursor: 'pointer',
+                        }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, marginBottom: 5 }}>{lang === 'es' ? 'Nombre' : 'First name'}</div>

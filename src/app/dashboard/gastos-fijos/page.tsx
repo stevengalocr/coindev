@@ -101,7 +101,9 @@ export default function GastosFijosPage() {
 
       <ConfirmModal
         open={!!deleteTarget}
-        title={lang === 'es' ? 'Eliminar gasto fijo' : 'Delete fixed expense'}
+        title={deleteTarget?.type === 'income'
+          ? (lang === 'es' ? 'Eliminar ingreso fijo' : 'Delete fixed income')
+          : (lang === 'es' ? 'Eliminar gasto fijo' : 'Delete fixed expense')}
         message={lang === 'es'
           ? `¿Eliminar "${deleteTarget?.desc}"? Esta acción no se puede deshacer.`
           : `Delete "${deleteTarget?.desc}"? This action cannot be undone.`}
@@ -155,7 +157,7 @@ export default function GastosFijosPage() {
               const c = CAT[m.cat];
               const accCur = getAccCurrency(m.account);
               return (
-                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, borderLeft: '3px solid var(--income)' }}>
+                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, borderLeft: '3px solid var(--income)', position: 'relative' }}>
                   <CategoryGlyph id={m.cat} size={42} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>{m.desc}</div>
@@ -168,6 +170,24 @@ export default function GastosFijosPage() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <MoneyText amount={m.amount} currency={accCur} size={15} weight={600} type="income" />
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); }}
+                      style={{ color: 'var(--text-3)', marginLeft: 4, padding: 8 }}
+                    >
+                      <Icon name="more" size={15} />
+                    </button>
+                    {menuId === m.id && (
+                      <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow-pop)', minWidth: 160, overflow: 'hidden' }}>
+                        <button onClick={e => { e.stopPropagation(); setEditItem(m); setMenuId(null); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left', background: 'transparent', borderBottom: '1px solid var(--border)' }}>
+                          <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); setDeleteTarget(m); setMenuId(null); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left', background: 'transparent' }}>
+                          <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

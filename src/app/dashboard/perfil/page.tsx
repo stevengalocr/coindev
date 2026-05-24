@@ -60,7 +60,9 @@ export default function PerfilPage() {
           fontSize: 20, fontWeight: 800, color: 'var(--btn-hero-text)',
           flexShrink: 0, letterSpacing: '-0.02em',
         }}>
-          {initials}
+          {profile?.avatar_url ? (
+            <span style={{ fontSize: 26 }}>{profile.avatar_url}</span>
+          ) : initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

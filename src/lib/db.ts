@@ -79,6 +79,7 @@ export interface DbProfile {
   trial_started_at: string | null;
   plan_expires_at: string | null;
   admin_notes: string | null;
+  avatar_url: string | null;
   created_at: string;
   last_sign_in_at: string | null;
 }
@@ -239,7 +240,7 @@ export async function updateUserPlanStatus(
   if (error) throw error;
 }
 
-export async function upsertProfile(patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme'>>): Promise<void> {
+export async function upsertProfile(patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme' | 'avatar_url'>>): Promise<void> {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
