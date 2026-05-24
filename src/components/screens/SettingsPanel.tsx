@@ -206,7 +206,7 @@ export function SettingsPanel({ open, onClose }: Props) {
                   style={{
                     padding: '11px', borderRadius: 'var(--r-md)', fontSize: 13, fontWeight: 600,
                     background: profileSaved ? 'var(--income-soft)' : (profileDirty && firstName.trim()) ? 'var(--gradient-hero)' : 'var(--surface-2)',
-                    color: profileSaved ? 'var(--income)' : (profileDirty && firstName.trim()) ? '#0A0F1C' : 'var(--text-3)',
+                    color: profileSaved ? 'var(--income)' : (profileDirty && firstName.trim()) ? 'var(--btn-hero-text)' : 'var(--text-3)',
                     border: `1px solid ${profileSaved ? 'var(--income)' : 'transparent'}`,
                     transition: 'all 200ms',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
