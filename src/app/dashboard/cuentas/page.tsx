@@ -209,7 +209,7 @@ function AccountCard({ acc, lang, t, recent, menuId, onMenuToggle, onEdit, onDel
   const pct = isCredit && acc.limit ? (used / acc.limit) * 100 : 0;
 
   return (
-    <div className="cd-card" style={{ padding: '20px 22px', position: 'relative' }}>
+    <div className="cd-card" style={{ padding: '20px 22px', position: 'relative', zIndex: menuId === acc.id ? 52 : 'auto' }}>
       {/* Color glow — clipped inside its own wrapper so the dropdown can overflow the card */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' }}>
         <div style={{

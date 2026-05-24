@@ -264,7 +264,7 @@ function MovimientosInner() {
                             )}
                           </div>
                           <MoneyText amount={m.amount} currency={accCurrencyMap[m.account] ?? 'CRC'} size={compact ? 12.5 : 13.5} weight={600} sign type={m.type} />
-                          <div style={{ position: 'relative' }}>
+                          <div style={{ position: 'relative', zIndex: menuId === m.id ? 52 : 'auto' }}>
                             <button
                               onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); }}
                               style={{ color: 'var(--text-3)', padding: 6 }}

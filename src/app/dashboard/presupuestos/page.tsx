@@ -152,7 +152,7 @@ export default function PresupuestosPage() {
               const barColor = over ? 'var(--expense)' : danger ? 'var(--warn)' : (c?.color ?? 'var(--income)');
               return (
                 <div key={b.cat} className="cd-card"
-                  style={{ padding: '18px 20px', cursor: 'pointer', transition: 'border-color 150ms', borderColor: hoverId === b.cat ? 'var(--border-strong)' : 'var(--border)', position: 'relative' }}
+                  style={{ padding: '18px 20px', cursor: 'pointer', transition: 'border-color 150ms', borderColor: hoverId === b.cat ? 'var(--border-strong)' : 'var(--border)', position: 'relative', zIndex: menuId === b.cat ? 52 : 'auto' }}
                   onMouseEnter={() => setHoverId(b.cat)}
                   onMouseLeave={() => setHoverId(null)}
                 >
