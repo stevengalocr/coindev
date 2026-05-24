@@ -109,6 +109,7 @@ export function Icon({ name, size = 20, stroke = 1.7, style, className }: IconPr
     case 'dumbbell': return <svg {...common}><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3.5 9.5v5"/><path d="M20.5 9.5v5"/><path d="M6.5 12h11"/></svg>;
     case 'paw': return <svg {...common}><circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><circle cx="4" cy="16" r="2"/><path d="M9 10c-3 2-5 5-5 8 0 2 2 4 8 4s8-2 8-4c0-3-2-6-5-8z"/></svg>;
     case 'guitar': return <svg {...common}><path d="M3.5 17.5 9 12"/><path d="M15 3l6 6-5 5c.6 2-.2 4.5-2.5 4.5-1 0-2.3-.6-3.3-1.5L9 14c-1-1-1.5-2.3-1.5-3.3 0-2.3 2.5-3.1 4.5-2.5z"/></svg>;
+    case 'info': return <svg {...common}><circle cx="12" cy="12" r="9"/><path d="M12 17v-6"/><circle cx="12" cy="8" r="0.8" fill="currentColor" stroke="none"/></svg>;
     case 'lock': return <svg {...common}><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>;
     case 'bar-chart': return <svg {...common}><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>;
     case 'edit': return <svg {...common}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;

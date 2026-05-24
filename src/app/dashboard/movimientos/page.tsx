@@ -11,6 +11,7 @@ import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { PeriodChips } from '@/components/shell/PeriodChips';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { InfoModal } from '@/components/ui/InfoModal';
 import { useToast } from '@/components/ui/Toast';
 
 type SortKey = 'date' | 'amount_desc' | 'amount_asc';
@@ -41,6 +42,7 @@ function MovimientosInner() {
   const [menuId, setMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
     if (!menuId) return;
@@ -123,7 +125,12 @@ function MovimientosInner() {
       <div className="page-enter">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.movements}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.movements}</h1>
+              <button onClick={() => setInfoOpen(true)} style={{ color: 'var(--text-3)', display: 'flex', padding: 2, marginTop: 1 }} aria-label="Información">
+                <Icon name="info" size={16} stroke={1.8} />
+              </button>
+            </div>
             <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>
               {list.length} {t.transactions}
               {list.length > 0 && <> · <span className="mono">{fmtMoney(total, 'CRC', { sign: true })}</span></>}
@@ -309,6 +316,18 @@ function MovimientosInner() {
         )}
       </div>
 
+      <InfoModal
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        lang={lang}
+        title_es="Movimientos"
+        title_en="Transactions"
+        items={[
+          { icon: 'list',       text_es: 'Aquí se registran todos tus ingresos y gastos organizados por fecha.', text_en: 'All your income and expenses are recorded here, organized by date.' },
+          { icon: 'filter',     text_es: 'Usa los filtros de período, tipo (ingreso/gasto) o el buscador para encontrar cualquier movimiento.', text_en: 'Use the period, type or search filters to find any transaction.' },
+          { icon: 'more',       text_es: 'Pulsa el menú de tres puntos en cualquier movimiento para editarlo o eliminarlo.', text_en: 'Tap the three-dot menu on any transaction to edit or delete it.' },
+        ]}
+      />
       <AddMovementModal
         open={addOpen}
         onClose={() => setAddOpen(false)}

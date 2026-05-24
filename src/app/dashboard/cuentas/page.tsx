@@ -10,6 +10,7 @@ import { MoneyText } from '@/components/shell/MoneyText';
 import { AccountGlyph } from '@/components/shell/CategoryGlyph';
 import { AddAccountModal } from '@/components/screens/AddAccountModal';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { InfoModal } from '@/components/ui/InfoModal';
 import { useToast } from '@/components/ui/Toast';
 
 type SortKey = 'balance_desc' | 'balance_asc' | 'name' | 'type';
@@ -23,6 +24,7 @@ export default function CuentasPage() {
   const [menuId, setMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Account | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('balance_desc');
 
@@ -78,9 +80,12 @@ export default function CuentasPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>
-            {t.accountsTitle}
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.accountsTitle}</h1>
+            <button onClick={() => setInfoOpen(true)} style={{ color: 'var(--text-3)', display: 'flex', padding: 2, marginTop: 1 }} aria-label="Información">
+              <Icon name="info" size={16} stroke={1.8} />
+            </button>
+          </div>
           {!loading && accounts.length > 0 && (
             <div style={{ marginTop: 6, display: 'flex', alignItems: 'baseline', gap: 8 }}>
               <span style={{ fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
@@ -184,6 +189,18 @@ export default function CuentasPage() {
         </div>
       )}
 
+      <InfoModal
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        lang={lang}
+        title_es="Cuentas"
+        title_en="Accounts"
+        items={[
+          { icon: 'bank',  text_es: 'Gestiona tus cuentas bancarias, tarjetas y efectivo en un solo lugar.', text_en: 'Manage your bank accounts, cards and cash in one place.' },
+          { icon: 'list',  text_es: 'Cada cuenta muestra su saldo actualizado automáticamente con cada movimiento que registras.', text_en: 'Each account shows its balance updated automatically with every transaction you record.' },
+          { icon: 'more',  text_es: 'Desde el menú de tres puntos puedes editar los datos o eliminar una cuenta.', text_en: 'Use the three-dot menu to edit account details or delete an account.' },
+        ]}
+      />
       <AddAccountModal
         open={addOpen}
         onClose={() => setAddOpen(false)}

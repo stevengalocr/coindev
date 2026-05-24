@@ -9,6 +9,7 @@ import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { Icon } from '@/components/ui/Icon';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { InfoModal } from '@/components/ui/InfoModal';
 import { useToast } from '@/components/ui/Toast';
 
 type SortKey = 'amount_desc' | 'amount_asc' | 'name' | 'next_due';
@@ -30,6 +31,7 @@ export default function GastosFijosPage() {
   const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sort, setSort] = useState<SortKey>('amount_desc');
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
     if (!menuId) return;
@@ -118,7 +120,12 @@ export default function GastosFijosPage() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.fixedTitle}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.fixedTitle}</h1>
+            <button onClick={() => setInfoOpen(true)} style={{ color: 'var(--text-3)', display: 'flex', padding: 2, marginTop: 1 }} aria-label="Información">
+              <Icon name="info" size={16} stroke={1.8} />
+            </button>
+          </div>
           <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{t.fixedSubtitle}</div>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -136,6 +143,18 @@ export default function GastosFijosPage() {
         </div>
       </div>
 
+      <InfoModal
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        lang={lang}
+        title_es="Gastos e ingresos fijos"
+        title_en="Fixed income & expenses"
+        items={[
+          { icon: 'shield', text_es: 'Aquí se agrupan todos los movimientos marcados como recurrentes: salario, alquiler, suscripciones, etc.', text_en: 'Here you can see all movements marked as recurring: salary, rent, subscriptions, etc.' },
+          { icon: 'cal',    text_es: 'Te ayudan a planificar tu flujo mensual ya que son montos que se repiten con cierta frecuencia.', text_en: 'They help you plan your monthly cash flow as they are amounts that repeat at a certain frequency.' },
+          { icon: 'plus',   text_es: 'Agrega nuevos recurrentes con el botón "Nuevo recurrente" y activa la opción de recurrencia en el formulario.', text_en: 'Add new recurring items with the "New recurring" button and enable the recurrence option in the form.' },
+        ]}
+      />
       <AddMovementModal
         open={addOpen}
         onClose={() => setAddOpen(false)}

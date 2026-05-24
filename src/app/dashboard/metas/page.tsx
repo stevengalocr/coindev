@@ -9,6 +9,7 @@ import { AddGoalModal } from '@/components/screens/AddGoalModal';
 import { AddContributionModal } from '@/components/screens/AddContributionModal';
 import { Icon } from '@/components/ui/Icon';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { InfoModal } from '@/components/ui/InfoModal';
 import { useToast } from '@/components/ui/Toast';
 import { fetchGoalContributions, type DbGoalContribution } from '@/lib/db';
 
@@ -49,6 +50,7 @@ export default function MetasPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [contributions, setContributions] = useState<Record<string, DbGoalContribution[]>>({});
   const [loadingContribs, setLoadingContribs] = useState<Record<string, boolean>>({});
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
     if (!menuId) return;
@@ -114,9 +116,12 @@ export default function MetasPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>
-            {t.goalsTitle}
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.goalsTitle}</h1>
+            <button onClick={() => setInfoOpen(true)} style={{ color: 'var(--text-3)', display: 'flex', padding: 2, marginTop: 1 }} aria-label="Información">
+              <Icon name="info" size={16} stroke={1.8} />
+            </button>
+          </div>
           <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{t.goalsSubtitle}</div>
         </div>
         <button
@@ -127,6 +132,18 @@ export default function MetasPage() {
         </button>
       </div>
 
+      <InfoModal
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        lang={lang}
+        title_es="Metas de ahorro"
+        title_en="Savings goals"
+        items={[
+          { icon: 'target', text_es: 'Crea objetivos de ahorro con un monto y una fecha límite para alcanzarlos.', text_en: 'Create savings goals with a target amount and deadline to reach them.' },
+          { icon: 'piggy',  text_es: 'Realiza aportaciones desde cualquiera de tus cuentas y sigue el progreso de cada meta.', text_en: 'Make contributions from any of your accounts and track the progress of each goal.' },
+          { icon: 'check',  text_es: 'Las metas completadas se archivan automáticamente y quedan en tu historial.', text_en: 'Completed goals are automatically archived and remain in your history.' },
+        ]}
+      />
       <AddGoalModal
         open={addOpen}
         onClose={() => setAddOpen(false)}

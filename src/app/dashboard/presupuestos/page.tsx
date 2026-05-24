@@ -9,6 +9,7 @@ import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { AddBudgetModal } from '@/components/screens/AddBudgetModal';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { InfoModal } from '@/components/ui/InfoModal';
 import { useToast } from '@/components/ui/Toast';
 
 export default function PresupuestosPage() {
@@ -21,6 +22,7 @@ export default function PresupuestosPage() {
   const [menuId, setMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
     if (!menuId) return;
@@ -69,7 +71,12 @@ export default function PresupuestosPage() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.budgetsTitle}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>{t.budgetsTitle}</h1>
+            <button onClick={() => setInfoOpen(true)} style={{ color: 'var(--text-3)', display: 'flex', padding: 2, marginTop: 1 }} aria-label="Información">
+              <Icon name="info" size={16} stroke={1.8} />
+            </button>
+          </div>
           <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{monthCap}</div>
         </div>
         <button onClick={() => setAddOpen(true)} style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -77,6 +84,18 @@ export default function PresupuestosPage() {
         </button>
       </div>
 
+      <InfoModal
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        lang={lang}
+        title_es="Presupuestos"
+        title_en="Budgets"
+        items={[
+          { icon: 'flag',   text_es: 'Define un límite de gasto por categoría para cada mes.', text_en: 'Set a spending limit per category for each month.' },
+          { icon: 'chart',  text_es: 'El sistema compara tus gastos reales contra el límite y te muestra el porcentaje utilizado.', text_en: 'The system compares your actual spending against the limit and shows the percentage used.' },
+          { icon: 'bell',   text_es: 'Cuando superas el 85% del límite en una categoría, la barra cambia de color como advertencia.', text_en: 'When you exceed 85% of the limit in a category, the bar changes color as a warning.' },
+        ]}
+      />
       <AddBudgetModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
