@@ -12,6 +12,7 @@ interface Props {
   onSuccess?: () => void;
   initialFixed?: boolean;
   initialType?: 'expense' | 'income';
+  lockType?: boolean;
   initialData?: import('@/lib/data').Movement;
 }
 
@@ -22,7 +23,7 @@ function toLocalDateStr(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-export function AddMovementModal({ open, onClose, onSuccess, initialFixed = false, initialType = 'expense', initialData }: Props) {
+export function AddMovementModal({ open, onClose, onSuccess, initialFixed = false, initialType = 'expense', lockType = false, initialData }: Props) {
   const { t, lang } = useApp();
   const { accounts, addTransaction, updateTransaction } = useData();
   const isEditing = !!initialData;
@@ -139,18 +140,37 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>
-              {isEditing ? (lang === 'es' ? 'Editar movimiento' : 'Edit movement') : t.newMovement}
+              {isEditing
+                ? (lang === 'es' ? 'Editar movimiento' : 'Edit movement')
+                : lockType
+                  ? type === 'expense'
+                    ? (lang === 'es' ? 'Nuevo gasto fijo' : 'New fixed expense')
+                    : (lang === 'es' ? 'Nuevo ingreso fijo' : 'New fixed income')
+                  : t.newMovement}
             </div>
             <button onClick={onClose} style={{ color: 'var(--text-3)', padding: 4 }}><Icon name="x" size={18} /></button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, background: 'var(--surface-2)', borderRadius: 14, padding: 4, marginBottom: 12, border: '1px solid var(--border)' }}>
-            {([{ id: 'expense', label: t.expenseType, color: 'var(--expense)' }, { id: 'income', label: t.incomeType, color: 'var(--income)' }] as const).map(opt => (
-              <button key={opt.id} onClick={() => { setType(opt.id); setCat(opt.id === 'income' ? 'salary' : 'groceries'); }}
-                style={{ padding: '9px 12px', borderRadius: 10, fontSize: 14, fontWeight: 600, color: type === opt.id ? '#0A0F1C' : 'var(--text-2)', background: type === opt.id ? opt.color : 'transparent', transition: 'all 150ms' }}>
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          {lockType ? (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '10px 16px', borderRadius: 12, marginBottom: 12,
+              background: type === 'expense' ? 'color-mix(in oklab, var(--expense) 12%, var(--surface-2))' : 'color-mix(in oklab, var(--income) 12%, var(--surface-2))',
+              border: `1px solid ${type === 'expense' ? 'color-mix(in oklab, var(--expense) 25%, transparent)' : 'color-mix(in oklab, var(--income) 25%, transparent)'}`,
+            }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: type === 'expense' ? 'var(--expense)' : 'var(--income)' }}>
+                {type === 'expense' ? (lang === 'es' ? '⬇ Gasto fijo' : '⬇ Fixed expense') : (lang === 'es' ? '⬆ Ingreso fijo' : '⬆ Fixed income')}
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, background: 'var(--surface-2)', borderRadius: 14, padding: 4, marginBottom: 12, border: '1px solid var(--border)' }}>
+              {([{ id: 'expense', label: t.expenseType, color: 'var(--expense)' }, { id: 'income', label: t.incomeType, color: 'var(--income)' }] as const).map(opt => (
+                <button key={opt.id} onClick={() => { setType(opt.id); setCat(opt.id === 'income' ? 'salary' : 'groceries'); }}
+                  style={{ padding: '9px 12px', borderRadius: 10, fontSize: 14, fontWeight: 600, color: type === opt.id ? '#0A0F1C' : 'var(--text-2)', background: type === opt.id ? opt.color : 'transparent', transition: 'all 150ms' }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── SCROLLABLE BODY: amount + keypad + category + fields + error ── */}

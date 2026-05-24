@@ -138,13 +138,13 @@ export default function GastosFijosPage() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onSuccess={() => toast(lang === 'es' ? 'Gasto fijo guardado' : 'Fixed expense saved')}
-        initialFixed initialType="expense"
+        initialFixed initialType="expense" lockType
       />
       <AddMovementModal
         open={addIncomeOpen}
         onClose={() => setAddIncomeOpen(false)}
         onSuccess={() => toast(lang === 'es' ? 'Ingreso fijo guardado' : 'Fixed income saved')}
-        initialFixed initialType="income"
+        initialFixed initialType="income" lockType
       />
       <AddMovementModal
         open={!!editItem}
