@@ -11,6 +11,7 @@ import { PeriodChips } from '@/components/shell/PeriodChips';
 import { Donut, YearChart, HeroSwoosh } from '@/components/shell/Charts';
 import { CAT, filterMovs, aggregate, fmtMoney, type Period, type Account } from '@/lib/data';
 import { OnboardingWizard } from '@/components/screens/OnboardingWizard';
+import { DueTodayCard } from '@/components/shell/DueTodayCard';
 
 function clamp(v: number, lo = 0, hi = 1) { return Math.max(lo, Math.min(hi, v)); }
 function pct(n: number, d: number) { return d ? Math.round((n / d) * 100) : 0; }
@@ -114,6 +115,7 @@ export default function DashboardPage() {
       </div>
 
       <OnboardingWizard />
+      <DueTodayCard />
 
       {loading && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 260, color: 'var(--text-3)', fontSize: 14 }}>
