@@ -587,17 +587,12 @@ export async function updateTransaction(id: string, data: {
 
 export async function deleteTransaction(id: string, type: 'income' | 'expense', amount: number, accountId: string): Promise<void> {
   const sb = createClient();
-  // Fetch date before deleting to decide whether to revert balance
-  const { data: tx } = await sb.from('transactions').select('date').eq('id', id).single();
   const { error } = await sb.from('transactions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
-  // Only revert balance if the transaction had already been applied (past or today)
-  if (tx && isDatePastOrToday(tx.date)) {
-    const delta = type === 'income' ? -amount : amount;
-    const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accountId).single();
-    if (acc) {
-      await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accountId);
-    }
+  const delta = type === 'income' ? -amount : amount;
+  const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accountId).single();
+  if (acc) {
+    await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accountId);
   }
 }
 
