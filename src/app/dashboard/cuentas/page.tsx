@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
@@ -25,6 +25,13 @@ export default function CuentasPage() {
   const [deleting, setDeleting] = useState(false);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('balance_desc');
+
+  useEffect(() => {
+    if (!menuId) return;
+    const close = () => setMenuId(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [menuId]);
 
   const SHOW_SEARCH = accounts.length >= 4;
 
@@ -56,10 +63,6 @@ export default function CuentasPage() {
 
   return (
     <div className="page-enter">
-      {menuId !== null && (
-        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, cursor: 'pointer' }} />
-      )}
-
       <ConfirmModal
         open={!!deleteTarget}
         title={lang === 'es' ? 'Eliminar cuenta' : 'Delete account'}

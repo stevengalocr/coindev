@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { CAT, fmtMoney, type Movement } from '@/lib/data';
@@ -30,6 +30,13 @@ export default function GastosFijosPage() {
   const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [sort, setSort] = useState<SortKey>('amount_desc');
+
+  useEffect(() => {
+    if (!menuId) return;
+    const close = () => setMenuId(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [menuId]);
 
   function nextDueDate(m: Movement): Date {
     const r = m.recurrence;
@@ -95,10 +102,6 @@ export default function GastosFijosPage() {
 
   return (
     <div className="page-enter">
-      {menuId !== null && (
-        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, cursor: 'pointer' }} />
-      )}
-
       <ConfirmModal
         open={!!deleteTarget}
         title={deleteTarget?.type === 'income'

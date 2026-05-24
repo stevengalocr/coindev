@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { CAT, fmtMoney, type Budget } from '@/lib/data';
@@ -21,6 +21,13 @@ export default function PresupuestosPage() {
   const [menuId, setMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!menuId) return;
+    const close = () => setMenuId(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [menuId]);
 
   function toCRC(amount: number, currency?: string): number {
     return currency === 'USD' ? amount * liveUsdRate : amount;
@@ -48,10 +55,6 @@ export default function PresupuestosPage() {
 
   return (
     <div className="page-enter">
-      {menuId !== null && (
-        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, cursor: 'pointer' }} />
-      )}
-
       <ConfirmModal
         open={!!deleteTarget}
         title={lang === 'es' ? 'Eliminar presupuesto' : 'Delete budget'}

@@ -42,6 +42,13 @@ function MovimientosInner() {
   const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  useEffect(() => {
+    if (!menuId) return;
+    const close = () => setMenuId(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [menuId]);
+
   // Pick up ?q= or ?account= from URL (unified search / account deep-link)
   useEffect(() => {
     const q = searchParams.get('q');
@@ -101,10 +108,6 @@ function MovimientosInner() {
 
   return (
     <>
-      {menuId !== null && (
-        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
-      )}
-
       <ConfirmModal
         open={!!deleteTarget}
         title={lang === 'es' ? 'Eliminar movimiento' : 'Delete transaction'}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { fmtMoney, type SavingsGoal } from '@/lib/data';
@@ -50,6 +50,13 @@ export default function MetasPage() {
   const [contributions, setContributions] = useState<Record<string, DbGoalContribution[]>>({});
   const [loadingContribs, setLoadingContribs] = useState<Record<string, boolean>>({});
 
+  useEffect(() => {
+    if (!menuId) return;
+    const close = () => setMenuId(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [menuId]);
+
   const toCRC = (amount: number, cur: string) => cur === 'USD' ? amount * liveUsdRate : amount;
   const totalTarget  = goals.reduce((s, g) => s + toCRC(g.target,  g.currency ?? 'CRC'), 0);
   const totalCurrent = goals.reduce((s, g) => s + toCRC(g.current, g.currency ?? 'CRC'), 0);
@@ -92,10 +99,6 @@ export default function MetasPage() {
 
   return (
     <div className="page-enter">
-      {menuId !== null && (
-        <div onClick={() => setMenuId(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, cursor: 'pointer' }} />
-      )}
-
       <ConfirmModal
         open={!!deleteTarget}
         title={lang === 'es' ? 'Eliminar meta' : 'Delete goal'}
