@@ -25,7 +25,6 @@ export default function GastosFijosPage() {
   }
   const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
-  const [addIncomeOpen, setAddIncomeOpen] = useState(false);
   const [editItem, setEditItem] = useState<Movement | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
@@ -129,7 +128,7 @@ export default function GastosFijosPage() {
             </select>
           )}
           <button onClick={() => setAddOpen(true)} style={{ padding: '9px 16px 9px 12px', borderRadius: 10, background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="plus" size={15} stroke={2.4} /> {lang === 'es' ? 'Nuevo gasto fijo' : 'New fixed expense'}
+            <Icon name="plus" size={15} stroke={2.4} /> {lang === 'es' ? 'Nuevo recurrente' : 'New recurring'}
           </button>
         </div>
       </div>
@@ -137,14 +136,8 @@ export default function GastosFijosPage() {
       <AddMovementModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onSuccess={() => toast(lang === 'es' ? 'Gasto fijo guardado' : 'Fixed expense saved')}
-        initialFixed initialType="expense" lockType
-      />
-      <AddMovementModal
-        open={addIncomeOpen}
-        onClose={() => setAddIncomeOpen(false)}
-        onSuccess={() => toast(lang === 'es' ? 'Ingreso fijo guardado' : 'Fixed income saved')}
-        initialFixed initialType="income" lockType
+        onSuccess={() => toast(lang === 'es' ? 'Movimiento guardado' : 'Saved')}
+        initialFixed
       />
       <AddMovementModal
         open={!!editItem}
@@ -155,13 +148,10 @@ export default function GastosFijosPage() {
 
       {/* Fixed incomes section */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ marginBottom: 10 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: 2 }}>
             {lang === 'es' ? 'Ingresos fijos' : 'Fixed income'}
           </div>
-          <button onClick={() => setAddIncomeOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, background: 'var(--income-soft)', border: '1px solid color-mix(in oklab, var(--income) 30%, transparent)', color: 'var(--income)', fontSize: 11.5, fontWeight: 600 }}>
-            <Icon name="plus" size={12} stroke={2.4} /> {lang === 'es' ? 'Agregar' : 'Add'}
-          </button>
         </div>
         {incomeItems.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
