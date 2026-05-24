@@ -193,11 +193,18 @@ export default function AdminPage() {
             const initials = (p.full_name ?? p.email).split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
             const joinDate = new Date(p.created_at).toLocaleDateString('es-CR', { day: 'numeric', month: 'short', year: 'numeric' });
 
+            const statusColor = STATUS_LABELS[p.plan_status]?.color ?? '#5B9BFF';
             return (
-              <div key={p.id} className="cd-card" style={{ padding: '16px 20px' }}>
+              <div key={p.id} className="cd-card" style={{ padding: '16px 20px', borderLeft: `3px solid ${isAdminUser ? 'var(--cyan)' : statusColor}`, paddingLeft: 17 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }} className="admin-table-row">
                   {/* Avatar */}
-                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: isAdminUser ? 'var(--gradient-hero)' : 'var(--surface-2)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700, color: isAdminUser ? 'var(--btn-hero-text)' : 'var(--text-2)', flexShrink: 0 }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: '50%',
+                    background: isAdminUser ? 'var(--gradient-hero)' : `color-mix(in oklab, ${statusColor} 18%, var(--surface-2))`,
+                    border: `1.5px solid ${isAdminUser ? 'transparent' : `color-mix(in oklab, ${statusColor} 35%, var(--border))`}`,
+                    display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 700,
+                    color: isAdminUser ? 'var(--btn-hero-text)' : statusColor, flexShrink: 0,
+                  }}>
                     {initials}
                   </div>
 
@@ -205,15 +212,13 @@ export default function AdminPage() {
                   <div style={{ flex: 1, minWidth: 180 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{p.full_name ?? '(sin nombre)'}</span>
-                      {isAdminUser && <span style={{ fontSize: 10.5, fontWeight: 700, color: '#5B9BFF', padding: '1px 7px', borderRadius: 999, background: 'rgba(91,155,255,0.1)', border: '1px solid rgba(91,155,255,0.2)' }}>ADMIN</span>}
+                      {isAdminUser && <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--cyan)', padding: '1px 7px', borderRadius: 999, background: 'rgba(79,224,169,0.1)', border: '1px solid rgba(79,224,169,0.25)' }}>ADMIN</span>}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{p.email}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
-                      Registro: {joinDate}
-                      {p.plan_status === 'trial' && ` · ${days} días de prueba restantes`}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-4)', marginTop: 1 }}>
-                      Última sesión: {timeAgo(p.last_sign_in_at)}
+                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <span>Registro: {joinDate}</span>
+                      {p.plan_status === 'trial' && <span style={{ color: '#5B9BFF' }}>{days} días de prueba</span>}
+                      <span style={{ color: 'var(--text-4)' }}>· Última sesión: {timeAgo(p.last_sign_in_at)}</span>
                     </div>
                   </div>
 

@@ -60,10 +60,15 @@ export default function GastosFijosPage() {
     return '';
   }
 
-  const fixedMovs = movements.filter(m => m.type === 'expense' && m.fixed);
-  const map: Record<string, typeof fixedMovs[0]> = {};
-  fixedMovs.forEach(m => { if (!map[m.desc]) map[m.desc] = m; });
-  let items = Object.values(map);
+  const fixedMovs = movements.filter(m => m.fixed);
+  const expenseMap: Record<string, typeof fixedMovs[0]> = {};
+  const incomeMap: Record<string, typeof fixedMovs[0]> = {};
+  fixedMovs.forEach(m => {
+    if (m.type === 'expense' && !expenseMap[m.desc]) expenseMap[m.desc] = m;
+    if (m.type === 'income' && !incomeMap[m.desc]) incomeMap[m.desc] = m;
+  });
+  let items = Object.values(expenseMap);
+  const incomeItems = Object.values(incomeMap);
 
   if (sort === 'amount_desc') items = items.sort((a, b) => b.amount - a.amount);
   else if (sort === 'amount_asc') items = items.sort((a, b) => a.amount - b.amount);
@@ -138,6 +143,38 @@ export default function GastosFijosPage() {
         onSuccess={() => toast(lang === 'es' ? 'Gasto fijo actualizado' : 'Fixed expense updated')}
         initialData={editItem ?? undefined}
       />
+
+      {/* Fixed incomes section */}
+      {!loading && incomeItems.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, paddingLeft: 2 }}>
+            {lang === 'es' ? 'Ingresos fijos' : 'Fixed income'}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {incomeItems.map(m => {
+              const c = CAT[m.cat];
+              const accCur = getAccCurrency(m.account);
+              return (
+                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, borderLeft: '3px solid var(--income)' }}>
+                  <CategoryGlyph id={m.cat} size={42} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>{m.desc}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 3 }}>
+                      {c?.[`label_${lang}` as 'label_es']} ·{' '}
+                      <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>
+                        {recurrenceLabel(m, lang)}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <MoneyText amount={m.amount} currency={accCur} size={15} weight={600} type="income" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

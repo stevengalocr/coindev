@@ -57,7 +57,7 @@ interface DataState {
   addGoal: (data: NewSavingsGoal) => Promise<void>;
   saveProfile: (patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme'>>) => Promise<void>;
   refetch: () => Promise<void>;
-  updateTransaction: (id: string, data: Parameters<typeof updateTransaction>[1], old: { type: 'income' | 'expense'; amount: number; account: string }) => Promise<void>;
+  updateTransaction: (id: string, data: Parameters<typeof updateTransaction>[1], old: { type: 'income' | 'expense'; amount: number; account: string; date?: string }) => Promise<void>;
   deleteTransaction: (id: string, type: 'income' | 'expense', amount: number, accountId: string) => Promise<void>;
   updateAccount: (id: string, data: { name?: string; type?: string; color?: string; currency?: string; credit_limit?: number | null; last_digits?: string | null }) => Promise<void>;
   deleteAccount: (id: string) => Promise<void>;
@@ -167,8 +167,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await load();
   }, [load]);
 
-  const updateTx = useCallback(async (id: string, data: Parameters<typeof updateTransaction>[1], old: { type: 'income' | 'expense'; amount: number; account: string }) => {
-    await updateTransaction(id, { ...data, oldType: old.type, oldAmount: old.amount, oldAccountId: old.account });
+  const updateTx = useCallback(async (id: string, data: Parameters<typeof updateTransaction>[1], old: { type: 'income' | 'expense'; amount: number; account: string; date?: string }) => {
+    await updateTransaction(id, { ...data, oldType: old.type, oldAmount: old.amount, oldAccountId: old.account, oldDate: old.date });
     await load();
   }, [load]);
 

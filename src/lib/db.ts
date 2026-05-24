@@ -293,6 +293,12 @@ export interface NewAccount {
   last_digits?: string;
 }
 
+function isDatePastOrToday(dateStr: string): boolean {
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  return new Date(dateStr + 'T12:00:00') <= today;
+}
+
 export async function insertAccount(data: NewAccount): Promise<void> {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
@@ -403,8 +409,8 @@ export async function insertTransaction(tx: NewTransaction): Promise<void> {
   });
   if (error) throw error;
 
-  // Update account balance
-  if (acc) {
+  // Only update balance if the transaction date is today or in the past
+  if (acc && isDatePastOrToday(tx.date)) {
     const delta = tx.type === 'income' ? tx.amount : -tx.amount;
     await sb
       .from('accounts')
@@ -545,6 +551,7 @@ export async function updateTransaction(id: string, data: {
   oldType?: 'income' | 'expense';
   oldAmount?: number;
   oldAccountId?: string;
+  oldDate?: string;
 }): Promise<void> {
   const sb = createClient();
   const updates: Record<string, unknown> = {};
@@ -560,11 +567,13 @@ export async function updateTransaction(id: string, data: {
   const { error } = await sb.from('transactions').update(updates).eq('id', id);
   if (error) throw error;
 
-  // Adjust account balance
-  const oldEffect = data.oldType === 'income' ? (data.oldAmount ?? 0) : -(data.oldAmount ?? 0);
+  // Adjust account balance, respecting whether each date was already applied
+  const oldWasApplied = data.oldDate ? isDatePastOrToday(data.oldDate) : true;
+  const newWasApplied = data.date ? isDatePastOrToday(data.date) : oldWasApplied;
+  const oldEffect = oldWasApplied ? (data.oldType === 'income' ? (data.oldAmount ?? 0) : -(data.oldAmount ?? 0)) : 0;
   const newType = data.type ?? data.oldType ?? 'expense';
   const newAmount = data.amount ?? data.oldAmount ?? 0;
-  const newEffect = newType === 'income' ? newAmount : -newAmount;
+  const newEffect = newWasApplied ? (newType === 'income' ? newAmount : -newAmount) : 0;
   const delta = newEffect - oldEffect;
   const accId = data.account_id ?? data.oldAccountId;
   if (delta !== 0 && accId) {
@@ -577,13 +586,17 @@ export async function updateTransaction(id: string, data: {
 
 export async function deleteTransaction(id: string, type: 'income' | 'expense', amount: number, accountId: string): Promise<void> {
   const sb = createClient();
+  // Fetch date before deleting to decide whether to revert balance
+  const { data: tx } = await sb.from('transactions').select('date').eq('id', id).single();
   const { error } = await sb.from('transactions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
-  // Revert balance
-  const delta = type === 'income' ? -amount : amount;
-  const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accountId).single();
-  if (acc) {
-    await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accountId);
+  // Only revert balance if the transaction had already been applied (past or today)
+  if (tx && isDatePastOrToday(tx.date)) {
+    const delta = type === 'income' ? -amount : amount;
+    const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accountId).single();
+    if (acc) {
+      await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accountId);
+    }
   }
 }
 

@@ -93,7 +93,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
         await updateTransaction(
           initialData.id,
           { type, cat, amount: rawAmount, account_id: accId, date, description: desc || (lang === 'es' ? 'Sin descripción' : 'No description'), is_fixed: fixed, recurrence_type: fixed ? recType : null, recurrence_value: fixed && recType ? recValue : null },
-          { type: initialData.type, amount: initialData.amount, account: initialData.account }
+          { type: initialData.type, amount: initialData.amount, account: initialData.account, date: toLocalDateStr(initialData.date) }
         );
       } else {
         await addTransaction({
