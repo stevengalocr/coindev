@@ -6,6 +6,7 @@ import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { CAT, filterMovs, fmtMoney, type Period, type Movement } from '@/lib/data';
 import { Icon } from '@/components/ui/Icon';
+import { SwipeableRow } from '@/components/ui/SwipeableRow';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
 import { PeriodChips } from '@/components/shell/PeriodChips';
@@ -253,11 +254,10 @@ function MovimientosInner() {
                       const diff = daysAgo(m.date);
                       const when = diff === 0 ? t.today : diff === 1 ? t.yesterday :
                         m.date.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short' });
-                      return (
-                        <div key={m.id} style={{
+                      const rowContent = (
+                        <div style={{
                           display: 'flex', alignItems: 'center', gap: compact ? 10 : 14,
                           padding: compact ? '8px 12px' : '11px 14px',
-                          borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none',
                           borderRadius: 10, transition: 'background 100ms', cursor: 'default',
                           position: 'relative',
                         }}>
@@ -274,7 +274,8 @@ function MovimientosInner() {
                             )}
                           </div>
                           <MoneyText amount={m.amount} currency={accCurrencyMap[m.account] ?? 'CRC'} size={compact ? 12.5 : 13.5} weight={600} sign type={m.type} />
-                          <div style={{ position: 'relative', zIndex: menuId === m.id ? 52 : 'auto' }}>
+                          {/* Three-dot menu — desktop only */}
+                          <div style={{ position: 'relative', zIndex: menuId === m.id ? 52 : 'auto' }} className="desktop-only">
                             <button
                               onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); }}
                               style={{ color: 'var(--text-3)', padding: 6 }}
@@ -304,6 +305,37 @@ function MovimientosInner() {
                                 </button>
                               </div>
                             )}
+                          </div>
+                        </div>
+                      );
+                      return (
+                        <div key={m.id} style={{ borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                          {/* Mobile: swipeable row */}
+                          <div className="mobile-only" style={{ display: 'none' }}>
+                            <SwipeableRow
+                              actions={[
+                                {
+                                  label: lang === 'es' ? 'Editar' : 'Edit',
+                                  icon: <Icon name="edit" size={18} />,
+                                  color: '#fff',
+                                  bg: 'var(--blue)',
+                                  onClick: () => setEditItem(m),
+                                },
+                                {
+                                  label: lang === 'es' ? 'Eliminar' : 'Delete',
+                                  icon: <Icon name="trash" size={18} />,
+                                  color: '#fff',
+                                  bg: 'var(--expense)',
+                                  onClick: () => setDeleteTarget(m),
+                                },
+                              ]}
+                            >
+                              {rowContent}
+                            </SwipeableRow>
+                          </div>
+                          {/* Desktop: plain row */}
+                          <div className="desktop-only">
+                            {rowContent}
                           </div>
                         </div>
                       );
@@ -340,7 +372,14 @@ function MovimientosInner() {
         initialData={editItem ?? undefined}
       />
 
-      <style>{`.mobile-only { display: none; } @media (max-width: 768px) { .mobile-only { display: flex !important; } }`}</style>
+      <style>{`
+        .mobile-only { display: none !important; }
+        .desktop-only { display: block; }
+        @media (max-width: 768px) {
+          .mobile-only { display: block !important; }
+          .desktop-only { display: none !important; }
+        }
+      `}</style>
     </>
   );
 }

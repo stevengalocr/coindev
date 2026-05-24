@@ -41,10 +41,10 @@ const NAV_SECTIONS = [
   },
 ] as const;
 
-/* Bottom nav: [Metas] [Movimientos] [INICIO★] [Divisas] [Perfil] */
+/* Bottom nav: [Inicio] [Movimientos] [+] [Divisas] [Perfil] */
 const MOBILE_LEFT = [
-  { href: '/dashboard/metas',        icon: 'spark', key: 'goals'     },
-  { href: '/dashboard/movimientos',  icon: 'list',  key: 'movements' },
+  { href: '/dashboard',             icon: 'home', key: 'home'      },
+  { href: '/dashboard/movimientos', icon: 'list', key: 'movements' },
 ] as const;
 
 const MOBILE_RIGHT = [
@@ -224,7 +224,14 @@ function DashInner({ children }: { children: ReactNode }) {
             padding: '10px 12px', borderRadius: 12,
             background: 'var(--surface)', border: '1px solid var(--border)',
           }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--gradient-hero)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800, color: 'var(--btn-hero-text)', flexShrink: 0, letterSpacing: '-0.02em' }}>{initials}</div>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--gradient-hero)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800, color: 'var(--btn-hero-text)', flexShrink: 0, letterSpacing: '-0.02em', overflow: 'hidden' }}>
+              {profile?.avatar_url?.startsWith('http') ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : profile?.avatar_url ? (
+                <span style={{ fontSize: 18 }}>{profile.avatar_url}</span>
+              ) : initials}
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
               <div style={{ display: 'inline-flex', alignItems: 'center', marginTop: 3, padding: '1px 7px', borderRadius: 999, background: 'color-mix(in oklab, var(--cyan) 12%, var(--surface-3))', border: '1px solid color-mix(in oklab, var(--cyan) 20%, var(--border))' }}>
@@ -270,10 +277,10 @@ function DashInner({ children }: { children: ReactNode }) {
       }} className="mobile-nav">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', alignItems: 'center', height: '100%', padding: '0 2px' }}>
 
-          {/* Left: Metas + Movimientos */}
+          {/* Left: Inicio + Movimientos */}
           {MOBILE_LEFT.map(item => {
             const active = isActive(item.href);
-            const labels: Record<string, string> = { goals: t.goals, movements: t.movements };
+            const labels: Record<string, string> = { home: t.home, movements: t.movements };
             return (
               <Link key={item.key} href={item.href} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -289,29 +296,30 @@ function DashInner({ children }: { children: ReactNode }) {
             );
           })}
 
-          {/* Center: Inicio FAB — triple-click opens Add Movement */}
-          <Link href="/dashboard" onClick={handleHomeClick} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            gap: 5, height: '100%', textDecoration: 'none',
-            transform: 'translateY(-10px)',
-          }}>
+          {/* Center: Add Movement FAB */}
+          <button
+            onClick={() => setAddOpen(true)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 5, height: '100%', background: 'transparent', border: 'none',
+              transform: 'translateY(-10px)', cursor: 'pointer',
+            }}
+            aria-label={lang === 'es' ? 'Agregar movimiento' : 'Add transaction'}
+          >
             <div style={{
               width: 52, height: 52, borderRadius: '50%',
               background: 'var(--gradient-hero)',
               display: 'grid', placeItems: 'center',
               flexShrink: 0,
-              boxShadow: isHome
-                ? '0 0 0 4px color-mix(in oklab, var(--cyan) 28%, transparent), 0 8px 28px color-mix(in oklab, var(--cyan) 45%, transparent)'
-                : '0 4px 20px rgba(0,0,0,0.45)',
-              opacity: isHome ? 1 : 0.86,
-              transition: 'box-shadow 200ms, opacity 200ms',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.45)',
+              transition: 'box-shadow 200ms',
             }}>
-              <Icon name="home" size={24} stroke={2.2} style={{ color: 'var(--btn-hero-text)' }} />
+              <Icon name="plus" size={26} stroke={2.4} style={{ color: 'var(--btn-hero-text)' }} />
             </div>
-            <span style={{ fontSize: 9, fontWeight: 700, color: isHome ? 'var(--text)' : 'var(--text-3)', lineHeight: 1 }}>
-              {lang === 'es' ? 'Inicio' : 'Home'}
+            <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-3)', lineHeight: 1 }}>
+              {lang === 'es' ? 'Agregar' : 'Add'}
             </span>
-          </Link>
+          </button>
 
           {/* Right: Divisas */}
           {MOBILE_RIGHT.map(item => {

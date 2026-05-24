@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/hooks/useApp';
@@ -12,13 +12,40 @@ import { SettingsPanel } from '@/components/screens/SettingsPanel';
 
 const ADMIN_EMAIL = 'stevengalocr@gmail.com';
 
+function isUrl(s: string | null | undefined): boolean {
+  if (!s) return false;
+  return s.startsWith('http://') || s.startsWith('https://');
+}
+
 export default function PerfilPage() {
   const { lang } = useApp();
-  const { user, profile } = useData();
+  const { user, profile, saveProfile } = useData();
   const router = useRouter();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split('.').pop() ?? 'jpg';
+      const path = `${user.id}/avatar.${ext}`;
+      const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+      // Append cache-busting query so the browser reloads the new photo
+      const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+      await saveProfile({ avatar_url: publicUrl });
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  }
 
   const displayName = profile?.full_name ?? 'Usuario';
   const initials = displayName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -46,6 +73,15 @@ export default function PerfilPage() {
   return (
     <div className="page-enter" style={{ maxWidth: 520, margin: '0 auto', padding: '0 0 32px' }}>
 
+      {/* Hidden file input */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        style={{ display: 'none' }}
+        onChange={handleAvatarChange}
+      />
+
       {/* User card */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 16,
@@ -53,17 +89,49 @@ export default function PerfilPage() {
         background: 'var(--surface)', borderRadius: 'var(--r-lg)',
         border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)',
       }}>
-        <div style={{
-          width: 56, height: 56, borderRadius: '50%',
-          background: 'var(--gradient-hero)',
-          display: 'grid', placeItems: 'center',
-          fontSize: 20, fontWeight: 800, color: 'var(--btn-hero-text)',
-          flexShrink: 0, letterSpacing: '-0.02em',
-        }}>
-          {profile?.avatar_url ? (
-            <span style={{ fontSize: 26 }}>{profile.avatar_url}</span>
-          ) : initials}
-        </div>
+        {/* Avatar with upload overlay */}
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          title={lang === 'es' ? 'Cambiar foto' : 'Change photo'}
+          style={{
+            position: 'relative', width: 56, height: 56,
+            borderRadius: '50%', flexShrink: 0,
+            background: 'var(--gradient-hero)',
+            border: 'none', cursor: 'pointer', padding: 0,
+            overflow: 'hidden',
+          }}
+        >
+          {isUrl(profile?.avatar_url) ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={profile!.avatar_url!}
+              alt={displayName}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          ) : (
+            <span style={{
+              display: 'grid', placeItems: 'center', width: '100%', height: '100%',
+              fontSize: profile?.avatar_url ? 26 : 20, fontWeight: 800,
+              color: 'var(--btn-hero-text)', letterSpacing: '-0.02em',
+            }}>
+              {profile?.avatar_url ?? initials}
+            </span>
+          )}
+          {/* Hover/upload overlay */}
+          <span style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: uploading ? 1 : 0,
+            transition: 'opacity 160ms',
+            color: '#fff',
+          }} className="avatar-overlay">
+            {uploading
+              ? <Icon name="spinner" size={18} />
+              : <Icon name="camera" size={18} />}
+          </span>
+        </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {displayName}
@@ -172,6 +240,10 @@ export default function PerfilPage() {
 
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+
+      <style>{`
+        button:hover .avatar-overlay { opacity: 1 !important; }
+      `}</style>
     </div>
   );
 }
