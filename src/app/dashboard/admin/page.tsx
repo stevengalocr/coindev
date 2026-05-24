@@ -5,7 +5,7 @@ import { useData } from '@/hooks/useData';
 import { useApp } from '@/hooks/useApp';
 import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
-import { fetchAllProfiles, updateUserPlanStatus, adminDeleteUser, fetchAllFeedback, updateFeedbackStatus, deleteFeedback, type DbProfile, type DbFeedback } from '@/lib/db';
+import { fetchAllProfiles, updateUserPlanStatus, adminDeleteUser, fetchAllFeedback, updateFeedbackStatus, deleteFeedback, timeAgo, type DbProfile, type DbFeedback } from '@/lib/db';
 
 const ADMIN_EMAIL = 'stevengalocr@gmail.com';
 const TRIAL_DAYS = 7;
@@ -211,6 +211,9 @@ export default function AdminPage() {
                     <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
                       Registro: {joinDate}
                       {p.plan_status === 'trial' && ` · ${days} días de prueba restantes`}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-4)', marginTop: 1 }}>
+                      Última sesión: {timeAgo(p.last_sign_in_at)}
                     </div>
                   </div>
 

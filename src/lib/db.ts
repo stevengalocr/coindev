@@ -80,6 +80,7 @@ export interface DbProfile {
   plan_expires_at: string | null;
   admin_notes: string | null;
   created_at: string;
+  last_sign_in_at: string | null;
 }
 
 export interface DbAccount {
@@ -207,12 +208,23 @@ export async function adminDeleteUser(targetUserId: string): Promise<void> {
 
 export async function fetchAllProfiles(): Promise<DbProfile[]> {
   const sb = createClient();
-  const { data, error } = await sb
-    .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { data, error } = await sb.rpc('get_all_profiles_with_last_sign_in');
   if (error) throw error;
   return (data ?? []) as DbProfile[];
+}
+
+export function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return 'Nunca';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  const months = Math.floor(days / 30);
+  if (mins < 2)   return 'Hace un momento';
+  if (mins < 60)  return `Hace ${mins} min`;
+  if (hours < 24) return `Hace ${hours} h`;
+  if (days < 30)  return `Hace ${days} día${days === 1 ? '' : 's'}`;
+  return `Hace ${months} mes${months === 1 ? '' : 'es'}`;
 }
 
 export async function updateUserPlanStatus(
