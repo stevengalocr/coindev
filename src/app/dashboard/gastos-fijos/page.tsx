@@ -25,6 +25,7 @@ export default function GastosFijosPage() {
   }
   const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
+  const [addIncomeOpen, setAddIncomeOpen] = useState(false);
   const [editItem, setEditItem] = useState<Movement | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
@@ -140,24 +141,35 @@ export default function GastosFijosPage() {
         initialFixed initialType="expense"
       />
       <AddMovementModal
+        open={addIncomeOpen}
+        onClose={() => setAddIncomeOpen(false)}
+        onSuccess={() => toast(lang === 'es' ? 'Ingreso fijo guardado' : 'Fixed income saved')}
+        initialFixed initialType="income"
+      />
+      <AddMovementModal
         open={!!editItem}
         onClose={() => setEditItem(null)}
-        onSuccess={() => toast(lang === 'es' ? 'Gasto fijo actualizado' : 'Fixed expense updated')}
+        onSuccess={() => toast(lang === 'es' ? 'Movimiento actualizado' : 'Updated')}
         initialData={editItem ?? undefined}
       />
 
       {/* Fixed incomes section */}
-      {!loading && incomeItems.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, paddingLeft: 2 }}>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: 2 }}>
             {lang === 'es' ? 'Ingresos fijos' : 'Fixed income'}
           </div>
+          <button onClick={() => setAddIncomeOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, background: 'var(--income-soft)', border: '1px solid color-mix(in oklab, var(--income) 30%, transparent)', color: 'var(--income)', fontSize: 11.5, fontWeight: 600 }}>
+            <Icon name="plus" size={12} stroke={2.4} /> {lang === 'es' ? 'Agregar' : 'Add'}
+          </button>
+        </div>
+        {incomeItems.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {incomeItems.map(m => {
               const c = CAT[m.cat];
               const accCur = getAccCurrency(m.account);
               return (
-                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, borderLeft: '3px solid var(--income)', position: 'relative' }}>
+                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, borderLeft: '3px solid var(--income)', position: 'relative', zIndex: menuId === m.id ? 10 : 'auto' }}>
                   <CategoryGlyph id={m.cat} size={42} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>{m.desc}</div>
@@ -193,8 +205,13 @@ export default function GastosFijosPage() {
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+        {!loading && incomeItems.length === 0 && (
+          <div style={{ padding: '14px 16px', borderRadius: 'var(--r-md)', background: 'var(--surface)', border: '1px dashed var(--border)', color: 'var(--text-3)', fontSize: 13, textAlign: 'center' }}>
+            {lang === 'es' ? 'Sin ingresos fijos registrados' : 'No fixed income yet'}
+          </div>
+        )}
+      </div>
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -254,7 +271,7 @@ export default function GastosFijosPage() {
               const c = CAT[m.cat];
               const accCur = getAccCurrency(m.account);
               return (
-                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color 150ms', position: 'relative' }}
+                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color 150ms', position: 'relative', zIndex: menuId === m.id ? 10 : 'auto' }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
                 >
