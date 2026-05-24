@@ -98,7 +98,6 @@ function DashInner({ children }: { children: ReactNode }) {
     : profile?.plan_status === 'pending_payment' ? (lang === 'es' ? 'Pago pendiente' : 'Pending payment')
     : 'Free';
 
-  const isHome = pathname === '/dashboard';
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
