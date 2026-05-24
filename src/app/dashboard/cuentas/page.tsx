@@ -209,13 +209,15 @@ function AccountCard({ acc, lang, t, recent, menuId, onMenuToggle, onEdit, onDel
   const pct = isCredit && acc.limit ? (used / acc.limit) * 100 : 0;
 
   return (
-    <div className="cd-card" style={{ padding: '20px 22px', position: 'relative', overflow: 'hidden' }}>
-      {/* Color glow */}
-      <div style={{
-        position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: 90,
-        background: `radial-gradient(circle, color-mix(in oklab, ${acc.color} 40%, transparent), transparent 70%)`,
-        opacity: 0.25, pointerEvents: 'none',
-      }} />
+    <div className="cd-card" style={{ padding: '20px 22px', position: 'relative' }}>
+      {/* Color glow — clipped inside its own wrapper so the dropdown can overflow the card */}
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' }}>
+        <div style={{
+          position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: 90,
+          background: `radial-gradient(circle, color-mix(in oklab, ${acc.color} 40%, transparent), transparent 70%)`,
+          opacity: 0.25,
+        }} />
+      </div>
       <div style={{ position: 'relative' }}>
         {/* Account name & type */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>

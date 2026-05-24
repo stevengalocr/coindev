@@ -159,7 +159,7 @@ export default function GastosFijosPage() {
               const c = CAT[m.cat];
               const accCur = getAccCurrency(m.account);
               return (
-                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, borderLeft: '3px solid var(--income)', position: 'relative', zIndex: menuId === m.id ? 10 : 'auto' }}>
+                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, borderLeft: '3px solid var(--income)', position: 'relative', zIndex: menuId === m.id ? 52 : 'auto' }}>
                   <CategoryGlyph id={m.cat} size={42} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>{m.desc}</div>
@@ -261,7 +261,7 @@ export default function GastosFijosPage() {
               const c = CAT[m.cat];
               const accCur = getAccCurrency(m.account);
               return (
-                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color 150ms', position: 'relative', zIndex: menuId === m.id ? 10 : 'auto' }}
+                <div key={m.id} className="cd-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'border-color 150ms', position: 'relative', zIndex: menuId === m.id ? 52 : 'auto' }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-strong)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
                 >
