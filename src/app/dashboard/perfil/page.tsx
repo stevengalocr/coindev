@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/hooks/useApp';
@@ -49,12 +49,18 @@ export default function PerfilPage() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // Name editing
-  const nameParts = (profile?.full_name ?? '').trim().split(' ');
-  const [firstName, setFirstName] = useState(() => nameParts[0] ?? '');
-  const [lastName, setLastName] = useState(() => nameParts.slice(1).join(' ') ?? '');
+  // Name editing — profile loads async, sync when ready
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [savingName, setSavingName] = useState(false);
   const [nameSaved, setNameSaved] = useState(false);
+
+  useEffect(() => {
+    if (!profile?.full_name) return;
+    const parts = profile.full_name.trim().split(' ');
+    setFirstName(parts[0] ?? '');
+    setLastName(parts.slice(1).join(' ') ?? '');
+  }, [profile?.full_name]);
 
   // Avatar
   const fileRef = useRef<HTMLInputElement>(null);
@@ -274,7 +280,40 @@ export default function PerfilPage() {
         )}
       </div>
 
-      {/* ── Name editing ── */}
+      {/* ── Accesos rápidos FINANZAS (primero) ── */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, paddingLeft: 2 }}>
+          {lang === 'es' ? 'Finanzas' : 'Finance'}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {([
+            { href: '/dashboard/cuentas',      icon: 'bank',   label_es: 'Cuentas',      label_en: 'Accounts',  color: 'var(--blue)'   },
+            { href: '/dashboard/presupuestos', icon: 'flag',   label_es: 'Presupuestos', label_en: 'Budgets',   color: 'var(--cyan)'   },
+            { href: '/dashboard/gastos-fijos', icon: 'shield', label_es: 'Gastos fijos', label_en: 'Fixed exp.',color: 'var(--income)' },
+            { href: '/dashboard/reportes',     icon: 'chart',  label_es: 'Reportes',     label_en: 'Reports',   color: 'var(--violet)' },
+          ] as const).map(item => (
+            <Link key={item.href} href={item.href} style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '13px 15px', borderRadius: 'var(--r-md)',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              textDecoration: 'none', boxShadow: 'var(--shadow-card)',
+            }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                background: `color-mix(in oklab, ${item.color} 14%, var(--surface-3))`,
+                display: 'grid', placeItems: 'center',
+              }}>
+                <Icon name={item.icon} size={17} stroke={1.8} style={{ color: item.color }} />
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.2 }}>
+                {lang === 'es' ? item.label_es : item.label_en}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Mi cuenta ── */}
       <div className="cd-card" style={{ padding: '16px', marginBottom: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
           {lang === 'es' ? 'Mi cuenta' : 'My account'}
@@ -338,7 +377,7 @@ export default function PerfilPage() {
           </div>
         </div>
 
-        {/* Language toggle */}
+        {/* Language dropdown */}
         <div className="pf-row">
           <div>
             <div className="pf-label">
@@ -347,44 +386,19 @@ export default function PerfilPage() {
             </div>
             <div className="pf-sub">{lang === 'es' ? 'Idioma de la interfaz' : 'Interface language'}</div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 11, color: 'var(--text-3)' }}>ES</span>
-            <Toggle active={lang === 'en'} onChange={v => handleLang(v ? 'en' : 'es')} />
-            <span style={{ fontSize: 11, color: 'var(--text-3)' }}>EN</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Accesos rápidos ── */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, paddingLeft: 2 }}>
-          {lang === 'es' ? 'Finanzas' : 'Finance'}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {([
-            { href: '/dashboard/cuentas',      icon: 'bank',   label_es: 'Cuentas',      label_en: 'Accounts',  color: 'var(--blue)'   },
-            { href: '/dashboard/presupuestos', icon: 'flag',   label_es: 'Presupuestos', label_en: 'Budgets',   color: 'var(--cyan)'   },
-            { href: '/dashboard/gastos-fijos', icon: 'shield', label_es: 'Gastos fijos', label_en: 'Fixed exp.',color: 'var(--income)' },
-            { href: '/dashboard/reportes',     icon: 'chart',  label_es: 'Reportes',     label_en: 'Reports',   color: 'var(--violet)' },
-          ] as const).map(item => (
-            <Link key={item.href} href={item.href} style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '13px 15px', borderRadius: 'var(--r-md)',
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              textDecoration: 'none', boxShadow: 'var(--shadow-card)',
-            }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: 9, flexShrink: 0,
-                background: `color-mix(in oklab, ${item.color} 14%, var(--surface-3))`,
-                display: 'grid', placeItems: 'center',
-              }}>
-                <Icon name={item.icon} size={17} stroke={1.8} style={{ color: item.color }} />
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.2 }}>
-                {lang === 'es' ? item.label_es : item.label_en}
-              </span>
-            </Link>
-          ))}
+          <select
+            value={lang}
+            onChange={e => handleLang(e.target.value as 'es' | 'en')}
+            style={{
+              padding: '7px 10px', borderRadius: 'var(--r-sm)',
+              background: 'var(--surface)', border: '1.5px solid var(--border)',
+              color: 'var(--text)', fontSize: 13, fontWeight: 500,
+              cursor: 'pointer', outline: 'none', minWidth: 110,
+            }}
+          >
+            <option value="es">🇨🇷 Español</option>
+            <option value="en">🇺🇸 English</option>
+          </select>
         </div>
       </div>
 
