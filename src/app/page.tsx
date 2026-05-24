@@ -130,7 +130,7 @@ const CSS = `
 
   /* ── nav ── */
   .land-nav {
-    position:sticky;top:0;z-index:50;
+    position:fixed;top:0;left:0;right:0;z-index:50;
     backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     background:rgba(7,7,13,.72);
     border-bottom:1px solid var(--line);
@@ -181,7 +181,7 @@ const CSS = `
   .badge-dot { width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green); }
 
   /* ── hero ── */
-  .hero-wrap { position:relative;padding:88px 0 64px;z-index:1; }
+  .hero-wrap { position:relative;padding:156px 0 64px;z-index:1; }
   .hero-grid {
     display:grid;grid-template-columns:1.05fr 1fr;gap:64px;
     align-items:center;margin-top:32px;
