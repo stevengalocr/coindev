@@ -328,7 +328,7 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
         </div>
 
         {/* ── STICKY FOOTER: save button ── */}
-        <div style={{ flexShrink: 0, padding: '12px 20px', paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}>
+        <div className="cd-modal-footer">
           <button onClick={handleSave} disabled={!amount || amount === '0' || saving} style={{
             width: '100%', padding: '15px 18px', borderRadius: 14,
             background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)',

@@ -205,3 +205,15 @@ button { cursor: pointer; border: 0; background: none; color: inherit; font: inh
     animation: none;
   }
 }
+
+/* Modal sticky footer — clears mobile nav bar */
+.cd-modal-footer {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+}
+@media (max-width: 768px) {
+  .cd-modal-footer {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}

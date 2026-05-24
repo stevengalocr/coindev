@@ -200,25 +200,26 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
             />
           </div>
 
-          {error && (
-            <div style={{ padding: '9px 12px', borderRadius: 10, background: 'var(--expense-soft)', border: '1px solid rgba(255,107,131,0.2)', fontSize: 13, color: 'var(--expense)', marginBottom: 14 }}>
-              {error}
-            </div>
-          )}
-
-          <button onClick={handleSave} disabled={saving || validAccounts.length === 0} style={{
-            width: '100%', padding: '14px', borderRadius: 'var(--r-md)',
-            background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)',
-            fontSize: 14, fontWeight: 700, border: 0, cursor: saving ? 'not-allowed' : 'pointer',
-            opacity: saving ? 0.7 : 1,
-          }}>
-            {saving
-              ? (lang === 'es' ? 'Guardando…' : 'Saving…')
-              : confirmingConversion
-                ? (lang === 'es' ? 'Confirmar conversión y abonar' : 'Confirm conversion & deposit')
-                : (lang === 'es' ? 'Confirmar abono' : 'Confirm deposit')}
-          </button>
         </div>
+      </div>
+      <div className="cd-modal-footer">
+        {error && (
+          <div style={{ padding: '9px 12px', borderRadius: 10, background: 'var(--expense-soft)', border: '1px solid rgba(255,107,131,0.2)', fontSize: 13, color: 'var(--expense)', marginBottom: 10 }}>
+            {error}
+          </div>
+        )}
+        <button onClick={handleSave} disabled={saving || validAccounts.length === 0} style={{
+          width: '100%', padding: '14px', borderRadius: 'var(--r-md)',
+          background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)',
+          fontSize: 14, fontWeight: 700, border: 0, cursor: saving ? 'not-allowed' : 'pointer',
+          opacity: saving ? 0.7 : 1,
+        }}>
+          {saving
+            ? (lang === 'es' ? 'Guardando…' : 'Saving…')
+            : confirmingConversion
+              ? (lang === 'es' ? 'Confirmar conversión y abonar' : 'Confirm conversion & deposit')
+              : (lang === 'es' ? 'Confirmar abono' : 'Confirm deposit')}
+        </button>
       </div>
       </div>
     </div>

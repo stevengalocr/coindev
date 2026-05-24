@@ -2,7 +2,7 @@
 
 import { ReactNode, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { AppProvider, useApp } from '@/hooks/useApp';
 import { DataProvider, useData } from '@/hooks/useData';
 import { Icon } from '@/components/ui/Icon';
@@ -41,7 +41,7 @@ const NAV_SECTIONS = [
   },
 ] as const;
 
-/* Bottom nav: [Metas] [Movimientos] [INICIO★] [Divisas] [Más] */
+/* Bottom nav: [Metas] [Movimientos] [INICIO★] [Divisas] [Perfil] */
 const MOBILE_LEFT = [
   { href: '/dashboard/metas',        icon: 'spark', key: 'goals'     },
   { href: '/dashboard/movimientos',  icon: 'list',  key: 'movements' },
@@ -51,16 +51,10 @@ const MOBILE_RIGHT = [
   { href: '/dashboard/divisas', icon: 'swap', key: 'divisas' },
 ] as const;
 
-const MOBILE_MORE = [
-  { href: '/dashboard/cuentas',      icon: 'bank',   key: 'accounts' },
-  { href: '/dashboard/presupuestos', icon: 'flag',   key: 'budgets'  },
-  { href: '/dashboard/gastos-fijos', icon: 'shield', key: 'fixed'    },
-  { href: '/dashboard/reportes',     icon: 'chart',  key: 'reports'  },
-] as const;
 
 function DashInner({ children }: { children: ReactNode }) {
   const { t, lang, setLang, setTheme } = useApp();
-  const { user, profile, movements, accounts } = useData();
+  const { user, profile, accounts } = useData();
 
   useEffect(() => {
     if (!profile) return;
@@ -69,10 +63,8 @@ function DashInner({ children }: { children: ReactNode }) {
   }, [profile, setLang, setTheme]);
 
   const pathname = usePathname();
-  const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   // Triple-click on Inicio → open Add Movement modal
@@ -106,7 +98,6 @@ function DashInner({ children }: { children: ReactNode }) {
     : profile?.plan_status === 'pending_payment' ? (lang === 'es' ? 'Pago pendiente' : 'Pending payment')
     : 'Free';
 
-  const moreActive = MOBILE_MORE.some(item => isActive(item.href));
   const isHome = pathname === '/dashboard';
 
   return (
@@ -341,110 +332,26 @@ function DashInner({ children }: { children: ReactNode }) {
             );
           })}
 
-          {/* Más */}
-          <button onClick={() => setMoreOpen(v => !v)} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            gap: 4, height: '100%', background: 'transparent', border: 0,
-            color: moreActive ? 'var(--cyan)' : moreOpen ? 'var(--text)' : 'var(--text-3)',
-            transition: 'color 120ms',
-          }}>
-            <Icon name="more" size={22} stroke={moreOpen ? 2.2 : 1.6} />
-            <span style={{ fontSize: 9, fontWeight: moreOpen || moreActive ? 700 : 400, letterSpacing: '0.01em', lineHeight: 1 }}>
-              {lang === 'es' ? 'Más' : 'More'}
-            </span>
-          </button>
+          {/* Perfil */}
+          {(() => {
+            const active = isActive('/dashboard/perfil');
+            return (
+              <Link href="/dashboard/perfil" style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 4, height: '100%', textDecoration: 'none',
+                color: active ? 'var(--cyan)' : 'var(--text-3)',
+                transition: 'color 120ms',
+              }}>
+                <Icon name="user" size={22} stroke={active ? 2.2 : 1.6} />
+                <span style={{ fontSize: 9, fontWeight: active ? 700 : 400, letterSpacing: '0.01em', lineHeight: 1 }}>
+                  {lang === 'es' ? 'Perfil' : 'Profile'}
+                </span>
+              </Link>
+            );
+          })()}
         </div>
       </nav>
 
-      {/* ── Mobile "Más" popup ───────────────────────────────────────────── */}
-      {moreOpen && (
-        <>
-          <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 48, background: 'rgba(3,6,15,0.55)', backdropFilter: 'blur(4px)' }} />
-          <div style={{
-            position: 'fixed',
-            bottom: 'calc(18px + 64px + env(safe-area-inset-bottom, 0px) + 10px)',
-            left: '50%', transform: 'translateX(-50%)',
-            zIndex: 49,
-            background: 'var(--bg-2)', border: '1px solid var(--border)',
-            borderRadius: 22, padding: '10px',
-            width: 'calc(100% - 28px)', maxWidth: 360,
-            boxShadow: '0 -8px 40px rgba(0,0,0,0.45)',
-            animation: 'cd-slide-up 200ms cubic-bezier(0.2,0.8,0.2,1)',
-          }}>
-            <style>{`@keyframes cd-slide-up { from { transform: translateX(-50%) translateY(20px); opacity:0 } to { transform: translateX(-50%) translateY(0); opacity:1 } }`}</style>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
-              {MOBILE_MORE.map(item => {
-                const active = isActive(item.href);
-                const moreLabels: Record<string, string> = { accounts: t.accounts, budgets: t.budgets, fixed: t.fixed, reports: t.reports };
-                return (
-                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '14px 16px', borderRadius: 14, textDecoration: 'none',
-                    background: active ? 'color-mix(in oklab, var(--cyan) 10%, var(--surface))' : 'var(--surface)',
-                    border: `1px solid ${active ? 'color-mix(in oklab, var(--cyan) 30%, var(--border))' : 'var(--border)'}`,
-                    color: active ? 'var(--cyan)' : 'var(--text-2)',
-                    transition: 'all 140ms',
-                  }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 10, background: active ? 'color-mix(in oklab, var(--cyan) 15%, var(--surface-3))' : 'var(--surface-3)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                      <Icon name={item.icon} size={18} stroke={active ? 2.2 : 1.6} />
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, lineHeight: 1.2 }}>
-                      {moreLabels[item.key]}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div style={{ height: 1, background: 'var(--border)', margin: '10px 2px' }} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {user?.email === ADMIN_EMAIL && (
-                <Link href="/dashboard/admin" onClick={() => setMoreOpen(false)} style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '13px 16px', borderRadius: 14, textDecoration: 'none',
-                  background: isActive('/dashboard/admin') ? 'color-mix(in oklab, var(--blue) 10%, var(--surface))' : 'var(--surface)',
-                  border: `1px solid ${isActive('/dashboard/admin') ? 'color-mix(in oklab, var(--blue) 25%, var(--border))' : 'var(--border)'}`,
-                  color: isActive('/dashboard/admin') ? 'var(--blue)' : 'var(--text-2)',
-                  fontSize: 13, fontWeight: 500,
-                }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in oklab, var(--blue) 10%, var(--surface-3))', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                    <Icon name="lock" size={18} stroke={1.6} style={{ color: 'var(--blue)' }} />
-                  </div>
-                  {lang === 'es' ? 'Administración' : 'Admin'}
-                </Link>
-              )}
-
-              {user?.email !== ADMIN_EMAIL && (
-                <button onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }} style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '13px 16px', borderRadius: 14, background: 'var(--surface)',
-                  border: '1px solid var(--border)', color: 'var(--text-2)',
-                  fontSize: 13, fontWeight: 500,
-                }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in oklab, var(--violet) 10%, var(--surface-3))', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                    <Icon name="edit" size={18} stroke={1.6} style={{ color: 'var(--violet)' }} />
-                  </div>
-                  {lang === 'es' ? 'Reportar / Sugerir' : 'Report / Suggest'}
-                </button>
-              )}
-
-              <button onClick={() => { setMoreOpen(false); setSettingsOpen(true); }} style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                padding: '13px 16px', borderRadius: 14, background: 'var(--surface)',
-                border: '1px solid var(--border)', color: 'var(--text-2)',
-                fontSize: 13, fontWeight: 500,
-              }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--surface-3)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                  <Icon name="settings" size={18} stroke={1.6} />
-                </div>
-                {lang === 'es' ? 'Configuración' : 'Settings'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
 
       <style>{`
         @media (max-width: 768px) {
