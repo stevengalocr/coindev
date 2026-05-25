@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { useToast } from '@/components/ui/Toast';
 import { Icon } from '@/components/ui/Icon';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
+import { insertFixedDueNotification } from '@/lib/db';
 import { type Movement } from '@/lib/data';
+
+const NOTIF_KEY = 'cd_due_notified';
 
 const STORAGE_KEY = 'cd_due_dismissed';
 
@@ -53,6 +56,37 @@ export function DueTodayCard() {
     if (r.type === 'weekly' && r.value === dayOfWeek) return true;
     return false;
   });
+
+  // Fire in-app + browser notification once per day when due items exist
+  useEffect(() => {
+    if (dueItems.length === 0) return;
+    try {
+      const stored = localStorage.getItem(NOTIF_KEY);
+      const today = new Date().toDateString();
+      if (stored === today) return;
+      localStorage.setItem(NOTIF_KEY, today);
+
+      const title = lang === 'es'
+        ? `Tienes ${dueItems.length} compromiso${dueItems.length > 1 ? 's' : ''} hoy`
+        : `You have ${dueItems.length} commitment${dueItems.length > 1 ? 's' : ''} today`;
+      const body = dueItems.map(m => m.desc).join(', ');
+
+      // In-app notification
+      insertFixedDueNotification(title, body).catch(() => {});
+
+      // Browser notification
+      if (typeof Notification !== 'undefined') {
+        if (Notification.permission === 'granted') {
+          new Notification(title, { body, icon: '/logo-64.png' });
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then(perm => {
+            if (perm === 'granted') new Notification(title, { body, icon: '/logo-64.png' });
+          });
+        }
+      }
+    } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dueItems.length, lang]);
 
   if (dueItems.length === 0) return null;
 

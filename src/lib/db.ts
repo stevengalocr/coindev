@@ -537,6 +537,13 @@ export async function markAllNotificationsRead(): Promise<void> {
   if (error) throw error;
 }
 
+export async function insertFixedDueNotification(title: string, body: string): Promise<void> {
+  const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  await sb.from('notifications').insert({ user_id: user.id, type: 'fixed_due', title, body, is_read: false });
+}
+
 // ── Update / Delete ─────────────────────────────────────────────────
 
 export async function updateTransaction(id: string, data: {

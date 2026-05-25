@@ -9,6 +9,7 @@ import { Icon } from '@/components/ui/Icon';
 import { type Lang } from '@/lib/data';
 import { SettingsPanel } from '@/components/screens/SettingsPanel';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
+import { NotificationsPanel } from '@/components/screens/NotificationsPanel';
 import { TrialBanner } from '@/components/shell/TrialBanner';
 import { ToastProvider } from '@/components/ui/Toast';
 import { FeedbackModal } from '@/components/screens/FeedbackModal';
@@ -54,7 +55,7 @@ const MOBILE_RIGHT = [
 
 function DashInner({ children }: { children: ReactNode }) {
   const { t, lang, setLang, setTheme } = useApp();
-  const { user, profile, accounts } = useData();
+  const { user, profile, accounts, unreadNotifications } = useData();
 
   useEffect(() => {
     if (!profile) return;
@@ -66,6 +67,7 @@ function DashInner({ children }: { children: ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [notifsOpen, setNotifsOpen] = useState(false);
 
   // Triple-click on Inicio → open Add Movement modal
   const homeClickCount = useRef(0);
@@ -217,6 +219,39 @@ function DashInner({ children }: { children: ReactNode }) {
           </div>
         )}
 
+        {/* Bell */}
+        <div style={{ padding: '4px 14px 4px' }}>
+          <button
+            onClick={() => setNotifsOpen(true)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 9,
+              padding: '9px 12px', borderRadius: 10, background: 'transparent',
+              border: '1px solid transparent', color: 'var(--text-3)',
+              fontSize: 12.5, fontWeight: 500, transition: 'all 140ms', cursor: 'pointer',
+              position: 'relative',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--text-3)'; }}
+          >
+            <div style={{ position: 'relative' }}>
+              <Icon name="bell" size={14} stroke={1.7} />
+              {unreadNotifications > 0 && (
+                <div style={{
+                  position: 'absolute', top: -4, right: -4,
+                  width: 14, height: 14, borderRadius: '50%',
+                  background: 'var(--expense)', color: '#fff',
+                  fontSize: 8, fontWeight: 800,
+                  display: 'grid', placeItems: 'center',
+                  border: '1.5px solid var(--bg-2)',
+                }}>
+                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                </div>
+              )}
+            </div>
+            {lang === 'es' ? 'Notificaciones' : 'Notifications'}
+          </button>
+        </div>
+
         <div style={{ padding: '4px 14px 16px', borderTop: '1px solid var(--border)' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
@@ -320,24 +355,35 @@ function DashInner({ children }: { children: ReactNode }) {
             </span>
           </button>
 
-          {/* Right: Divisas */}
-          {MOBILE_RIGHT.map(item => {
-            const active = isActive(item.href);
-            const labels: Record<string, string> = { divisas: t.divisas };
-            return (
-              <Link key={item.key} href={item.href} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                gap: 4, height: '100%', textDecoration: 'none',
-                color: active ? 'var(--cyan)' : 'var(--text-3)',
-                transition: 'color 120ms',
-              }}>
-                <Icon name={item.icon} size={22} stroke={active ? 2.2 : 1.6} />
-                <span style={{ fontSize: 9, fontWeight: active ? 700 : 400, letterSpacing: '0.01em', lineHeight: 1 }}>
-                  {labels[item.key]}
-                </span>
-              </Link>
-            );
-          })}
+          {/* Right: Notificaciones */}
+          <button
+            onClick={() => setNotifsOpen(true)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 4, height: '100%', background: 'transparent', border: 'none', cursor: 'pointer',
+              color: 'var(--text-3)', position: 'relative',
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              <Icon name="bell" size={22} stroke={1.6} />
+              {unreadNotifications > 0 && (
+                <div style={{
+                  position: 'absolute', top: -2, right: -4,
+                  minWidth: 16, height: 16, borderRadius: 999,
+                  background: 'var(--expense)', color: '#fff',
+                  fontSize: 9, fontWeight: 800,
+                  display: 'grid', placeItems: 'center',
+                  padding: '0 3px',
+                  border: '1.5px solid var(--bg-2)',
+                }}>
+                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                </div>
+              )}
+            </div>
+            <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: '0.01em', lineHeight: 1 }}>
+              {lang === 'es' ? 'Alertas' : 'Alerts'}
+            </span>
+          </button>
 
           {/* Perfil */}
           {(() => {
@@ -371,6 +417,7 @@ function DashInner({ children }: { children: ReactNode }) {
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} />
       <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      <NotificationsPanel open={notifsOpen} onClose={() => setNotifsOpen(false)} />
     </div>
   );
 }

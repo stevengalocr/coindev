@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import {
   fetchProfile, fetchAccounts, fetchTransactions, fetchBudgets,
-  fetchSavingsGoals, fetchUnreadNotificationsCount,
+  fetchSavingsGoals, fetchUnreadNotificationsCount, fetchNotifications, markAllNotificationsRead,
   insertTransaction, insertAccount, insertBudget, insertSavingsGoal, upsertProfile,
   updateTransaction, deleteTransaction,
   updateAccount, deleteAccount,
@@ -13,7 +13,7 @@ import {
   updateSavingsGoal, deleteSavingsGoalById,
   addGoalContribution,
   toAccount, toMovement, toBudget, toGoal,
-  type DbProfile, type NewTransaction, type NewAccount, type NewBudget, type NewSavingsGoal,
+  type DbProfile, type DbNotification, type NewTransaction, type NewAccount, type NewBudget, type NewSavingsGoal,
 } from '@/lib/db';
 import type { Account, Movement, Budget, SavingsGoal } from '@/lib/data';
 import { FX } from '@/lib/data';
@@ -48,9 +48,11 @@ interface DataState {
   budgets: Budget[];
   goals: SavingsGoal[];
   yearEvolution: YearPoint[];
+  notifications: DbNotification[];
   unreadNotifications: number;
   liveUsdRate: number;
   loading: boolean;
+  markAllRead: () => Promise<void>;
   addTransaction: (tx: NewTransaction) => Promise<void>;
   addAccount: (data: NewAccount) => Promise<void>;
   addBudget: (data: NewBudget) => Promise<void>;
@@ -79,6 +81,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [yearEvolution, setYearEvolution] = useState<YearPoint[]>([]);
+  const [notifications, setNotifications] = useState<DbNotification[]>([]);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [liveUsdRate, setLiveUsdRate] = useState(510);
   const [loading, setLoading] = useState(true);
@@ -91,13 +94,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (!authUser) { setLoading(false); return; }
       setUser({ id: authUser.id, email: authUser.email ?? '' });
 
-      const [dbAccts, dbTxs, dbBudgets, dbProfile, dbGoals, unreadCount] = await Promise.all([
+      const [dbAccts, dbTxs, dbBudgets, dbProfile, dbGoals, unreadCount, dbNotifs] = await Promise.all([
         fetchAccounts(),
         fetchTransactions(),
         fetchBudgets(),
         fetchProfile(),
         fetchSavingsGoals(),
         fetchUnreadNotificationsCount(),
+        fetchNotifications(),
       ]);
 
       const lang = dbProfile?.language ?? 'es';
@@ -107,6 +111,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setMovements(movs);
       setBudgets(dbBudgets.map(b => toBudget(b, movs)));
       setGoals(dbGoals.map(toGoal));
+      setNotifications(dbNotifs);
       setUnreadNotifications(unreadCount);
       setProfile(dbProfile);
       setYearEvolution(buildYearEvolution(movs, lang));
@@ -212,6 +217,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await load();
   }, [load]);
 
+  const markAllRead = useCallback(async () => {
+    await markAllNotificationsRead();
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    setUnreadNotifications(0);
+  }, []);
+
   const saveProfile = useCallback(async (
     patch: Partial<Pick<DbProfile, 'full_name' | 'default_currency' | 'language' | 'theme' | 'avatar_url'>>
   ) => {
@@ -222,7 +233,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   return (
     <DataCtx.Provider value={{
       user, profile, accounts, movements, budgets, goals, yearEvolution,
-      unreadNotifications, liveUsdRate, loading,
+      notifications, unreadNotifications, liveUsdRate, loading,
+      markAllRead,
       addTransaction, addAccount, addBudget, addGoal,
       saveProfile, refetch: load,
       updateTransaction: updateTx,
