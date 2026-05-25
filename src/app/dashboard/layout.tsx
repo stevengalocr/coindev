@@ -10,6 +10,7 @@ import { type Lang } from '@/lib/data';
 import { SettingsPanel } from '@/components/screens/SettingsPanel';
 import { AddMovementModal } from '@/components/screens/AddMovementModal';
 import { NotificationsPanel } from '@/components/screens/NotificationsPanel';
+import { MobileMoreSheet } from '@/components/shell/MobileMoreSheet';
 import { TrialBanner } from '@/components/shell/TrialBanner';
 import { ToastProvider } from '@/components/ui/Toast';
 import { FeedbackModal } from '@/components/screens/FeedbackModal';
@@ -68,6 +69,7 @@ function DashInner({ children }: { children: ReactNode }) {
   const [addOpen, setAddOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [notifsOpen, setNotifsOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // Triple-click on Inicio → open Add Movement modal
   const homeClickCount = useRef(0);
@@ -355,9 +357,9 @@ function DashInner({ children }: { children: ReactNode }) {
             </span>
           </button>
 
-          {/* Right: Notificaciones */}
+          {/* Right: Más */}
           <button
-            onClick={() => setNotifsOpen(true)}
+            onClick={() => setMoreOpen(true)}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               gap: 4, height: '100%', background: 'transparent', border: 'none', cursor: 'pointer',
@@ -365,7 +367,7 @@ function DashInner({ children }: { children: ReactNode }) {
             }}
           >
             <div style={{ position: 'relative' }}>
-              <Icon name="bell" size={22} stroke={1.6} />
+              <Icon name="list" size={22} stroke={1.6} />
               {unreadNotifications > 0 && (
                 <div style={{
                   position: 'absolute', top: -2, right: -4,
@@ -381,7 +383,7 @@ function DashInner({ children }: { children: ReactNode }) {
               )}
             </div>
             <span style={{ fontSize: 9, fontWeight: 400, letterSpacing: '0.01em', lineHeight: 1 }}>
-              {lang === 'es' ? 'Alertas' : 'Alerts'}
+              {lang === 'es' ? 'Más' : 'More'}
             </span>
           </button>
 
@@ -418,6 +420,17 @@ function DashInner({ children }: { children: ReactNode }) {
       <AddMovementModal open={addOpen} onClose={() => setAddOpen(false)} />
       <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <NotificationsPanel open={notifsOpen} onClose={() => setNotifsOpen(false)} />
+      <MobileMoreSheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        lang={lang}
+        unreadNotifications={unreadNotifications}
+        onOpenNotifications={() => setNotifsOpen(true)}
+        sections={NAV_SECTIONS.map(s => ({
+          label: lang === 'es' ? s.label_es : s.label_en,
+          items: s.items.map(item => ({ href: item.href, icon: item.icon, label: navLabels[item.key] ?? item.key })),
+        }))}
+      />
     </div>
   );
 }
