@@ -287,12 +287,12 @@ export default function PerfilPage() {
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, paddingLeft: 2 }}>
           {lang === 'es' ? 'Finanzas' : 'Finance'}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
           {([
             { href: '/dashboard/cuentas',      icon: 'bank',   label_es: 'Cuentas',      label_en: 'Accounts',  color: 'var(--blue)'   },
             { href: '/dashboard/presupuestos', icon: 'flag',   label_es: 'Presupuestos', label_en: 'Budgets',   color: 'var(--cyan)'   },
             { href: '/dashboard/gastos-fijos', icon: 'shield', label_es: 'Gastos fijos', label_en: 'Fixed exp.',color: 'var(--income)' },
-            { href: '/dashboard/reportes',     icon: 'chart',  label_es: 'Reportes',     label_en: 'Reports',   color: 'var(--violet)' },
+            { href: '/dashboard/metas',        icon: 'spark',  label_es: 'Metas',        label_en: 'Goals',     color: 'var(--violet)' },
           ] as const).map(item => (
             <Link key={item.href} href={item.href} style={{
               display: 'flex', alignItems: 'center', gap: 12,
@@ -313,6 +313,24 @@ export default function PerfilPage() {
             </Link>
           ))}
         </div>
+        <Link href="/dashboard/reportes" style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '13px 15px', borderRadius: 'var(--r-md)',
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          textDecoration: 'none', boxShadow: 'var(--shadow-card)',
+        }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+            background: 'color-mix(in oklab, var(--warn) 14%, var(--surface-3))',
+            display: 'grid', placeItems: 'center',
+          }}>
+            <Icon name="chart" size={17} stroke={1.8} style={{ color: 'var(--warn)' }} />
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+            {lang === 'es' ? 'Reportes' : 'Reports'}
+          </span>
+          <Icon name="chevron-right" size={15} style={{ color: 'var(--text-4)', marginLeft: 'auto' }} />
+        </Link>
       </div>
 
       {/* ── Mi cuenta ── */}
@@ -436,33 +454,6 @@ export default function PerfilPage() {
             <Icon name="chevron-right" size={16} style={{ color: 'var(--text-4)', flexShrink: 0 }} />
           </button>
         )}
-      </div>
-
-      {/* ── Navegación (solo mobile) ── */}
-      <div className="cd-card mobile-only" style={{ marginBottom: 16, overflow: 'hidden' }}>
-        {[
-          { href: '/dashboard/cuentas',      icon: 'bank',   label_es: 'Cuentas',        label_en: 'Accounts'   },
-          { href: '/dashboard/presupuestos', icon: 'flag',   label_es: 'Presupuestos',   label_en: 'Budgets'    },
-          { href: '/dashboard/metas',        icon: 'spark',  label_es: 'Metas',          label_en: 'Goals'      },
-          { href: '/dashboard/gastos-fijos', icon: 'shield', label_es: 'Gastos fijos',   label_en: 'Fixed expenses' },
-          { href: '/dashboard/reportes',     icon: 'chart',  label_es: 'Reportes',       label_en: 'Reports'    },
-        ].map((item, i, arr) => (
-          <Link key={item.href} href={item.href} style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '14px 16px', textDecoration: 'none',
-            borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
-          }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-              background: 'var(--surface-2)', border: '1px solid var(--border)',
-              display: 'grid', placeItems: 'center',
-            }}>
-              <Icon name={item.icon} size={16} stroke={1.7} style={{ color: 'var(--text-3)' }} />
-            </div>
-            <span className="pf-label">{lang === 'es' ? item.label_es : item.label_en}</span>
-            <Icon name="chevron-right" size={16} style={{ color: 'var(--text-4)', marginLeft: 'auto', flexShrink: 0 }} />
-          </Link>
-        ))}
       </div>
 
       {/* ── Logout ── */}
