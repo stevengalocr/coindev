@@ -151,6 +151,8 @@ export default function PerfilPage() {
         .sp-input { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r-md); padding: 9px 12px; color: var(--text); font-size: 13.5px; width: 100%; outline: none; transition: border-color 150ms; box-sizing: border-box; font-family: inherit; }
         .sp-input:focus { border-color: var(--cyan); }
         .sp-input::placeholder { color: var(--text-3); }
+        .mobile-only { display: none !important; }
+        @media (max-width: 768px) { .mobile-only { display: block !important; } }
       `}</style>
 
       {/* Hidden inputs */}
@@ -434,6 +436,33 @@ export default function PerfilPage() {
             <Icon name="chevron-right" size={16} style={{ color: 'var(--text-4)', flexShrink: 0 }} />
           </button>
         )}
+      </div>
+
+      {/* ── Navegación (solo mobile) ── */}
+      <div className="cd-card mobile-only" style={{ marginBottom: 16, overflow: 'hidden' }}>
+        {[
+          { href: '/dashboard/cuentas',      icon: 'bank',   label_es: 'Cuentas',        label_en: 'Accounts'   },
+          { href: '/dashboard/presupuestos', icon: 'flag',   label_es: 'Presupuestos',   label_en: 'Budgets'    },
+          { href: '/dashboard/metas',        icon: 'spark',  label_es: 'Metas',          label_en: 'Goals'      },
+          { href: '/dashboard/gastos-fijos', icon: 'shield', label_es: 'Gastos fijos',   label_en: 'Fixed expenses' },
+          { href: '/dashboard/reportes',     icon: 'chart',  label_es: 'Reportes',       label_en: 'Reports'    },
+        ].map((item, i, arr) => (
+          <Link key={item.href} href={item.href} style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '14px 16px', textDecoration: 'none',
+            borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
+          }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+              background: 'var(--surface-2)', border: '1px solid var(--border)',
+              display: 'grid', placeItems: 'center',
+            }}>
+              <Icon name={item.icon} size={16} stroke={1.7} style={{ color: 'var(--text-3)' }} />
+            </div>
+            <span className="pf-label">{lang === 'es' ? item.label_es : item.label_en}</span>
+            <Icon name="chevron-right" size={16} style={{ color: 'var(--text-4)', marginLeft: 'auto', flexShrink: 0 }} />
+          </Link>
+        ))}
       </div>
 
       {/* ── Logout ── */}
