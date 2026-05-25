@@ -70,6 +70,14 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
   }, [open, initialData, initialFixed, initialType]);
 
   useEffect(() => {
+    if (isEditing || recType !== 'monthly') return;
+    const today = new Date();
+    const next = new Date(today.getFullYear(), today.getMonth(), recValue);
+    if (next <= today) next.setMonth(next.getMonth() + 1);
+    setDate(toLocalDateStr(next));
+  }, [recType, recValue, isEditing]);
+
+  useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', h);
