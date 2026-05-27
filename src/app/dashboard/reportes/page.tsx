@@ -24,24 +24,33 @@ export default function ReportesPage() {
   const [period, setPeriod] = useState<Period>('month');
   const [exporting, setExporting] = useState<'csv' | 'pdf' | null>(null);
 
+  // Convert all amounts to CRC before any calculation
+  const accCurrencyMap = Object.fromEntries(accounts.map(a => [a.id, a.currency ?? 'CRC']));
+  const toCRC = (amount: number, cur: string) => cur === 'USD' ? amount * liveUsdRate : amount;
+
   const movs = filterMovs(movements, period);
+  // Normalize movement amounts to CRC so all metrics, charts and exports are consistent
+  const movsInCRC = movs.map(m => ({ ...m, amount: toCRC(m.amount, accCurrencyMap[m.account] ?? 'CRC') }));
+
   const expByCat: Record<string, number> = {};
-  movs.filter(m => m.type === 'expense').forEach(m => { expByCat[m.cat] = (expByCat[m.cat] || 0) + m.amount; });
+  movsInCRC.filter(m => m.type === 'expense').forEach(m => { expByCat[m.cat] = (expByCat[m.cat] || 0) + m.amount; });
   const donutData = Object.entries(expByCat)
     .map(([cat, value]) => ({ value, color: CAT[cat]?.color ?? '#888', cat }))
     .sort((a, b) => b.value - a.value);
   const totalExp = donutData.reduce((s, d) => s + d.value, 0);
 
   const byDesc: Record<string, number> = {};
-  movs.filter(m => m.type === 'expense').forEach(m => { byDesc[m.desc] = (byDesc[m.desc] || 0) + m.amount; });
+  movsInCRC.filter(m => m.type === 'expense').forEach(m => { byDesc[m.desc] = (byDesc[m.desc] || 0) + m.amount; });
   const topMerchants = Object.entries(byDesc).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
-  const income = movs.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0);
+  const income = movsInCRC.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0);
   const savings = income - totalExp;
   const savingsRate = income > 0 ? (savings / income) * 100 : 0;
 
-  const savingsBalance = accounts.find(a => a.kind === 'savings')?.balance ?? 0;
-  const health = aggregate(movs, savingsBalance);
+  // Also convert savings account balance to CRC for emergencyDays calculation
+  const savingsAcc = accounts.find(a => a.kind === 'savings');
+  const savingsBalance = savingsAcc ? toCRC(savingsAcc.balance, savingsAcc.currency ?? 'CRC') : 0;
+  const health = aggregate(movsInCRC, savingsBalance);
   const healthSavingsRate = health.savingsRate * 100;
   const healthFixedRatio = health.fixedRatio * 100;
   const healthEmergencyDays = health.emergencyDays;
