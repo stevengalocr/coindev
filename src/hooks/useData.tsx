@@ -23,18 +23,20 @@ export interface YearPoint { m: string; income: number; expense: number; future:
 const MONTH_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const MONTH_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-function buildYearEvolution(movements: Movement[], lang: string): YearPoint[] {
+function buildYearEvolution(movements: Movement[], lang: string, accounts: Account[], usdRate: number): YearPoint[] {
   const now = new Date();
   const year = now.getFullYear();
   const cur = now.getMonth();
   const labels = lang === 'es' ? MONTH_ES : MONTH_EN;
+  const accCurrencyMap = Object.fromEntries(accounts.map(a => [a.id, a.currency ?? 'CRC']));
+  const toCRC = (m: Movement) => (accCurrencyMap[m.account] ?? 'CRC') === 'USD' ? m.amount * usdRate : m.amount;
   return Array.from({ length: 12 }, (_, i) => {
     if (i > cur) return { m: labels[i], income: 0, expense: 0, future: true };
     const ms = movements.filter(m => m.date.getFullYear() === year && m.date.getMonth() === i);
     return {
       m: labels[i],
-      income: ms.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0),
-      expense: ms.filter(m => m.type === 'expense').reduce((s, m) => s + m.amount, 0),
+      income: ms.filter(m => m.type === 'income').reduce((s, m) => s + toCRC(m), 0),
+      expense: ms.filter(m => m.type === 'expense').reduce((s, m) => s + toCRC(m), 0),
       future: false,
     };
   });
@@ -135,9 +137,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setFixedConfirmations(dbFixedConfs);
       setUnreadNotifications(unreadCount);
       setProfile(dbProfile);
-      setYearEvolution(buildYearEvolution(movs, lang));
 
-      // Fetch live USD/CRC rate and update global FX for all fmtMoney calls
+      // Fetch live USD/CRC rate, then build year evolution with correct rate
+      let usdRate = 510;
       try {
         const fxRes = await fetch('/api/fx');
         if (fxRes.ok) {
@@ -145,10 +147,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const usd = (rates as { code: string; crc: number }[]).find(r => r.code === 'USD');
           if (usd?.crc) {
             FX.USD = 1 / usd.crc;
-            setLiveUsdRate(usd.crc);
+            usdRate = usd.crc;
+            setLiveUsdRate(usdRate);
           }
         }
       } catch { /* keep static fallback */ }
+      setYearEvolution(buildYearEvolution(movs, lang, accs, usdRate));
     } finally {
       setLoading(false);
     }

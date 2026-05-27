@@ -91,7 +91,11 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
   const symbol = currencyMeta.symbol;
 
   async function handleSave() {
-    if (!amount || amount === '0') return;
+    const rawAmount = parseFloat(amount);
+    if (!amount || amount === '0' || isNaN(rawAmount) || rawAmount <= 0) {
+      setError(lang === 'es' ? 'Ingresa un monto válido.' : 'Enter a valid amount.');
+      return;
+    }
     if (!accId) { setError(lang === 'es' ? 'Selecciona una cuenta.' : 'Select an account.'); return; }
     // Prevent duplicate fixed-expense names (new items only; editing existing is allowed)
     if (fixed && !isEditing) {
@@ -107,7 +111,6 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
     setSaving(true);
     setError('');
     try {
-      const rawAmount = parseFloat(amount);
       if (isEditing && initialData) {
         await updateTransaction(
           initialData.id,

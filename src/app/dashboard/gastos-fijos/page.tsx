@@ -49,7 +49,16 @@ export default function GastosFijosPage() {
       if (d <= now) d.setMonth(d.getMonth() + 1);
       return d;
     }
-    return new Date(now.getTime() + (r.type === 'custom' ? r.value : 7) * 86400000);
+    if (r.type === 'weekly') {
+      const todayDay = now.getDay() === 0 ? 7 : now.getDay();
+      let daysUntil = r.value - todayDay;
+      if (daysUntil <= 0) daysUntil += 7;
+      const d = new Date(now);
+      d.setDate(now.getDate() + daysUntil);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    return new Date(now.getTime() + r.value * 86400000);
   }
 
   function recurrenceLabel(m: Movement, lang: string): string {
@@ -85,8 +94,11 @@ export default function GastosFijosPage() {
   else if (sort === 'next_due') items = items.sort((a, b) => nextDueDate(a).getTime() - nextDueDate(b).getTime());
 
   const total = items.reduce((s, m) => s + toCRC(m.amount, getAccCurrency(m.account)), 0);
-  const income = movements.filter(m => m.type === 'income').reduce((s, m) => s + toCRC(m.amount, getAccCurrency(m.account)), 0);
-  const ratio = income > 0 ? total / income : 0;
+  const now = new Date();
+  const monthIncome = movements
+    .filter(m => m.type === 'income' && m.date.getFullYear() === now.getFullYear() && m.date.getMonth() === now.getMonth())
+    .reduce((s, m) => s + toCRC(m.amount, getAccCurrency(m.account)), 0);
+  const ratio = monthIncome > 0 ? total / monthIncome : 0;
   const perDay = total / 30;
   const ratioColor = ratio > 0.6 ? 'var(--expense)' : ratio > 0.45 ? 'var(--warn)' : 'var(--income)';
 

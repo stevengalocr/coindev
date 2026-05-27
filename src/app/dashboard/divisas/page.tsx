@@ -69,7 +69,7 @@ export default function DivisasPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const usd = rates[0] ?? FX_RATES[0];
+  const usd = rates.find(r => r.code === 'USD') ?? FX_RATES[0];
   const parsed = parseFloat(amount) || 0;
   const converted = parsed > 0
     ? fromCRC

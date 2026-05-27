@@ -565,6 +565,12 @@ export async function insertFixedDueNotification(title: string, body: string): P
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const { count } = await sb.from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id).eq('type', 'fixed_due').eq('title', title)
+    .gte('created_at', todayStart.toISOString());
+  if ((count ?? 0) > 0) return;
   await sb.from('notifications').insert({ user_id: user.id, type: 'fixed_due', title, body, is_read: false });
 }
 

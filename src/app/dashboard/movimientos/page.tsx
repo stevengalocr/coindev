@@ -210,7 +210,7 @@ function MovimientosInner() {
                     display: 'flex', alignItems: 'center', gap: 12,
                     padding: '10px 12px',
                     borderBottom: i < drafts.length - 1 ? '1px solid var(--border)' : 'none',
-                    borderRadius: 8, opacity: 0.85,
+                    borderRadius: 8,
                   }}>
                     <CategoryGlyph id={m.cat} size={34} />
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -220,7 +220,22 @@ function MovimientosInner() {
                         {m.date.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short' })}
                       </div>
                     </div>
-                    <MoneyText amount={m.amount} currency={currency} size={13} weight={600} sign type={m.type} style={{ color: 'var(--text-3)' }} />
+                    <MoneyText amount={m.type === 'income' ? m.amount : -m.amount} currency={currency} size={13} weight={600} sign type={m.type} />
+                    <div style={{ position: 'relative', zIndex: menuId === m.id ? 52 : 'auto' }}>
+                      <button onClick={e => { e.stopPropagation(); setMenuId(menuId === m.id ? null : m.id); }} style={{ color: 'var(--text-3)', padding: 6 }}>
+                        <Icon name="more" size={15} />
+                      </button>
+                      {menuId === m.id && (
+                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow-pop)', minWidth: 160, overflow: 'hidden' }}>
+                          <button onClick={e => { e.stopPropagation(); setEditItem(m); setMenuId(null); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--text)', fontWeight: 500, textAlign: 'left', background: 'transparent', borderBottom: '1px solid var(--border)' }}>
+                            <Icon name="edit" size={15} /> {lang === 'es' ? 'Editar' : 'Edit'}
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); setDeleteTarget(m); setMenuId(null); }} style={{ width: '100%', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: 'var(--expense)', fontWeight: 500, textAlign: 'left', background: 'transparent' }}>
+                            <Icon name="trash" size={15} /> {lang === 'es' ? 'Eliminar' : 'Delete'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
