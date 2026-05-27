@@ -75,6 +75,8 @@ export function DueTodayCard() {
     [fixedConfirmations, weeklyKey]
   );
 
+  const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
   // Fix #6: memoize dueItems to avoid re-reading confirmed sets on every render
   const dueItems = useMemo(() => pendingMovements.filter(m => {
     if (dismissed.has(m.id)) return false;
@@ -82,10 +84,15 @@ export function DueTodayCard() {
       const r = m.recurrence;
       if (r.type === 'monthly') {
         if (confirmedMonthly.has(m.id)) return false;
+        // Don't show if the item's start month hasn't arrived yet
+        const startMonth = new Date(m.date.getFullYear(), m.date.getMonth(), 1);
+        if (startMonth > thisMonthStart) return false;
         return r.value <= dayOfMonth;
       }
       if (r.type === 'weekly') {
         if (confirmedWeekly.has(m.id)) return false;
+        // Don't show if the item's start date is still in the future
+        if (m.date > today) return false;
         // Fix #5: Sunday (now dayOfWeek=7) correctly shows all items with r.value 1-7
         return r.value <= dayOfWeek;
       }
@@ -96,7 +103,7 @@ export function DueTodayCard() {
     }
     return false;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [pendingMovements, dismissed, confirmedMonthly, confirmedWeekly, dayOfMonth, dayOfWeek]);
+  }), [pendingMovements, dismissed, confirmedMonthly, confirmedWeekly, dayOfMonth, dayOfWeek, thisMonthStart]);
 
   // Fix #8: use stable item-id string as dep so notification re-fires when items change
   const dueItemIds = dueItems.map(m => m.id).join(',');
@@ -260,7 +267,7 @@ export function DueTodayCard() {
                   )}
                 </div>
               </div>
-              <MoneyText amount={m.amount} currency={currency} size={14} weight={700} sign type={m.type} style={{ flexShrink: 0 }} />
+              <MoneyText amount={isIncome ? m.amount : -m.amount} currency={currency} size={14} weight={700} sign type={m.type} style={{ flexShrink: 0 }} />
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                 <button
                   onClick={() => skip(m)}
