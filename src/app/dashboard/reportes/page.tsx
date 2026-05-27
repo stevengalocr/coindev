@@ -47,9 +47,10 @@ export default function ReportesPage() {
   const savings = income - totalExp;
   const savingsRate = income > 0 ? (savings / income) * 100 : 0;
 
-  // Also convert savings account balance to CRC for emergencyDays calculation
-  const savingsAcc = accounts.find(a => a.kind === 'savings');
-  const savingsBalance = savingsAcc ? toCRC(savingsAcc.balance, savingsAcc.currency ?? 'CRC') : 0;
+  // Sum ALL savings accounts converted to CRC for emergencyDays
+  const savingsBalance = accounts
+    .filter(a => a.kind === 'savings')
+    .reduce((s, a) => s + toCRC(a.balance, a.currency ?? 'CRC'), 0);
   const health = aggregate(movsInCRC, savingsBalance);
   const healthSavingsRate = health.savingsRate * 100;
   const healthFixedRatio = health.fixedRatio * 100;

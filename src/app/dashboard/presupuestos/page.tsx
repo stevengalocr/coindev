@@ -168,9 +168,10 @@ export default function PresupuestosPage() {
           <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {budgets.map(b => {
               const c = CAT[b.cat];
-              const pct = Math.min((b.spent / b.limit) * 100, 100);
+              const rawPct = (b.spent / b.limit) * 100;
+              const pct = Math.min(rawPct, 100);
               const over = b.spent > b.limit;
-              const danger = pct > 85;
+              const danger = rawPct > 85;
               const barColor = over ? 'var(--expense)' : danger ? 'var(--warn)' : (c?.color ?? 'var(--income)');
               return (
                 <div key={b.cat} className="cd-card"
@@ -197,7 +198,7 @@ export default function PresupuestosPage() {
                         <span style={{ fontSize: 11.5, color: over ? 'var(--expense)' : danger ? 'var(--warn)' : 'var(--text-3)', fontWeight: 500 }}>
                           {over ? `${fmtMoney(b.spent - b.limit, b.currency ?? 'CRC')} ${t.over}` : `${fmtMoney(b.limit - b.spent, b.currency ?? 'CRC')} ${t.left}`}
                         </span>
-                        <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: over ? 'var(--expense)' : danger ? 'var(--warn)' : 'var(--text-3)' }}>{Math.round(pct)}%</span>
+                        <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: over ? 'var(--expense)' : danger ? 'var(--warn)' : 'var(--text-3)' }}>{Math.round(rawPct)}%</span>
                       </div>
                     </div>
                     <div style={{ position: 'relative', marginLeft: 4 }}>

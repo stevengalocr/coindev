@@ -61,8 +61,8 @@ export function NotificationsPanel({ open, onClose }: Props) {
     function handleClick(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) onClose();
     }
-    setTimeout(() => document.addEventListener('mousedown', handleClick), 0);
-    return () => document.removeEventListener('mousedown', handleClick);
+    const tid = setTimeout(() => document.addEventListener('mousedown', handleClick), 0);
+    return () => { clearTimeout(tid); document.removeEventListener('mousedown', handleClick); };
   }, [open, onClose]);
 
   if (!open) return null;

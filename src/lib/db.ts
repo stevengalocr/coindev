@@ -673,9 +673,12 @@ export async function updateBudgetByCategory(cat: string, limit_amount: number):
 
 export async function deleteBudgetByCategory(cat: string): Promise<void> {
   const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
   const category_id = CAT_TO_DB[cat] ?? null;
   if (!category_id) throw new Error('Categoría inválida');
-  const { error } = await sb.from('budgets').update({ is_active: false }).eq('category_id', category_id);
+  const { error } = await sb.from('budgets').update({ is_active: false })
+    .eq('category_id', category_id).eq('user_id', user.id);
   if (error) throw error;
 }
 

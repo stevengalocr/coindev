@@ -110,9 +110,14 @@ export default function PerfilPage() {
     setUploading(true);
     try {
       const supabase = createClient();
+      // Remove any existing avatar files to avoid orphaned files on extension change
+      const { data: existing } = await supabase.storage.from('avatars').list(user.id);
+      if (existing?.length) {
+        await supabase.storage.from('avatars').remove(existing.map(f => `${user.id}/${f.name}`));
+      }
       const ext = file.name.split('.').pop() ?? 'jpg';
       const path = `${user.id}/avatar.${ext}`;
-      const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      const { error } = await supabase.storage.from('avatars').upload(path, file);
       if (error) throw error;
       const { data } = supabase.storage.from('avatars').getPublicUrl(path);
       await saveProfile({ avatar_url: `${data.publicUrl}?t=${Date.now()}` });

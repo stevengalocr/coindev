@@ -46,8 +46,10 @@ export default function CuentasPage() {
     ? accounts.filter(a => a.name.toLowerCase().includes(query.toLowerCase()))
     : accounts;
 
-  if (sort === 'balance_desc') filtered = [...filtered].sort((a, b) => b.balance - a.balance);
-  else if (sort === 'balance_asc') filtered = [...filtered].sort((a, b) => a.balance - b.balance);
+  const toCRCBal = (a: { balance: number; currency?: string }) =>
+    (a.currency ?? 'CRC') === 'USD' ? a.balance * liveUsdRate : a.balance;
+  if (sort === 'balance_desc') filtered = [...filtered].sort((a, b) => toCRCBal(b) - toCRCBal(a));
+  else if (sort === 'balance_asc') filtered = [...filtered].sort((a, b) => toCRCBal(a) - toCRCBal(b));
   else if (sort === 'name') filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
   else if (sort === 'type') filtered = [...filtered].sort((a, b) => a.kind.localeCompare(b.kind));
 

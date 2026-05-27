@@ -97,6 +97,11 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
       return;
     }
     if (!accId) { setError(lang === 'es' ? 'Selecciona una cuenta.' : 'Select an account.'); return; }
+    // Require a name for fixed/recurring items to avoid "Sin descripción" duplicates
+    if (fixed && !desc.trim()) {
+      setError(lang === 'es' ? 'Escribe un nombre para el recurrente.' : 'Enter a name for the recurring item.');
+      return;
+    }
     // Prevent duplicate fixed-expense names (new items only; editing existing is allowed)
     if (fixed && !isEditing) {
       const trimmed = desc.trim().toLowerCase();
@@ -177,6 +182,17 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
 
         {/* ── SCROLLABLE BODY: amount + keypad + category + fields + error ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '4px 20px 0' }} className="no-scrollbar">
+
+          {/* No-accounts guard */}
+          {accounts.length === 0 && (
+            <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 13.5 }}>
+              <div style={{ fontSize: 28, marginBottom: 12 }}>🏦</div>
+              <div style={{ fontWeight: 600, color: 'var(--text-2)', marginBottom: 6 }}>
+                {lang === 'es' ? 'Sin cuentas disponibles' : 'No accounts available'}
+              </div>
+              <div>{lang === 'es' ? 'Crea una cuenta antes de registrar movimientos.' : 'Create an account before adding transactions.'}</div>
+            </div>
+          )}
 
           {/* Amount */}
           <div style={{ textAlign: 'center', padding: '2px 0 8px' }}>
@@ -351,11 +367,11 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
 
         {/* ── STICKY FOOTER: save button ── */}
         <div className="cd-modal-footer">
-          <button onClick={handleSave} disabled={!amount || amount === '0' || saving} style={{
+          <button onClick={handleSave} disabled={!amount || amount === '0' || saving || accounts.length === 0} style={{
             width: '100%', padding: '15px 18px', borderRadius: 14,
             background: 'var(--gradient-hero)', color: 'var(--btn-hero-text)',
             fontSize: 15, fontWeight: 600, letterSpacing: '0.01em',
-            opacity: (!amount || amount === '0' || saving) ? 0.5 : 1,
+            opacity: (!amount || amount === '0' || saving || accounts.length === 0) ? 0.5 : 1,
             transition: 'opacity 150ms',
           }}>
             {saving
