@@ -206,8 +206,8 @@ export default function LoginPage() {
   // Auto-redirect if already authenticated
   useEffect(() => {
     const sb = createClient();
-    sb.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace('/dashboard');
+    sb.auth.getUser().then(({ data: { user } }) => {
+      if (user) router.replace('/dashboard');
     });
   }, [router]);
 

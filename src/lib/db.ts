@@ -705,7 +705,7 @@ export async function updateSavingsGoal(id: string, data: { name?: string; descr
 
 export async function deleteSavingsGoalById(id: string): Promise<void> {
   const sb = createClient();
-  const { error } = await sb.from('savings_goals').update({ status: 'cancelled', deleted_at: new Date().toISOString() }).eq('id', id);
+  const { error } = await sb.rpc('cancel_savings_goal', { p_goal_id: id });
   if (error) throw error;
 }
 
