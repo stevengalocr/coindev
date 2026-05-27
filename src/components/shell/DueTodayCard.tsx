@@ -1,47 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/hooks/useApp';
 import { useData } from '@/hooks/useData';
 import { useToast } from '@/components/ui/Toast';
 import { Icon } from '@/components/ui/Icon';
 import { MoneyText } from '@/components/shell/MoneyText';
 import { CategoryGlyph } from '@/components/shell/CategoryGlyph';
-import { insertFixedDueNotification } from '@/lib/db';
+import { insertFixedDueNotification, insertFixedConfirmation } from '@/lib/db';
 import { type Movement } from '@/lib/data';
 
 const NOTIF_KEY = 'cd_due_notified';
-
 const STORAGE_KEY = 'cd_due_dismissed';
 
-const CONFIRMED_KEY = 'cd_confirmed_period';
-
-function getConfirmedIds(recType: 'monthly' | 'weekly'): string[] {
-  try {
-    const today = new Date();
-    const raw = localStorage.getItem(CONFIRMED_KEY);
-    const data = raw ? JSON.parse(raw) : {};
-    const key = recType === 'monthly'
-      ? `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-      : `${today.getFullYear()}-W${String(Math.ceil((today.getDate() + new Date(today.getFullYear(), today.getMonth(), 1).getDay()) / 7)).padStart(2, '0')}`;
-    return data[key] ?? [];
-  } catch { return []; }
-}
-
-function markConfirmedForPeriod(id: string, recType: 'monthly' | 'weekly') {
-  try {
-    const today = new Date();
-    const raw = localStorage.getItem(CONFIRMED_KEY);
-    const data = raw ? JSON.parse(raw) : {};
-    const key = recType === 'monthly'
-      ? `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-      : `${today.getFullYear()}-W${String(Math.ceil((today.getDate() + new Date(today.getFullYear(), today.getMonth(), 1).getDay()) / 7)).padStart(2, '0')}`;
-    data[key] = [...new Set([...(data[key] ?? []), id])];
-    // Prune: keep only last 4 keys
-    const keys = Object.keys(data).sort();
-    if (keys.length > 4) keys.slice(0, keys.length - 4).forEach(k => delete data[k]);
-    localStorage.setItem(CONFIRMED_KEY, JSON.stringify(data));
-  } catch { /* ignore */ }
+// Fix #2: period key helpers for DB storage (ISO week, not week-of-month)
+function periodKey(recType: 'monthly' | 'weekly'): string {
+  const today = new Date();
+  if (recType === 'monthly') {
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  }
+  // ISO week number
+  const d = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
 function getDismissedToday(): Set<string> {
@@ -49,8 +33,7 @@ function getDismissedToday(): Set<string> {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return new Set();
     const { date, ids } = JSON.parse(raw);
-    const today = new Date().toDateString();
-    if (date !== today) return new Set();
+    if (date !== new Date().toDateString()) return new Set();
     return new Set(ids as string[]);
   } catch { return new Set(); }
 }
@@ -68,61 +51,72 @@ function dismissForToday(ids: string[]) {
 
 export function DueTodayCard() {
   const { lang } = useApp();
-  const { pendingMovements, accounts, liveUsdRate, addTransaction, confirmPending, refetch } = useData();
+  // Fix #2: fixedConfirmations comes from DB via useData (cross-device safe)
+  const { pendingMovements, fixedConfirmations, accounts, liveUsdRate, addTransaction, confirmPending } = useData();
   const toast = useToast();
 
   const today = new Date();
   const dayOfMonth = today.getDate();
-  const dayOfWeek = today.getDay();
+  // Fix #5: treat Sunday (getDay=0) as 7 so weekly overdue detection works correctly
+  const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
 
   const [dismissed, setDismissed] = useState<Set<string>>(() => getDismissedToday());
   const [confirming, setConfirming] = useState<string | null>(null);
 
-  const confirmedMonthly = getConfirmedIds('monthly');
-  const confirmedWeekly = getConfirmedIds('weekly');
+  // Fix #2: build confirmed sets from DB data (not localStorage)
+  const monthlyKey = periodKey('monthly');
+  const weeklyKey = periodKey('weekly');
+  const confirmedMonthly = useMemo(
+    () => new Set(fixedConfirmations.filter(c => c.period_key === monthlyKey).map(c => c.template_id)),
+    [fixedConfirmations, monthlyKey]
+  );
+  const confirmedWeekly = useMemo(
+    () => new Set(fixedConfirmations.filter(c => c.period_key === weeklyKey).map(c => c.template_id)),
+    [fixedConfirmations, weeklyKey]
+  );
 
-  const dueItems = pendingMovements.filter(m => {
+  // Fix #6: memoize dueItems to avoid re-reading confirmed sets on every render
+  const dueItems = useMemo(() => pendingMovements.filter(m => {
     if (dismissed.has(m.id)) return false;
-    // Fixed items with recurrence
     if (m.fixed && m.recurrence) {
       const r = m.recurrence;
       if (r.type === 'monthly') {
-        if (confirmedMonthly.includes(m.id)) return false;
-        return r.value <= dayOfMonth; // due today or overdue this month
+        if (confirmedMonthly.has(m.id)) return false;
+        return r.value <= dayOfMonth;
       }
       if (r.type === 'weekly') {
-        if (confirmedWeekly.includes(m.id)) return false;
+        if (confirmedWeekly.has(m.id)) return false;
+        // Fix #5: Sunday (now dayOfWeek=7) correctly shows all items with r.value 1-7
         return r.value <= dayOfWeek;
       }
       return false;
     }
-    // Non-fixed pending transactions due today or overdue
     if (!m.fixed && m.status === 'pending') {
-      const dueDate = new Date(m.date);
-      dueDate.setHours(23, 59, 59, 999);
-      return dueDate <= new Date();
+      return m.date <= today;
     }
     return false;
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [pendingMovements, dismissed, confirmedMonthly, confirmedWeekly, dayOfMonth, dayOfWeek]);
 
-  // Fire in-app + browser notification once per day when due items exist
+  // Fix #8: use stable item-id string as dep so notification re-fires when items change
+  const dueItemIds = dueItems.map(m => m.id).join(',');
   useEffect(() => {
     if (dueItems.length === 0) return;
     try {
+      const todayStr = new Date().toDateString();
       const stored = localStorage.getItem(NOTIF_KEY);
-      const today = new Date().toDateString();
-      if (stored === today) return;
-      localStorage.setItem(NOTIF_KEY, today);
+      // Guard: fire once per day per unique item set
+      const guard = `${todayStr}:${dueItemIds}`;
+      if (stored === guard) return;
+      localStorage.setItem(NOTIF_KEY, guard);
 
       const title = lang === 'es'
         ? `Tienes ${dueItems.length} compromiso${dueItems.length > 1 ? 's' : ''} hoy`
         : `You have ${dueItems.length} commitment${dueItems.length > 1 ? 's' : ''} today`;
       const body = dueItems.map(m => m.desc).join(', ');
 
-      // In-app notification
       insertFixedDueNotification(title, body).catch(() => {});
 
-      // Browser notification
       if (typeof Notification !== 'undefined') {
         if (Notification.permission === 'granted') {
           new Notification(title, { body, icon: '/logo-64.png' });
@@ -134,7 +128,7 @@ export function DueTodayCard() {
       }
     } catch { /* ignore */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dueItems.length, lang]);
+  }, [dueItemIds, lang]);
 
   if (dueItems.length === 0) return null;
 
@@ -153,25 +147,25 @@ export function DueTodayCard() {
     setConfirming(m.id);
     try {
       if (m.fixed) {
-        // Fixed template: create a NEW confirmed transaction. Template stays pending.
-        await addTransaction({
-          type: m.type,
-          cat: m.cat,
-          amount: m.amount,
-          account_id: m.account,
-          date: today.toISOString().split('T')[0],
-          description: m.desc,
-          is_fixed: false,
-        });
-        // Mark as confirmed for this period so it doesn't show again this month/week
-        if (m.recurrence) {
-          markConfirmedForPeriod(m.id, m.recurrence.type === 'weekly' ? 'weekly' : 'monthly');
-        }
+        // Fixed template: insert a new confirmed transaction + record period in DB (Fix #2)
+        // Fix #6: addTransaction already calls load() internally — no extra refetch needed
+        const pKey = periodKey(m.recurrence?.type === 'weekly' ? 'weekly' : 'monthly');
+        await Promise.all([
+          addTransaction({
+            type: m.type,
+            cat: m.cat,
+            amount: m.amount,
+            account_id: m.account,
+            date: today.toISOString().split('T')[0],
+            description: m.desc,
+            is_fixed: false,
+          }),
+          insertFixedConfirmation(m.id, pKey),
+        ]);
       } else {
-        // Non-fixed pending: confirm it in place (updates status + balance)
+        // Non-fixed pending: confirm in place via atomic RPC (Fix #1)
         await confirmPending(m.id);
       }
-      await refetch();
       toast(
         m.type === 'income'
           ? (lang === 'es' ? `${m.desc} registrado` : `${m.desc} recorded`)
@@ -249,7 +243,7 @@ export function DueTodayCard() {
           const currency = accCurrencyMap[m.account] ?? 'CRC';
           const acc = accounts.find(a => a.id === m.account);
           const isIncome = m.type === 'income';
-          const loading = confirming === m.id;
+          const busy = confirming === m.id;
 
           return (
             <div key={m.id} style={{
@@ -271,10 +265,9 @@ export function DueTodayCard() {
               </div>
               <MoneyText amount={m.amount} currency={currency} size={14} weight={700} sign type={m.type} style={{ flexShrink: 0 }} />
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                {/* Skip */}
                 <button
                   onClick={() => skip(m)}
-                  disabled={loading}
+                  disabled={busy}
                   title={lang === 'es' ? 'Saltar hoy' : 'Skip today'}
                   style={{
                     width: 32, height: 32, borderRadius: 8,
@@ -285,10 +278,9 @@ export function DueTodayCard() {
                 >
                   <Icon name="x" size={14} stroke={2} />
                 </button>
-                {/* Confirm */}
                 <button
                   onClick={() => confirm(m)}
-                  disabled={loading}
+                  disabled={busy}
                   style={{
                     height: 32, padding: '0 12px', borderRadius: 8,
                     background: isIncome ? 'var(--income-soft)' : 'color-mix(in oklab, var(--cyan) 12%, var(--surface-2))',
@@ -296,13 +288,13 @@ export function DueTodayCard() {
                     color: isIncome ? 'var(--income)' : 'var(--cyan)',
                     fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
                     display: 'flex', alignItems: 'center', gap: 5,
-                    opacity: loading ? 0.6 : 1,
+                    opacity: busy ? 0.6 : 1,
                   }}
                 >
-                  {loading
+                  {busy
                     ? <Icon name="spark" size={13} />
                     : <Icon name="check" size={13} stroke={2.5} />}
-                  {loading
+                  {busy
                     ? (lang === 'es' ? 'Guardando…' : 'Saving…')
                     : isIncome
                     ? (lang === 'es' ? 'Recibido' : 'Received')

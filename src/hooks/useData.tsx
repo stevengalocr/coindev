@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import {
-  fetchProfile, fetchAccounts, fetchTransactions, fetchPendingTransactions, fetchBudgets,
+  fetchProfile, fetchAccounts, fetchTransactions, fetchPendingTransactions, fetchFixedConfirmations, fetchBudgets,
   fetchSavingsGoals, fetchUnreadNotificationsCount, fetchNotifications, markAllNotificationsRead,
   insertTransaction, insertAccount, insertBudget, insertSavingsGoal, upsertProfile,
   updateTransaction, deleteTransaction, confirmPendingTransaction,
@@ -50,6 +50,7 @@ interface DataState {
   goals: SavingsGoal[];
   yearEvolution: YearPoint[];
   notifications: DbNotification[];
+  fixedConfirmations: { template_id: string; period_key: string }[];
   unreadNotifications: number;
   liveUsdRate: number;
   loading: boolean;
@@ -85,6 +86,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [yearEvolution, setYearEvolution] = useState<YearPoint[]>([]);
   const [notifications, setNotifications] = useState<DbNotification[]>([]);
+  const [fixedConfirmations, setFixedConfirmations] = useState<{ template_id: string; period_key: string }[]>([]);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [liveUsdRate, setLiveUsdRate] = useState(510);
   const [loading, setLoading] = useState(true);
@@ -97,7 +99,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (!authUser) { setLoading(false); return; }
       setUser({ id: authUser.id, email: authUser.email ?? '' });
 
-      const [dbAccts, dbTxs, dbPending, dbBudgets, dbProfile, dbGoals, unreadCount, dbNotifs] = await Promise.all([
+      const [dbAccts, dbTxs, dbPending, dbBudgets, dbProfile, dbGoals, unreadCount, dbNotifs, dbFixedConfs] = await Promise.all([
         fetchAccounts(),
         fetchTransactions(),
         fetchPendingTransactions(),
@@ -106,6 +108,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         fetchSavingsGoals(),
         fetchUnreadNotificationsCount(),
         fetchNotifications(),
+        fetchFixedConfirmations(),
       ]);
 
       const lang = dbProfile?.language ?? 'es';
@@ -118,6 +121,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setBudgets(dbBudgets.map(b => toBudget(b, movs)));
       setGoals(dbGoals.map(toGoal));
       setNotifications(dbNotifs);
+      setFixedConfirmations(dbFixedConfs);
       setUnreadNotifications(unreadCount);
       setProfile(dbProfile);
       setYearEvolution(buildYearEvolution(movs, lang));
@@ -151,6 +155,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setAccounts([]);
         setMovements([]);
         setPendingMovements([]);
+        setFixedConfirmations([]);
         router.push('/login');
       } else if (event === 'TOKEN_REFRESHED') {
         load();
@@ -245,7 +250,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   return (
     <DataCtx.Provider value={{
       user, profile, accounts, movements, pendingMovements, budgets, goals, yearEvolution,
-      notifications, unreadNotifications, liveUsdRate, loading,
+      notifications, fixedConfirmations, unreadNotifications, liveUsdRate, loading,
       markAllRead,
       addTransaction, addAccount, addBudget, addGoal,
       saveProfile, refetch: load,

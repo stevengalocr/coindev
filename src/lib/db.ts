@@ -275,29 +275,43 @@ export async function fetchTransactions(): Promise<DbTransaction[]> {
 
 export async function fetchPendingTransactions(): Promise<DbTransaction[]> {
   const sb = createClient();
+  // Fix #7: fixed templates have no meaningful date boundary so we exclude them from
+  // the year filter; non-fixed drafts are bounded to the current year.
+  const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
   const { data } = await sb
     .from('transactions')
     .select('id,account_id,category_id,type,amount,description,notes,date,is_fixed,status,recurrence_type,recurrence_value')
     .is('deleted_at', null)
     .eq('status', 'pending')
+    .or(`is_fixed.eq.true,date.gte.${yearStart}`)
     .order('date', { ascending: true });
   return (data ?? []) as DbTransaction[];
 }
 
+// Fix #1: atomic via DB RPC — status + balance updated in one PG transaction
 export async function confirmPendingTransaction(id: string): Promise<void> {
   const sb = createClient();
-  const { data: tx } = await sb
-    .from('transactions')
-    .select('account_id, type, amount, is_fixed, status')
-    .eq('id', id)
-    .single();
-  if (!tx || tx.is_fixed || tx.status !== 'pending') return;
-  await sb.from('transactions').update({ status: 'confirmed' }).eq('id', id);
-  const delta = tx.type === 'income' ? Number(tx.amount) : -Number(tx.amount);
-  const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', tx.account_id).single();
-  if (acc) {
-    await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', tx.account_id);
-  }
+  const { error } = await sb.rpc('confirm_pending_tx', { p_tx_id: id });
+  if (error) throw error;
+}
+
+// Fix #2: DB-backed period confirmations (replaces localStorage)
+export async function fetchFixedConfirmations(): Promise<{ template_id: string; period_key: string }[]> {
+  const sb = createClient();
+  const { data } = await sb
+    .from('fixed_confirmations')
+    .select('template_id,period_key');
+  return (data ?? []) as { template_id: string; period_key: string }[];
+}
+
+export async function insertFixedConfirmation(templateId: string, periodKey: string): Promise<void> {
+  const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  await sb.from('fixed_confirmations').upsert(
+    { user_id: user.id, template_id: templateId, period_key: periodKey },
+    { onConflict: 'user_id,template_id,period_key', ignoreDuplicates: true }
+  );
 }
 
 export async function fetchBudgets(): Promise<DbBudget[]> {
@@ -593,9 +607,10 @@ export async function updateTransaction(id: string, data: {
 }): Promise<void> {
   const sb = createClient();
 
-  // Fetch current state to know what was actually applied
+  // Fix #3: if pre-read fails, throw rather than silently skipping old-balance reversal
   const { data: currentTx } = await sb.from('transactions').select('is_fixed, status, date, type, amount').eq('id', id).single();
-  const wasApplied = currentTx && !currentTx.is_fixed && currentTx.status === 'confirmed';
+  if (!currentTx) throw new Error('Transaction not found');
+  const wasApplied = !currentTx.is_fixed && currentTx.status === 'confirmed';
 
   const updates: Record<string, unknown> = {};
   if (data.type !== undefined) updates.type = data.type;
@@ -608,7 +623,7 @@ export async function updateTransaction(id: string, data: {
   if ('recurrence_type' in data) updates.recurrence_type = data.recurrence_type ?? null;
   if ('recurrence_value' in data) updates.recurrence_value = data.recurrence_value ?? null;
 
-  const oldWasApplied = !!wasApplied;
+  const oldWasApplied = wasApplied;
   const newIsFixed = data.is_fixed !== undefined ? data.is_fixed : (currentTx?.is_fixed ?? false);
   const newDate = data.date ?? currentTx?.date ?? '';
   const newWasApplied = !newIsFixed && isDatePastOrToday(newDate);
@@ -640,12 +655,13 @@ export async function updateTransaction(id: string, data: {
 
 export async function deleteTransaction(id: string, type: 'income' | 'expense', amount: number, accountId: string): Promise<void> {
   const sb = createClient();
-  // Read current state before deleting to know if balance needs reverting
+  // Fix #4: throw if pre-read fails so we never silently skip balance reversal
   const { data: existing } = await sb.from('transactions').select('is_fixed, status').eq('id', id).single();
+  if (!existing) throw new Error('Transaction not found');
   const { error } = await sb.from('transactions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
   // Only revert balance if it was confirmed AND not a fixed template
-  if (existing && existing.status === 'confirmed' && !existing.is_fixed) {
+  if (existing.status === 'confirmed' && !existing.is_fixed) {
     const delta = type === 'income' ? -amount : amount;
     const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accountId).single();
     if (acc) {
