@@ -16,7 +16,7 @@ type SortKey = 'amount_desc' | 'amount_asc' | 'name' | 'next_due';
 
 export default function GastosFijosPage() {
   const { t, lang } = useApp();
-  const { movements, accounts, liveUsdRate, loading, deleteTransaction } = useData();
+  const { movements, pendingMovements, accounts, liveUsdRate, loading, deleteTransaction } = useData();
 
   function getAccCurrency(accountId: string): string {
     return accounts.find(a => a.id === accountId)?.currency ?? 'CRC';
@@ -69,7 +69,7 @@ export default function GastosFijosPage() {
     return '';
   }
 
-  const fixedMovs = movements.filter(m => m.fixed);
+  const fixedMovs = pendingMovements.filter(m => m.fixed);
   const expenseMap: Record<string, typeof fixedMovs[0]> = {};
   const incomeMap: Record<string, typeof fixedMovs[0]> = {};
   fixedMovs.forEach(m => {

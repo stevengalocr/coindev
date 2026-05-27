@@ -171,6 +171,7 @@ export function toMovement(t: DbTransaction): Movement {
     date: new Date(t.date + 'T12:00:00'),
     desc: t.description,
     fixed: t.is_fixed,
+    status: t.status as 'confirmed' | 'pending',
     recurrence: t.recurrence_type
       ? { type: t.recurrence_type, value: t.recurrence_value ?? 1 }
       : null,
@@ -270,6 +271,33 @@ export async function fetchTransactions(): Promise<DbTransaction[]> {
     .order('date', { ascending: false })
     .order('created_at', { ascending: false });
   return (data ?? []) as DbTransaction[];
+}
+
+export async function fetchPendingTransactions(): Promise<DbTransaction[]> {
+  const sb = createClient();
+  const { data } = await sb
+    .from('transactions')
+    .select('id,account_id,category_id,type,amount,description,notes,date,is_fixed,status,recurrence_type,recurrence_value')
+    .is('deleted_at', null)
+    .eq('status', 'pending')
+    .order('date', { ascending: true });
+  return (data ?? []) as DbTransaction[];
+}
+
+export async function confirmPendingTransaction(id: string): Promise<void> {
+  const sb = createClient();
+  const { data: tx } = await sb
+    .from('transactions')
+    .select('account_id, type, amount, is_fixed, status')
+    .eq('id', id)
+    .single();
+  if (!tx || tx.is_fixed || tx.status !== 'pending') return;
+  await sb.from('transactions').update({ status: 'confirmed' }).eq('id', id);
+  const delta = tx.type === 'income' ? Number(tx.amount) : -Number(tx.amount);
+  const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', tx.account_id).single();
+  if (acc) {
+    await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', tx.account_id);
+  }
 }
 
 export async function fetchBudgets(): Promise<DbBudget[]> {
@@ -392,6 +420,8 @@ export async function insertTransaction(tx: NewTransaction): Promise<void> {
     .eq('id', tx.account_id)
     .single();
 
+  const isPending = tx.is_fixed || !isDatePastOrToday(tx.date);
+
   const category_id = CAT_TO_DB[tx.cat] ?? null;
   const { error } = await sb.from('transactions').insert({
     user_id: user.id,
@@ -406,12 +436,12 @@ export async function insertTransaction(tx: NewTransaction): Promise<void> {
     is_fixed: tx.is_fixed,
     recurrence_type: tx.recurrence_type ?? null,
     recurrence_value: tx.recurrence_value ?? null,
-    status: 'confirmed',
+    status: isPending ? 'pending' : 'confirmed',
   });
   if (error) throw error;
 
-  // Only update balance if the transaction date is today or in the past
-  if (acc && isDatePastOrToday(tx.date)) {
+  // Only update balance if NOT pending
+  if (acc && !isPending) {
     const delta = tx.type === 'income' ? tx.amount : -tx.amount;
     await sb
       .from('accounts')
@@ -562,6 +592,11 @@ export async function updateTransaction(id: string, data: {
   oldDate?: string;
 }): Promise<void> {
   const sb = createClient();
+
+  // Fetch current state to know what was actually applied
+  const { data: currentTx } = await sb.from('transactions').select('is_fixed, status, date, type, amount').eq('id', id).single();
+  const wasApplied = currentTx && !currentTx.is_fixed && currentTx.status === 'confirmed';
+
   const updates: Record<string, unknown> = {};
   if (data.type !== undefined) updates.type = data.type;
   if (data.cat !== undefined) { updates.category_id = CAT_TO_DB[data.cat] ?? null; updates.notes = data.cat; }
@@ -572,12 +607,23 @@ export async function updateTransaction(id: string, data: {
   if (data.is_fixed !== undefined) updates.is_fixed = data.is_fixed;
   if ('recurrence_type' in data) updates.recurrence_type = data.recurrence_type ?? null;
   if ('recurrence_value' in data) updates.recurrence_value = data.recurrence_value ?? null;
+
+  const oldWasApplied = !!wasApplied;
+  const newIsFixed = data.is_fixed !== undefined ? data.is_fixed : (currentTx?.is_fixed ?? false);
+  const newDate = data.date ?? currentTx?.date ?? '';
+  const newWasApplied = !newIsFixed && isDatePastOrToday(newDate);
+
+  // Update status field in the updates object
+  if (!newIsFixed) {
+    updates.status = isDatePastOrToday(newDate) ? 'confirmed' : 'pending';
+  } else {
+    updates.status = 'pending';
+  }
+
   const { error } = await sb.from('transactions').update(updates).eq('id', id);
   if (error) throw error;
 
-  // Adjust account balance, respecting whether each date was already applied
-  const oldWasApplied = data.oldDate ? isDatePastOrToday(data.oldDate) : true;
-  const newWasApplied = data.date ? isDatePastOrToday(data.date) : oldWasApplied;
+  // Adjust account balance, respecting whether each date was actually applied
   const oldEffect = oldWasApplied ? (data.oldType === 'income' ? (data.oldAmount ?? 0) : -(data.oldAmount ?? 0)) : 0;
   const newType = data.type ?? data.oldType ?? 'expense';
   const newAmount = data.amount ?? data.oldAmount ?? 0;
@@ -594,12 +640,17 @@ export async function updateTransaction(id: string, data: {
 
 export async function deleteTransaction(id: string, type: 'income' | 'expense', amount: number, accountId: string): Promise<void> {
   const sb = createClient();
+  // Read current state before deleting to know if balance needs reverting
+  const { data: existing } = await sb.from('transactions').select('is_fixed, status').eq('id', id).single();
   const { error } = await sb.from('transactions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
-  const delta = type === 'income' ? -amount : amount;
-  const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accountId).single();
-  if (acc) {
-    await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accountId);
+  // Only revert balance if it was confirmed AND not a fixed template
+  if (existing && existing.status === 'confirmed' && !existing.is_fixed) {
+    const delta = type === 'income' ? -amount : amount;
+    const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accountId).single();
+    if (acc) {
+      await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accountId);
+    }
   }
 }
 

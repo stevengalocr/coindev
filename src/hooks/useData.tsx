@@ -4,10 +4,10 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import {
-  fetchProfile, fetchAccounts, fetchTransactions, fetchBudgets,
+  fetchProfile, fetchAccounts, fetchTransactions, fetchPendingTransactions, fetchBudgets,
   fetchSavingsGoals, fetchUnreadNotificationsCount, fetchNotifications, markAllNotificationsRead,
   insertTransaction, insertAccount, insertBudget, insertSavingsGoal, upsertProfile,
-  updateTransaction, deleteTransaction,
+  updateTransaction, deleteTransaction, confirmPendingTransaction,
   updateAccount, deleteAccount,
   updateBudgetByCategory, deleteBudgetByCategory,
   updateSavingsGoal, deleteSavingsGoalById,
@@ -45,6 +45,7 @@ interface DataState {
   profile: DbProfile | null;
   accounts: Account[];
   movements: Movement[];
+  pendingMovements: Movement[];
   budgets: Budget[];
   goals: SavingsGoal[];
   yearEvolution: YearPoint[];
@@ -68,6 +69,7 @@ interface DataState {
   updateGoal: (id: string, data: { name?: string; description?: string | null; icon?: string; target_amount?: number; target_date?: string | null; status?: string }) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
   addContribution: (goalId: string, accountId: string, goalAmount: number, accountAmount: number, note?: string) => Promise<void>;
+  confirmPending: (id: string) => Promise<void>;
 }
 
 const DataCtx = createContext<DataState | null>(null);
@@ -78,6 +80,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<DbProfile | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
+  const [pendingMovements, setPendingMovements] = useState<Movement[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [yearEvolution, setYearEvolution] = useState<YearPoint[]>([]);
@@ -94,9 +97,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (!authUser) { setLoading(false); return; }
       setUser({ id: authUser.id, email: authUser.email ?? '' });
 
-      const [dbAccts, dbTxs, dbBudgets, dbProfile, dbGoals, unreadCount, dbNotifs] = await Promise.all([
+      const [dbAccts, dbTxs, dbPending, dbBudgets, dbProfile, dbGoals, unreadCount, dbNotifs] = await Promise.all([
         fetchAccounts(),
         fetchTransactions(),
+        fetchPendingTransactions(),
         fetchBudgets(),
         fetchProfile(),
         fetchSavingsGoals(),
@@ -107,8 +111,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const lang = dbProfile?.language ?? 'es';
       const accs = dbAccts.map(toAccount);
       const movs = dbTxs.map(toMovement);
+      const pending = dbPending.map(toMovement);
       setAccounts(accs);
       setMovements(movs);
+      setPendingMovements(pending);
       setBudgets(dbBudgets.map(b => toBudget(b, movs)));
       setGoals(dbGoals.map(toGoal));
       setNotifications(dbNotifs);
@@ -144,6 +150,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setAccounts([]);
         setMovements([]);
+        setPendingMovements([]);
         router.push('/login');
       } else if (event === 'TOKEN_REFRESHED') {
         load();
@@ -217,6 +224,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await load();
   }, [load]);
 
+  const confirmPending = useCallback(async (id: string) => {
+    await confirmPendingTransaction(id);
+    await load();
+  }, [load]);
+
   const markAllRead = useCallback(async () => {
     await markAllNotificationsRead();
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
@@ -232,7 +244,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   return (
     <DataCtx.Provider value={{
-      user, profile, accounts, movements, budgets, goals, yearEvolution,
+      user, profile, accounts, movements, pendingMovements, budgets, goals, yearEvolution,
       notifications, unreadNotifications, liveUsdRate, loading,
       markAllRead,
       addTransaction, addAccount, addBudget, addGoal,
@@ -246,6 +258,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       updateGoal: updateGoal2,
       deleteGoal: deleteGoal2,
       addContribution,
+      confirmPending,
     }}>
       {children}
     </DataCtx.Provider>

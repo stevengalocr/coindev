@@ -316,6 +316,7 @@ export interface Movement {
   date: Date;
   desc: string;
   fixed: boolean;
+  status: 'confirmed' | 'pending';
   recurrence?: { type: RecurrenceType; value: number } | null;
 }
 
@@ -335,30 +336,30 @@ function mkMovs(): Movement[] {
   const today = new Date(2026, 4, 18);
   const d = (back: number) => new Date(today.getFullYear(), today.getMonth(), today.getDate() - back);
   return [
-    { id: 'm1',  type: 'expense', cat: 'food',      amount: 8400,    account: 'cash',       date: d(0),  desc: 'Soda La Casona',          fixed: false },
-    { id: 'm2',  type: 'expense', cat: 'transport', amount: 3200,    account: 'cash',       date: d(0),  desc: 'Uber al trabajo',          fixed: false },
-    { id: 'm3',  type: 'expense', cat: 'groceries', amount: 47800,   account: 'bac',        date: d(1),  desc: 'Auto Mercado',             fixed: false },
-    { id: 'm4',  type: 'expense', cat: 'food',      amount: 5650,    account: 'credomatic', date: d(1),  desc: "Rappi · McDonald's",       fixed: false },
-    { id: 'm5',  type: 'income',  cat: 'freelance', amount: 320000,  account: 'bac',        date: d(2),  desc: 'Cliente · diseño web',     fixed: false },
-    { id: 'm6',  type: 'expense', cat: 'subs',      amount: 8900,    account: 'credomatic', date: d(3),  desc: 'Spotify Premium',          fixed: true  },
-    { id: 'm7',  type: 'expense', cat: 'subs',      amount: 9400,    account: 'credomatic', date: d(3),  desc: 'Netflix',                  fixed: true  },
-    { id: 'm8',  type: 'expense', cat: 'fun',       amount: 18200,   account: 'cash',       date: d(4),  desc: 'Cine + palomitas',         fixed: false },
-    { id: 'm9',  type: 'expense', cat: 'transport', amount: 12500,   account: 'bac',        date: d(5),  desc: 'Gasolina Delta',           fixed: false },
-    { id: 'm10', type: 'expense', cat: 'groceries', amount: 23900,   account: 'bac',        date: d(7),  desc: 'PriceSmart',               fixed: false },
-    { id: 'm11', type: 'expense', cat: 'health',    amount: 32000,   account: 'bac',        date: d(8),  desc: 'Farmacia Fischel',         fixed: false },
-    { id: 'm12', type: 'expense', cat: 'food',      amount: 14600,   account: 'credomatic', date: d(9),  desc: 'Rappi · Pops',             fixed: false },
-    { id: 'm13', type: 'income',  cat: 'salary',    amount: 950000,  account: 'bac',        date: d(11), desc: 'Salario quincenal',        fixed: true  },
-    { id: 'm14', type: 'expense', cat: 'rent',      amount: 320000,  account: 'bac',        date: d(13), desc: 'Alquiler · Sabana',        fixed: true  },
-    { id: 'm15', type: 'expense', cat: 'utilities', amount: 18500,   account: 'bac',        date: d(13), desc: 'ICE · electricidad',       fixed: true  },
-    { id: 'm16', type: 'expense', cat: 'utilities', amount: 24800,   account: 'bac',        date: d(14), desc: 'Kölbi · internet',         fixed: true  },
-    { id: 'm17', type: 'expense', cat: 'utilities', amount: 6200,    account: 'bac',        date: d(14), desc: 'Acueductos · agua',        fixed: true  },
-    { id: 'm18', type: 'expense', cat: 'subs',      amount: 4500,    account: 'credomatic', date: d(16), desc: 'iCloud 200GB',             fixed: true  },
-    { id: 'm19', type: 'expense', cat: 'fun',       amount: 28000,   account: 'cash',       date: d(17), desc: 'Bar con amigos',           fixed: false },
-    { id: 'm20', type: 'expense', cat: 'groceries', amount: 38400,   account: 'bac',        date: d(20), desc: 'Auto Mercado',             fixed: false },
-    { id: 'm21', type: 'expense', cat: 'transport', amount: 14000,   account: 'bac',        date: d(22), desc: 'Gasolina',                 fixed: false },
-    { id: 'm22', type: 'expense', cat: 'food',      amount: 7800,    account: 'credomatic', date: d(23), desc: 'Almuerzo · Rostipollos',   fixed: false },
-    { id: 'm23', type: 'income',  cat: 'salary',    amount: 950000,  account: 'bac',        date: d(26), desc: 'Salario quincenal',        fixed: true  },
-    { id: 'm24', type: 'expense', cat: 'fun',       amount: 9500,    account: 'cash',       date: d(28), desc: 'Concierto promotor',       fixed: false },
+    { id: 'm1',  type: 'expense', cat: 'food',      amount: 8400,    account: 'cash',       date: d(0),  desc: 'Soda La Casona',          fixed: false, status: 'confirmed' as const },
+    { id: 'm2',  type: 'expense', cat: 'transport', amount: 3200,    account: 'cash',       date: d(0),  desc: 'Uber al trabajo',          fixed: false, status: 'confirmed' as const },
+    { id: 'm3',  type: 'expense', cat: 'groceries', amount: 47800,   account: 'bac',        date: d(1),  desc: 'Auto Mercado',             fixed: false, status: 'confirmed' as const },
+    { id: 'm4',  type: 'expense', cat: 'food',      amount: 5650,    account: 'credomatic', date: d(1),  desc: "Rappi · McDonald's",       fixed: false, status: 'confirmed' as const },
+    { id: 'm5',  type: 'income',  cat: 'freelance', amount: 320000,  account: 'bac',        date: d(2),  desc: 'Cliente · diseño web',     fixed: false, status: 'confirmed' as const },
+    { id: 'm6',  type: 'expense', cat: 'subs',      amount: 8900,    account: 'credomatic', date: d(3),  desc: 'Spotify Premium',          fixed: true,  status: 'pending'   as const },
+    { id: 'm7',  type: 'expense', cat: 'subs',      amount: 9400,    account: 'credomatic', date: d(3),  desc: 'Netflix',                  fixed: true,  status: 'pending'   as const },
+    { id: 'm8',  type: 'expense', cat: 'fun',       amount: 18200,   account: 'cash',       date: d(4),  desc: 'Cine + palomitas',         fixed: false, status: 'confirmed' as const },
+    { id: 'm9',  type: 'expense', cat: 'transport', amount: 12500,   account: 'bac',        date: d(5),  desc: 'Gasolina Delta',           fixed: false, status: 'confirmed' as const },
+    { id: 'm10', type: 'expense', cat: 'groceries', amount: 23900,   account: 'bac',        date: d(7),  desc: 'PriceSmart',               fixed: false, status: 'confirmed' as const },
+    { id: 'm11', type: 'expense', cat: 'health',    amount: 32000,   account: 'bac',        date: d(8),  desc: 'Farmacia Fischel',         fixed: false, status: 'confirmed' as const },
+    { id: 'm12', type: 'expense', cat: 'food',      amount: 14600,   account: 'credomatic', date: d(9),  desc: 'Rappi · Pops',             fixed: false, status: 'confirmed' as const },
+    { id: 'm13', type: 'income',  cat: 'salary',    amount: 950000,  account: 'bac',        date: d(11), desc: 'Salario quincenal',        fixed: true,  status: 'pending'   as const },
+    { id: 'm14', type: 'expense', cat: 'rent',      amount: 320000,  account: 'bac',        date: d(13), desc: 'Alquiler · Sabana',        fixed: true,  status: 'pending'   as const },
+    { id: 'm15', type: 'expense', cat: 'utilities', amount: 18500,   account: 'bac',        date: d(13), desc: 'ICE · electricidad',       fixed: true,  status: 'pending'   as const },
+    { id: 'm16', type: 'expense', cat: 'utilities', amount: 24800,   account: 'bac',        date: d(14), desc: 'Kölbi · internet',         fixed: true,  status: 'pending'   as const },
+    { id: 'm17', type: 'expense', cat: 'utilities', amount: 6200,    account: 'bac',        date: d(14), desc: 'Acueductos · agua',        fixed: true,  status: 'pending'   as const },
+    { id: 'm18', type: 'expense', cat: 'subs',      amount: 4500,    account: 'credomatic', date: d(16), desc: 'iCloud 200GB',             fixed: true,  status: 'pending'   as const },
+    { id: 'm19', type: 'expense', cat: 'fun',       amount: 28000,   account: 'cash',       date: d(17), desc: 'Bar con amigos',           fixed: false, status: 'confirmed' as const },
+    { id: 'm20', type: 'expense', cat: 'groceries', amount: 38400,   account: 'bac',        date: d(20), desc: 'Auto Mercado',             fixed: false, status: 'confirmed' as const },
+    { id: 'm21', type: 'expense', cat: 'transport', amount: 14000,   account: 'bac',        date: d(22), desc: 'Gasolina',                 fixed: false, status: 'confirmed' as const },
+    { id: 'm22', type: 'expense', cat: 'food',      amount: 7800,    account: 'credomatic', date: d(23), desc: 'Almuerzo · Rostipollos',   fixed: false, status: 'confirmed' as const },
+    { id: 'm23', type: 'income',  cat: 'salary',    amount: 950000,  account: 'bac',        date: d(26), desc: 'Salario quincenal',        fixed: true,  status: 'pending'   as const },
+    { id: 'm24', type: 'expense', cat: 'fun',       amount: 9500,    account: 'cash',       date: d(28), desc: 'Concierto promotor',       fixed: false, status: 'confirmed' as const },
   ];
 }
 

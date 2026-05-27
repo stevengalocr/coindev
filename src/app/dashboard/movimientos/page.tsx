@@ -27,7 +27,7 @@ export default function MovimientosPage() {
 
 function MovimientosInner() {
   const { t, lang } = useApp();
-  const { movements, accounts, loading, deleteTransaction, liveUsdRate } = useData();
+  const { movements, pendingMovements, accounts, loading, deleteTransaction, liveUsdRate } = useData();
   const accCurrencyMap = Object.fromEntries(accounts.map(a => [a.id, a.currency ?? 'CRC']));
   const toCRC = (amount: number, cur: string) => cur === 'USD' ? amount * liveUsdRate : amount;
   const toast = useToast();
@@ -59,6 +59,8 @@ function MovimientosInner() {
     const acc = searchParams.get('account');
     if (acc) {/* account filter could be added here – for now prefills search with account name */}
   }, [searchParams]);
+
+  const drafts = pendingMovements.filter(m => !m.fixed);
 
   const periodMovs = filterMovs(movements, period);
   let list = periodMovs.filter(m => {
@@ -187,6 +189,44 @@ function MovimientosInner() {
             <option value="amount_asc">{lang === 'es' ? 'Menor monto' : 'Lowest amount'}</option>
           </select>
         </div>
+
+        {/* Pending / Drafts section */}
+        {!loading && drafts.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 4px 10px' }}>
+              <Icon name="cal" size={13} style={{ color: 'var(--text-3)' }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {lang === 'es' ? 'Pendientes' : 'Pending'}
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--text-4)', background: 'var(--surface-3)', borderRadius: 999, padding: '1px 7px', fontWeight: 600 }}>{drafts.length}</span>
+            </div>
+            <div className="cd-card" style={{ padding: 4, background: 'color-mix(in oklab, var(--warn) 5%, var(--surface))' }}>
+              {drafts.map((m, i) => {
+                const c = CAT[m.cat];
+                const acc = accounts.find(a => a.id === m.account);
+                const currency = accCurrencyMap[m.account] ?? 'CRC';
+                return (
+                  <div key={m.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '10px 12px',
+                    borderBottom: i < drafts.length - 1 ? '1px solid var(--border)' : 'none',
+                    borderRadius: 8, opacity: 0.85,
+                  }}>
+                    <CategoryGlyph id={m.cat} size={34} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.desc}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+                        {c?.[`label_${lang}` as 'label_es']} · {acc?.name ?? '—'} ·{' '}
+                        {m.date.toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short' })}
+                      </div>
+                    </div>
+                    <MoneyText amount={m.amount} currency={currency} size={13} weight={600} sign type={m.type} style={{ color: 'var(--text-3)' }} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

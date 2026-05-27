@@ -14,6 +14,36 @@ const NOTIF_KEY = 'cd_due_notified';
 
 const STORAGE_KEY = 'cd_due_dismissed';
 
+const CONFIRMED_KEY = 'cd_confirmed_period';
+
+function getConfirmedIds(recType: 'monthly' | 'weekly'): string[] {
+  try {
+    const today = new Date();
+    const raw = localStorage.getItem(CONFIRMED_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    const key = recType === 'monthly'
+      ? `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+      : `${today.getFullYear()}-W${String(Math.ceil((today.getDate() + new Date(today.getFullYear(), today.getMonth(), 1).getDay()) / 7)).padStart(2, '0')}`;
+    return data[key] ?? [];
+  } catch { return []; }
+}
+
+function markConfirmedForPeriod(id: string, recType: 'monthly' | 'weekly') {
+  try {
+    const today = new Date();
+    const raw = localStorage.getItem(CONFIRMED_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    const key = recType === 'monthly'
+      ? `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+      : `${today.getFullYear()}-W${String(Math.ceil((today.getDate() + new Date(today.getFullYear(), today.getMonth(), 1).getDay()) / 7)).padStart(2, '0')}`;
+    data[key] = [...new Set([...(data[key] ?? []), id])];
+    // Prune: keep only last 4 keys
+    const keys = Object.keys(data).sort();
+    if (keys.length > 4) keys.slice(0, keys.length - 4).forEach(k => delete data[k]);
+    localStorage.setItem(CONFIRMED_KEY, JSON.stringify(data));
+  } catch { /* ignore */ }
+}
+
 function getDismissedToday(): Set<string> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -38,7 +68,7 @@ function dismissForToday(ids: string[]) {
 
 export function DueTodayCard() {
   const { lang } = useApp();
-  const { movements, accounts, liveUsdRate, addTransaction, refetch } = useData();
+  const { pendingMovements, accounts, liveUsdRate, addTransaction, confirmPending, refetch } = useData();
   const toast = useToast();
 
   const today = new Date();
@@ -48,12 +78,30 @@ export function DueTodayCard() {
   const [dismissed, setDismissed] = useState<Set<string>>(() => getDismissedToday());
   const [confirming, setConfirming] = useState<string | null>(null);
 
-  const dueItems = movements.filter(m => {
-    if (!m.fixed || !m.recurrence) return false;
+  const confirmedMonthly = getConfirmedIds('monthly');
+  const confirmedWeekly = getConfirmedIds('weekly');
+
+  const dueItems = pendingMovements.filter(m => {
     if (dismissed.has(m.id)) return false;
-    const r = m.recurrence;
-    if (r.type === 'monthly' && r.value === dayOfMonth) return true;
-    if (r.type === 'weekly' && r.value === dayOfWeek) return true;
+    // Fixed items with recurrence
+    if (m.fixed && m.recurrence) {
+      const r = m.recurrence;
+      if (r.type === 'monthly') {
+        if (confirmedMonthly.includes(m.id)) return false;
+        return r.value <= dayOfMonth; // due today or overdue this month
+      }
+      if (r.type === 'weekly') {
+        if (confirmedWeekly.includes(m.id)) return false;
+        return r.value <= dayOfWeek;
+      }
+      return false;
+    }
+    // Non-fixed pending transactions due today or overdue
+    if (!m.fixed && m.status === 'pending') {
+      const dueDate = new Date(m.date);
+      dueDate.setHours(23, 59, 59, 999);
+      return dueDate <= new Date();
+    }
     return false;
   });
 
@@ -102,23 +150,31 @@ export function DueTodayCard() {
   }
 
   async function confirm(m: Movement) {
-    const acc = accounts.find(a => a.id === m.account);
-    if (!acc) return;
     setConfirming(m.id);
     try {
-      await addTransaction({
-        type: m.type,
-        cat: m.cat,
-        amount: m.amount,
-        account_id: m.account,
-        date: today.toISOString().split('T')[0],
-        description: m.desc,
-        is_fixed: false,
-      });
+      if (m.fixed) {
+        // Fixed template: create a NEW confirmed transaction. Template stays pending.
+        await addTransaction({
+          type: m.type,
+          cat: m.cat,
+          amount: m.amount,
+          account_id: m.account,
+          date: today.toISOString().split('T')[0],
+          description: m.desc,
+          is_fixed: false,
+        });
+        // Mark as confirmed for this period so it doesn't show again this month/week
+        if (m.recurrence) {
+          markConfirmedForPeriod(m.id, m.recurrence.type === 'weekly' ? 'weekly' : 'monthly');
+        }
+      } else {
+        // Non-fixed pending: confirm it in place (updates status + balance)
+        await confirmPending(m.id);
+      }
       await refetch();
       toast(
         m.type === 'income'
-          ? (lang === 'es' ? `+${m.desc} registrado` : `${m.desc} recorded`)
+          ? (lang === 'es' ? `${m.desc} registrado` : `${m.desc} recorded`)
           : (lang === 'es' ? `${m.desc} marcado como pagado` : `${m.desc} marked as paid`),
         'success'
       );
