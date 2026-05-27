@@ -96,7 +96,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       const sb = createClient();
       const { data: { user: authUser } } = await sb.auth.getUser();
-      if (!authUser) { setLoading(false); return; }
+      if (!authUser) {
+        // Session expired or invalid — clear state and redirect to login
+        setUser(null);
+        setProfile(null);
+        setAccounts([]);
+        setMovements([]);
+        setPendingMovements([]);
+        setFixedConfirmations([]);
+        setLoading(false);
+        router.push('/login');
+        return;
+      }
       setUser({ id: authUser.id, email: authUser.email ?? '' });
 
       const [dbAccts, dbTxs, dbPending, dbBudgets, dbProfile, dbGoals, unreadCount, dbNotifs, dbFixedConfs] = await Promise.all([

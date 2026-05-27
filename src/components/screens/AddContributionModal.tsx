@@ -23,6 +23,7 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [confirmingConversion, setConfirmingConversion] = useState(false);
+  const [confirmingNegative, setConfirmingNegative] = useState(false);
 
   const validAccounts = accounts.filter(a => a.kind !== 'credit');
 
@@ -32,6 +33,7 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
     setNote('');
     setError('');
     setConfirmingConversion(false);
+    setConfirmingNegative(false);
     setAccountId(validAccounts[0]?.id ?? '');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -61,8 +63,10 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
       setError(lang === 'es' ? 'Selecciona una cuenta.' : 'Select an account.');
       return;
     }
-    if (selectedAcc && amt > selectedAcc.balance) {
-      setError(lang === 'es' ? 'Saldo insuficiente en esa cuenta.' : 'Insufficient balance in that account.');
+    // Warn (not block) when contribution would leave the account in negative balance
+    if (selectedAcc && amt > selectedAcc.balance && !confirmingNegative) {
+      setConfirmingNegative(true);
+      setError('');
       return;
     }
     if (needsConversion && !confirmingConversion) {
@@ -133,6 +137,28 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
               />
             </div>
           </div>
+
+          {/* Negative balance warning banner */}
+          {confirmingNegative && selectedAcc && (() => {
+            const amt = parseFloat(amount.replace(/,/g, '')) || 0;
+            const afterBalance = selectedAcc.balance - amt;
+            return (
+              <div style={{ marginBottom: 16, padding: '14px 16px', borderRadius: 'var(--r-md)', background: 'color-mix(in oklab, var(--warn) 10%, var(--surface))', border: '1.5px solid var(--warn)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 15 }}>⚠️</span>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--warn)' }}>
+                    {lang === 'es' ? 'Saldo insuficiente' : 'Insufficient balance'}
+                  </div>
+                </div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.6 }}>
+                  {lang === 'es'
+                    ? <>Tu cuenta <strong>{selectedAcc.name}</strong> tiene <strong>{fmtMoney(selectedAcc.balance, selectedAcc.currency ?? 'CRC')}</strong>. Al abonar quedaría en <strong style={{ color: 'var(--expense)' }}>{fmtMoney(afterBalance, selectedAcc.currency ?? 'CRC')}</strong>. ¿Deseas continuar de todas formas?</>
+                    : <>Your account <strong>{selectedAcc.name}</strong> has <strong>{fmtMoney(selectedAcc.balance, selectedAcc.currency ?? 'CRC')}</strong>. After this deposit it would be <strong style={{ color: 'var(--expense)' }}>{fmtMoney(afterBalance, selectedAcc.currency ?? 'CRC')}</strong>. Continue anyway?</>
+                  }
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Conversion banner */}
           {confirmingConversion && needsConversion && (() => {
@@ -218,7 +244,9 @@ export function AddContributionModal({ open, onClose, onSuccess, goal }: Props) 
             ? (lang === 'es' ? 'Guardando…' : 'Saving…')
             : confirmingConversion
               ? (lang === 'es' ? 'Confirmar conversión y abonar' : 'Confirm conversion & deposit')
-              : (lang === 'es' ? 'Confirmar abono' : 'Confirm deposit')}
+              : confirmingNegative
+                ? (lang === 'es' ? 'Continuar de todas formas' : 'Continue anyway')
+                : (lang === 'es' ? 'Confirmar abono' : 'Confirm deposit')}
         </button>
       </div>
       </div>

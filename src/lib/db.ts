@@ -510,43 +510,23 @@ export async function fetchGoalContributions(goalId: string): Promise<DbGoalCont
   return (data ?? []) as DbGoalContribution[];
 }
 
+// Atomic via DB RPC — insert contribution + update goal + update account in one PG transaction
 export async function addGoalContribution(
   goalId: string,
   accountId: string,
-  goalAmount: number,   // amount in goal's currency (credited to goal)
+  goalAmount: number,    // amount in goal's currency (credited to goal)
   accountAmount: number, // amount in account's currency (debited from account)
   note?: string
 ): Promise<void> {
   const sb = createClient();
-  // Insert contribution record (stores goal-currency amount for history display)
-  const { error: contribErr } = await sb
-    .from('goal_contributions')
-    .insert({ goal_id: goalId, account_id: accountId, amount: goalAmount, note: note ?? null });
-  if (contribErr) throw contribErr;
-  // Increase goal current_amount by goalAmount
-  const { data: goal, error: goalErr } = await sb
-    .from('savings_goals')
-    .select('current_amount')
-    .eq('id', goalId)
-    .single();
-  if (goalErr) throw goalErr;
-  const { error: updateGoalErr } = await sb
-    .from('savings_goals')
-    .update({ current_amount: Number(goal.current_amount) + goalAmount })
-    .eq('id', goalId);
-  if (updateGoalErr) throw updateGoalErr;
-  // Decrease account balance by accountAmount (in account's own currency)
-  const { data: acc, error: accErr } = await sb
-    .from('accounts')
-    .select('current_balance')
-    .eq('id', accountId)
-    .single();
-  if (accErr) throw accErr;
-  const { error: updateAccErr } = await sb
-    .from('accounts')
-    .update({ current_balance: Number(acc.current_balance) - accountAmount })
-    .eq('id', accountId);
-  if (updateAccErr) throw updateAccErr;
+  const { error } = await sb.rpc('add_goal_contribution', {
+    p_goal_id: goalId,
+    p_account_id: accountId,
+    p_goal_amount: goalAmount,
+    p_account_amount: accountAmount,
+    p_note: note ?? null,
+  });
+  if (error) throw error;
 }
 
 export async function fetchUnreadNotificationsCount(): Promise<number> {
