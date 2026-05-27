@@ -422,46 +422,22 @@ export interface NewTransaction {
   recurrence_value?: number | null;
 }
 
+// Atomic via DB RPC — insert transaction + update account balance in one PG transaction
 export async function insertTransaction(tx: NewTransaction): Promise<void> {
   const sb = createClient();
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
-
-  // Fetch account currency and balance before inserting
-  const { data: acc } = await sb
-    .from('accounts')
-    .select('current_balance, currency')
-    .eq('id', tx.account_id)
-    .single();
-
-  const isPending = tx.is_fixed || !isDatePastOrToday(tx.date);
-
-  const category_id = CAT_TO_DB[tx.cat] ?? null;
-  const { error } = await sb.from('transactions').insert({
-    user_id: user.id,
-    account_id: tx.account_id,
-    category_id,
-    type: tx.type,
-    amount: tx.amount,
-    currency: acc?.currency ?? 'CRC',
-    description: tx.description,
-    notes: tx.cat,
-    date: tx.date,
-    is_fixed: tx.is_fixed,
-    recurrence_type: tx.recurrence_type ?? null,
-    recurrence_value: tx.recurrence_value ?? null,
-    status: isPending ? 'pending' : 'confirmed',
+  const { error } = await sb.rpc('insert_transaction', {
+    p_account_id:       tx.account_id,
+    p_category_id:      CAT_TO_DB[tx.cat] ?? null,
+    p_type:             tx.type,
+    p_amount:           tx.amount,
+    p_description:      tx.description,
+    p_notes:            tx.cat,
+    p_date:             tx.date,
+    p_is_fixed:         tx.is_fixed,
+    p_recurrence_type:  tx.recurrence_type ?? null,
+    p_recurrence_value: tx.recurrence_value ?? null,
   });
   if (error) throw error;
-
-  // Only update balance if NOT pending
-  if (acc && !isPending) {
-    const delta = tx.type === 'income' ? tx.amount : -tx.amount;
-    await sb
-      .from('accounts')
-      .update({ current_balance: Number(acc.current_balance) + delta })
-      .eq('id', tx.account_id);
-  }
 }
 
 export function toGoal(g: DbSavingsGoal): SavingsGoal {
