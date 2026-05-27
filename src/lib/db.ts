@@ -550,6 +550,33 @@ export async function insertFixedDueNotification(title: string, body: string): P
   await sb.from('notifications').insert({ user_id: user.id, type: 'fixed_due', title, body, is_read: false });
 }
 
+// Dedup: once per budget category per calendar month
+export async function insertBudgetAlertNotification(title: string, body: string, monthKey: string): Promise<void> {
+  const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const [y, m] = monthKey.split('-').map(Number);
+  const monthStart = new Date(y, m - 1, 1);
+  const { count } = await sb.from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id).eq('type', 'budget_alert').eq('title', title)
+    .gte('created_at', monthStart.toISOString());
+  if ((count ?? 0) > 0) return;
+  await sb.from('notifications').insert({ user_id: user.id, type: 'budget_alert', title, body, is_read: false });
+}
+
+// Dedup: once ever per goal (title includes goal name)
+export async function insertGoalReachedNotification(title: string, body: string): Promise<void> {
+  const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const { count } = await sb.from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id).eq('type', 'goal_reached').eq('title', title);
+  if ((count ?? 0) > 0) return;
+  await sb.from('notifications').insert({ user_id: user.id, type: 'goal_reached', title, body, is_read: false });
+}
+
 // ── Update / Delete ─────────────────────────────────────────────────
 
 export async function updateTransaction(id: string, data: {

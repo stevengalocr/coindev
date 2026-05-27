@@ -12,11 +12,12 @@ import {
   updateBudgetByCategory, deleteBudgetByCategory,
   updateSavingsGoal, deleteSavingsGoalById,
   addGoalContribution,
+  insertBudgetAlertNotification, insertGoalReachedNotification,
   toAccount, toMovement, toBudget, toGoal,
   type DbProfile, type DbNotification, type NewTransaction, type NewAccount, type NewBudget, type NewSavingsGoal,
 } from '@/lib/db';
 import type { Account, Movement, Budget, SavingsGoal } from '@/lib/data';
-import { FX } from '@/lib/data';
+import { FX, CAT } from '@/lib/data';
 
 export interface YearPoint { m: string; income: number; expense: number; future: boolean }
 
@@ -128,11 +129,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const accs = dbAccts.map(toAccount);
       const movs = dbTxs.map(toMovement);
       const pending = dbPending.map(toMovement);
+      const budgetList = dbBudgets.map(b => toBudget(b, movs));
+      const goalList = dbGoals.map(toGoal);
       setAccounts(accs);
       setMovements(movs);
       setPendingMovements(pending);
-      setBudgets(dbBudgets.map(b => toBudget(b, movs)));
-      setGoals(dbGoals.map(toGoal));
+      setBudgets(budgetList);
+      setGoals(goalList);
       setNotifications(dbNotifs);
       setFixedConfirmations(dbFixedConfs);
       setUnreadNotifications(unreadCount);
@@ -153,6 +156,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       } catch { /* keep static fallback */ }
       setYearEvolution(buildYearEvolution(movs, lang, accs, usdRate));
+
+      // Fire budget alert and goal reached notifications (non-blocking, never throws)
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      for (const b of budgetList) {
+        if (b.limit > 0 && b.spent / b.limit > 0.85) {
+          const catDef = CAT[b.cat];
+          const catLabel = catDef?.[`label_${lang}` as 'label_es'] ?? b.cat;
+          const roundedPct = Math.round((b.spent / b.limit) * 100);
+          const title = lang === 'es'
+            ? `Presupuesto de ${catLabel} al ${roundedPct}%`
+            : `${catLabel} budget at ${roundedPct}%`;
+          const body = lang === 'es'
+            ? `Usaste el ${roundedPct}% de tu presupuesto mensual de ${catLabel}.`
+            : `You've used ${roundedPct}% of your monthly ${catLabel} budget.`;
+          insertBudgetAlertNotification(title, body, monthKey).catch(() => {});
+        }
+      }
+      for (const g of goalList) {
+        if (g.target > 0 && g.current >= g.target && g.status === 'active') {
+          const title = lang === 'es' ? `¡Meta "${g.name}" alcanzada!` : `Goal "${g.name}" reached!`;
+          const body = lang === 'es'
+            ? `¡Felicitaciones! Alcanzaste tu meta de ahorro "${g.name}".`
+            : `Congratulations! You've reached your savings goal "${g.name}".`;
+          insertGoalReachedNotification(title, body).catch(() => {});
+        }
+      }
     } finally {
       setLoading(false);
     }
