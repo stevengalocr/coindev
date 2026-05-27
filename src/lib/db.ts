@@ -638,17 +638,32 @@ export async function updateTransaction(id: string, data: {
   const { error } = await sb.from('transactions').update(updates).eq('id', id);
   if (error) throw error;
 
-  // Adjust account balance, respecting whether each date was actually applied
+  // Adjust account balance — handle account change by updating two accounts separately
   const oldEffect = oldWasApplied ? (data.oldType === 'income' ? (data.oldAmount ?? 0) : -(data.oldAmount ?? 0)) : 0;
   const newType = data.type ?? data.oldType ?? 'expense';
   const newAmount = data.amount ?? data.oldAmount ?? 0;
   const newEffect = newWasApplied ? (newType === 'income' ? newAmount : -newAmount) : 0;
-  const delta = newEffect - oldEffect;
-  const accId = data.account_id ?? data.oldAccountId;
-  if (delta !== 0 && accId) {
-    const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accId).single();
-    if (acc) {
-      await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accId);
+
+  const oldAccId = data.oldAccountId;
+  const newAccId = data.account_id ?? data.oldAccountId;
+  const accountChanged = !!(data.account_id && data.oldAccountId && data.account_id !== data.oldAccountId);
+
+  if (accountChanged) {
+    // Reverse old effect on old account, apply new effect on new account independently
+    if (oldEffect !== 0 && oldAccId) {
+      const { data: oldAcc } = await sb.from('accounts').select('current_balance').eq('id', oldAccId).single();
+      if (oldAcc) await sb.from('accounts').update({ current_balance: Number(oldAcc.current_balance) - oldEffect }).eq('id', oldAccId);
+    }
+    if (newEffect !== 0 && newAccId) {
+      const { data: newAcc } = await sb.from('accounts').select('current_balance').eq('id', newAccId).single();
+      if (newAcc) await sb.from('accounts').update({ current_balance: Number(newAcc.current_balance) + newEffect }).eq('id', newAccId);
+    }
+  } else {
+    // Same account: net delta
+    const delta = newEffect - oldEffect;
+    if (delta !== 0 && newAccId) {
+      const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', newAccId).single();
+      if (acc) await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', newAccId);
     }
   }
 }
@@ -667,6 +682,10 @@ export async function deleteTransaction(id: string, type: 'income' | 'expense', 
     if (acc) {
       await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accountId);
     }
+  }
+  // Fix #4: remove period-confirmation records when a fixed template is deleted
+  if (existing.is_fixed) {
+    await sb.from('fixed_confirmations').delete().eq('template_id', id);
   }
 }
 

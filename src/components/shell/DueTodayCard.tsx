@@ -147,21 +147,18 @@ export function DueTodayCard() {
     setConfirming(m.id);
     try {
       if (m.fixed) {
-        // Fixed template: insert a new confirmed transaction + record period in DB (Fix #2)
-        // Fix #6: addTransaction already calls load() internally — no extra refetch needed
+        // Fix #3: write period confirmation FIRST so load() (called by addTransaction) picks it up
         const pKey = periodKey(m.recurrence?.type === 'weekly' ? 'weekly' : 'monthly');
-        await Promise.all([
-          addTransaction({
-            type: m.type,
-            cat: m.cat,
-            amount: m.amount,
-            account_id: m.account,
-            date: today.toISOString().split('T')[0],
-            description: m.desc,
-            is_fixed: false,
-          }),
-          insertFixedConfirmation(m.id, pKey),
-        ]);
+        await insertFixedConfirmation(m.id, pKey);
+        await addTransaction({
+          type: m.type,
+          cat: m.cat,
+          amount: m.amount,
+          account_id: m.account,
+          date: today.toISOString().split('T')[0],
+          description: m.desc,
+          is_fixed: false,
+        });
       } else {
         // Non-fixed pending: confirm in place via atomic RPC (Fix #1)
         await confirmPending(m.id);

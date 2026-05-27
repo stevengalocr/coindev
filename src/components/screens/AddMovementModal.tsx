@@ -24,7 +24,7 @@ function toLocalDateStr(d: Date): string {
 
 export function AddMovementModal({ open, onClose, onSuccess, initialFixed = false, initialType = 'expense', initialData }: Props) {
   const { t, lang } = useApp();
-  const { accounts, addTransaction, updateTransaction } = useData();
+  const { accounts, pendingMovements, addTransaction, updateTransaction } = useData();
   const isEditing = !!initialData;
 
   const [type, setType] = useState<'expense' | 'income'>(initialData?.type ?? initialType);
@@ -93,6 +93,17 @@ export function AddMovementModal({ open, onClose, onSuccess, initialFixed = fals
   async function handleSave() {
     if (!amount || amount === '0') return;
     if (!accId) { setError(lang === 'es' ? 'Selecciona una cuenta.' : 'Select an account.'); return; }
+    // Prevent duplicate fixed-expense names (new items only; editing existing is allowed)
+    if (fixed && !isEditing) {
+      const trimmed = desc.trim().toLowerCase();
+      const dupe = pendingMovements.find(m => m.fixed && m.desc.trim().toLowerCase() === trimmed);
+      if (dupe) {
+        setError(lang === 'es'
+          ? `Ya tienes un gasto fijo llamado "${dupe.desc}". Usa un nombre diferente.`
+          : `You already have a fixed expense called "${dupe.desc}". Use a different name.`);
+        return;
+      }
+    }
     setSaving(true);
     setError('');
     try {
