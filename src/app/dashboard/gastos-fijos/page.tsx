@@ -52,7 +52,7 @@ export default function GastosFijosPage() {
     if (r.type === 'weekly') {
       const todayDay = now.getDay() === 0 ? 7 : now.getDay();
       let daysUntil = r.value - todayDay;
-      if (daysUntil <= 0) daysUntil += 7;
+      if (daysUntil < 0) daysUntil += 7;
       const d = new Date(now);
       d.setDate(now.getDate() + daysUntil);
       d.setHours(0, 0, 0, 0);
@@ -82,8 +82,8 @@ export default function GastosFijosPage() {
   const expenseMap: Record<string, typeof fixedMovs[0]> = {};
   const incomeMap: Record<string, typeof fixedMovs[0]> = {};
   fixedMovs.forEach(m => {
-    if (m.type === 'expense' && !expenseMap[m.desc]) expenseMap[m.desc] = m;
-    if (m.type === 'income' && !incomeMap[m.desc]) incomeMap[m.desc] = m;
+    if (m.type === 'expense') expenseMap[m.id] = m;
+    if (m.type === 'income') incomeMap[m.id] = m;
   });
   let items = Object.values(expenseMap);
   const incomeItems = Object.values(incomeMap);
