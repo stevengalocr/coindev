@@ -657,22 +657,13 @@ export async function updateTransaction(id: string, data: {
   }
 }
 
-export async function deleteTransaction(id: string, type: 'income' | 'expense', amount: number, accountId: string): Promise<void> {
+export async function deleteTransaction(id: string, _type: 'income' | 'expense', _amount: number, _accountId: string): Promise<void> {
   const sb = createClient();
-  // Fix #4: throw if pre-read fails so we never silently skip balance reversal
-  const { data: existing } = await sb.from('transactions').select('is_fixed, status').eq('id', id).single();
+  const { data: existing } = await sb.from('transactions').select('is_fixed').eq('id', id).single();
   if (!existing) throw new Error('Transaction not found');
   const { error } = await sb.from('transactions').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
-  // Only revert balance if it was confirmed AND not a fixed template
-  if (existing.status === 'confirmed' && !existing.is_fixed) {
-    const delta = type === 'income' ? -amount : amount;
-    const { data: acc } = await sb.from('accounts').select('current_balance').eq('id', accountId).single();
-    if (acc) {
-      await sb.from('accounts').update({ current_balance: Number(acc.current_balance) + delta }).eq('id', accountId);
-    }
-  }
-  // Fix #4: remove period-confirmation records when a fixed template is deleted
+  // Balance revert is handled by trg_update_balance trigger (only for confirmed non-fixed)
   if (existing.is_fixed) {
     await sb.from('fixed_confirmations').delete().eq('template_id', id);
   }
