@@ -161,28 +161,37 @@ export default function CuentasCompartidasPage() {
   function renderSentPendingCard(acc: FullSharedAccount) {
     const invitee = acc.members.find(m => m.user_id !== myId);
     const inviteeName = invitee?.profile?.full_name ?? invitee?.invited_email ?? '—';
+    const inviteeEmail = invitee?.invited_email ?? '';
     const busy = actionId === acc.id;
+    const sentDate = new Date(acc.created_at).toLocaleDateString(lang === 'es' ? 'es-CR' : 'en-US', { day: 'numeric', month: 'short' });
     return (
-      <div key={acc.id} className="cd-card" style={{ padding: '16px 18px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div key={acc.id} className="cd-card" style={{ overflow: 'hidden' }}>
+        {/* Info banner */}
+        <div style={{ padding: '8px 14px', background: 'color-mix(in oklab, var(--warn) 8%, var(--surface-2))', borderBottom: '1px solid color-mix(in oklab, var(--warn) 20%, var(--border))', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="bell" size={12} style={{ color: 'var(--warn)', flexShrink: 0 }} />
+          <span style={{ fontSize: 11.5, color: 'var(--warn)', fontWeight: 600 }}>
+            {lang === 'es' ? `Invitación enviada el ${sentDate} — esperando respuesta` : `Invitation sent on ${sentDate} — awaiting response`}
+          </span>
+        </div>
+        <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 42, height: 42, borderRadius: 12, background: 'color-mix(in oklab, var(--cyan) 12%, var(--surface-2))', border: '1px solid color-mix(in oklab, var(--cyan) 22%, var(--border))', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
             <Icon name="send" size={17} stroke={1.8} style={{ color: 'var(--cyan)' }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{acc.name}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
-              {lang === 'es' ? `Esperando a ` : `Waiting for `}
+            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {lang === 'es' ? 'Para: ' : 'To: '}
               <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>{inviteeName}</span>
-              {' · '}
-              <span style={{ color: 'var(--warn)', fontWeight: 600 }}>
-                {lang === 'es' ? 'Pendiente' : 'Pending'}
-              </span>
+              {inviteeName !== inviteeEmail && inviteeEmail && (
+                <span style={{ color: 'var(--text-4)' }}>{` · ${inviteeEmail}`}</span>
+              )}
             </div>
           </div>
           <button onClick={() => deleteAccount(acc.id)} disabled={busy}
             title={lang === 'es' ? 'Cancelar solicitud' : 'Cancel request'}
-            style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-3)', display: 'grid', placeItems: 'center', flexShrink: 0, opacity: busy ? 0.5 : 1 }}>
-            {busy ? <Icon name="spark" size={14} /> : <Icon name="trash" size={14} stroke={1.8} />}
+            style={{ height: 34, padding: '0 12px', borderRadius: 9, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-3)', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, opacity: busy ? 0.5 : 1 }}>
+            {busy ? <Icon name="spark" size={13} /> : <Icon name="trash" size={13} stroke={1.8} />}
+            {lang === 'es' ? 'Cancelar' : 'Cancel'}
           </button>
         </div>
       </div>

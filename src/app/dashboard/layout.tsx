@@ -92,7 +92,7 @@ function DashInner({ children }: { children: ReactNode }) {
   };
 
   const isActive = (href: string) =>
-    href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
+    href === '/dashboard' ? pathname === '/dashboard' : pathname === href || pathname.startsWith(href + '/');
 
   const displayName = profile?.full_name ?? 'Usuario';
   const initials = displayName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
