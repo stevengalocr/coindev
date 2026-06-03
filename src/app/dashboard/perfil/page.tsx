@@ -318,6 +318,25 @@ export default function PerfilPage() {
             </Link>
           ))}
         </div>
+        <Link href="/dashboard/cuentas-compartidas" style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '13px 15px', borderRadius: 'var(--r-md)',
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          textDecoration: 'none', boxShadow: 'var(--shadow-card)',
+          marginBottom: 10,
+        }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+            background: 'color-mix(in oklab, var(--cyan) 14%, var(--surface-3))',
+            display: 'grid', placeItems: 'center',
+          }}>
+            <Icon name="users" size={17} stroke={1.8} style={{ color: 'var(--cyan)' }} />
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+            {lang === 'es' ? 'Cuentas compartidas' : 'Shared accounts'}
+          </span>
+          <Icon name="chevron-right" size={15} style={{ color: 'var(--text-4)', marginLeft: 'auto' }} />
+        </Link>
         <Link href="/dashboard/reportes" style={{
           display: 'flex', alignItems: 'center', gap: 12,
           padding: '13px 15px', borderRadius: 'var(--r-md)',
