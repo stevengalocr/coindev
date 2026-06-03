@@ -865,6 +865,12 @@ export async function respondToSharedInvite(memberId: string, accept: boolean): 
   if (error) throw error;
 }
 
+export async function deleteSharedAccount(accountId: string): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.rpc('delete_shared_account', { p_account_id: accountId });
+  if (error) throw error;
+}
+
 export async function transactSharedAccount(
   sharedAccountId: string,
   personalAccountId: string,
