@@ -64,15 +64,24 @@ export function CreateSharedAccountModal({ open, onClose, onSuccess }: Props) {
       <div
         onClick={e => e.stopPropagation()}
         className="cd-modal-sheet"
-        style={{ width: '100%', maxWidth: 520, background: 'var(--surface)', borderRadius: '20px 20px 0 0', borderTop: '1px solid var(--border)', paddingBottom: 'env(safe-area-inset-bottom, 0px)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}
+        style={{
+          width: '100%', maxWidth: 520,
+          background: 'var(--surface)',
+          borderRadius: '20px 20px 0 0',
+          borderTop: '1px solid var(--border)',
+          // Single scrollable container — no sticky footer that hides behind keyboard
+          overflowY: 'auto',
+          maxHeight: '92dvh',
+          paddingBottom: 'env(safe-area-inset-bottom, 16px)',
+        }}
       >
         {/* Header */}
-        <div style={{ padding: '20px 24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+        <div style={{ padding: '20px 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--surface)', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 11, background: 'color-mix(in oklab, var(--cyan) 14%, var(--surface-2))', border: '1px solid color-mix(in oklab, var(--cyan) 25%, var(--border))', display: 'grid', placeItems: 'center' }}>
-              <Icon name="users" size={18} stroke={1.8} style={{ color: 'var(--cyan)' }} />
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in oklab, var(--cyan) 14%, var(--surface-2))', border: '1px solid color-mix(in oklab, var(--cyan) 25%, var(--border))', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              <Icon name="users" size={17} stroke={1.8} style={{ color: 'var(--cyan)' }} />
             </div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>
               {lang === 'es' ? 'Nueva cuenta compartida' : 'New shared account'}
             </div>
           </div>
@@ -81,32 +90,32 @@ export function CreateSharedAccountModal({ open, onClose, onSuccess }: Props) {
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }} className="no-scrollbar">
+        {/* Fields — all in one scroll, no footer trap */}
+        <div style={{ padding: '18px 20px' }}>
+
           {/* Name */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 8 }}>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>
               {lang === 'es' ? 'Nombre de la cuenta' : 'Account name'}
-            </label>
+            </div>
             <input
-              autoFocus
               value={name}
               onChange={e => setName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && submit()}
               placeholder={lang === 'es' ? 'Ej: Ahorros para el viaje' : 'E.g. Travel savings'}
-              style={{ width: '100%', padding: '12px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+              inputMode="text"
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 16, outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
 
           {/* Currency */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 8 }}>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>
               {lang === 'es' ? 'Moneda' : 'Currency'}
-            </label>
+            </div>
             <select
               value={currency}
               onChange={e => setCurrency(e.target.value)}
-              style={{ width: '100%', padding: '12px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 15, cursor: 'pointer' }}
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 16, cursor: 'pointer' }}
             >
               {LATAM_CURRENCIES.map(c => (
                 <option key={c.code} value={c.code}>{c.code} — {lang === 'es' ? c.name_es : c.name_en}</option>
@@ -114,46 +123,49 @@ export function CreateSharedAccountModal({ open, onClose, onSuccess }: Props) {
             </select>
           </div>
 
-          {/* Invite email */}
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 8 }}>
-              {lang === 'es' ? 'Correo del otro usuario' : 'Other user\'s email'}
-            </label>
+          {/* Email */}
+          <div style={{ marginBottom: 6 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>
+              {lang === 'es' ? 'Correo del otro usuario' : "Other user's email"}
+            </div>
             <input
               type="email"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && submit()}
-              placeholder={lang === 'es' ? 'correo@ejemplo.com' : 'email@example.com'}
-              style={{ width: '100%', padding: '12px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+              placeholder="correo@ejemplo.com"
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 16, outline: 'none', boxSizing: 'border-box' }}
             />
-            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.4 }}>
               {lang === 'es'
-                ? 'El usuario debe estar registrado en CoinDev para recibir la invitación.'
-                : 'The user must be registered in CoinDev to receive the invitation.'}
+                ? 'El usuario debe estar registrado en CoinDev.'
+                : 'The user must be registered in CoinDev.'}
             </div>
           </div>
 
+          {/* Error */}
           {error && (
-            <div style={{ padding: '10px 14px', borderRadius: 10, background: 'color-mix(in oklab, var(--expense) 12%, var(--surface-2))', border: '1px solid color-mix(in oklab, var(--expense) 30%, var(--border))', color: 'var(--expense)', fontSize: 13, marginBottom: 4 }}>
+            <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'color-mix(in oklab, var(--expense) 12%, var(--surface-2))', border: '1px solid color-mix(in oklab, var(--expense) 30%, var(--border))', color: 'var(--expense)', fontSize: 13 }}>
               {error}
             </div>
           )}
-        </div>
 
-        {/* Footer */}
-        <div className="cd-modal-footer" style={{ padding: '12px 24px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+          {/* Submit — inline so it's never hidden behind keyboard */}
           <button
             onClick={submit}
             disabled={saving}
-            style={{ width: '100%', padding: '14px', borderRadius: 14, background: saving ? 'var(--surface-3)' : 'var(--gradient-hero)', color: saving ? 'var(--text-3)' : 'var(--btn-hero-text)', fontSize: 15, fontWeight: 700, opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            style={{ width: '100%', marginTop: 20, padding: '15px', borderRadius: 14, background: saving ? 'var(--surface-3)' : 'var(--gradient-hero)', color: saving ? 'var(--text-3)' : 'var(--btn-hero-text)', fontSize: 15, fontWeight: 700, opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           >
-            {saving ? (
-              <><Icon name="spark" size={16} />{lang === 'es' ? 'Enviando…' : 'Sending…'}</>
-            ) : (
-              <><Icon name="send" size={16} />{lang === 'es' ? 'Crear y enviar invitación' : 'Create & send invitation'}</>
-            )}
+            {saving
+              ? <><Icon name="spark" size={16} />{lang === 'es' ? 'Enviando…' : 'Sending…'}</>
+              : <><Icon name="send" size={16} />{lang === 'es' ? 'Crear y enviar invitación' : 'Create & send invitation'}</>
+            }
           </button>
+
+          {/* Bottom breathing room so button clears the keyboard */}
+          <div style={{ height: 8 }} />
         </div>
       </div>
     </div>
