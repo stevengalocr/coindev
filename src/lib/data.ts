@@ -96,6 +96,7 @@ export const I18N = {
     savingsRateLabel: 'Tasa de ahorro',
     fixedRatioLabel: 'Gastos fijos / Ingresos',
     emergencyDaysLabel: 'Días de cobertura',
+    shared: 'Compartidas',
   },
   en: {
     appName: 'CoinDev',
@@ -194,6 +195,7 @@ export const I18N = {
     savingsRateLabel: 'Savings rate',
     fixedRatioLabel: 'Fixed costs / Income',
     emergencyDaysLabel: 'Coverage days',
+    shared: 'Shared',
   },
 } as const;
 

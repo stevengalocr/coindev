@@ -117,6 +117,9 @@ export function Icon({ name, size = 20, stroke = 1.7, style, className }: IconPr
     case 'logout': return <svg {...common}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
     case 'user': return <svg {...common}><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>;
     case 'camera': return <svg {...common}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>;
+    case 'users': return <svg {...common}><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3.1-6 7-6s7 2.5 7 6"/><circle cx="19" cy="8" r="2.5"/><path d="M22 20c0-2.5-1.8-4.4-4.5-5"/></svg>;
+    case 'minus': return <svg {...common}><path d="M5 12h14"/></svg>;
+    case 'send': return <svg {...common}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>;
     default: return <svg {...common}><circle cx="12" cy="12" r="6"/></svg>;
   }
 }

@@ -785,3 +785,103 @@ export async function deleteFeedback(id: string): Promise<void> {
   const { error } = await sb.from('feedback').delete().eq('id', id);
   if (error) throw error;
 }
+
+// ── Shared Accounts ────────────────────────────────────────────────────────
+
+export interface DbSharedAccount {
+  id: string;
+  name: string;
+  currency: string;
+  balance: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbSharedMember {
+  id: string;
+  shared_account_id: string;
+  user_id: string;
+  invited_email: string;
+  role: 'owner' | 'member';
+  status: 'pending' | 'active' | 'rejected';
+  invited_at: string;
+  responded_at: string | null;
+  profile?: { full_name: string | null; email: string; avatar_url: string | null } | null;
+}
+
+export interface DbSharedTransaction {
+  id: string;
+  shared_account_id: string;
+  user_id: string;
+  type: 'deposit' | 'withdrawal';
+  amount: number;
+  personal_account_id: string | null;
+  description: string;
+  date: string;
+  created_at: string;
+  profile?: { full_name: string | null; email: string } | null;
+}
+
+export async function fetchSharedAccounts(): Promise<(DbSharedAccount & { members: DbSharedMember[] })[]> {
+  const sb = createClient();
+  const { data, error } = await sb
+    .from('shared_accounts')
+    .select(`*, members:shared_account_members(*, profile:profiles(full_name, email, avatar_url))`)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as (DbSharedAccount & { members: DbSharedMember[] })[];
+}
+
+export async function fetchSharedTransactions(sharedAccountId: string): Promise<DbSharedTransaction[]> {
+  const sb = createClient();
+  const { data, error } = await sb
+    .from('shared_account_transactions')
+    .select(`*, profile:profiles(full_name, email)`)
+    .eq('shared_account_id', sharedAccountId)
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as DbSharedTransaction[];
+}
+
+export async function createSharedAccount(name: string, currency: string, invitedEmail: string): Promise<string> {
+  const sb = createClient();
+  const { data, error } = await sb.rpc('create_shared_account', {
+    p_name: name,
+    p_currency: currency,
+    p_invited_email: invitedEmail,
+  });
+  if (error) throw error;
+  return (data as { account_id: string }).account_id;
+}
+
+export async function respondToSharedInvite(memberId: string, accept: boolean): Promise<void> {
+  const sb = createClient();
+  const { error } = await sb.rpc('respond_to_shared_invite', {
+    p_member_id: memberId,
+    p_accept: accept,
+  });
+  if (error) throw error;
+}
+
+export async function transactSharedAccount(
+  sharedAccountId: string,
+  personalAccountId: string,
+  type: 'deposit' | 'withdrawal',
+  amount: number,
+  description: string,
+  date: string,
+): Promise<string> {
+  const sb = createClient();
+  const { data, error } = await sb.rpc('transact_shared_account', {
+    p_shared_account_id: sharedAccountId,
+    p_personal_account_id: personalAccountId,
+    p_type: type,
+    p_amount: amount,
+    p_description: description,
+    p_date: date,
+  });
+  if (error) throw error;
+  return data as string;
+}

@@ -27,10 +27,11 @@ const NAV_SECTIONS = [
   {
     label_es: 'Finanzas', label_en: 'Finance',
     items: [
-      { href: '/dashboard/cuentas',      icon: 'bank',   key: 'accounts' },
-      { href: '/dashboard/presupuestos', icon: 'flag',   key: 'budgets'  },
-      { href: '/dashboard/metas',        icon: 'spark',  key: 'goals'    },
-      { href: '/dashboard/gastos-fijos', icon: 'shield', key: 'fixed'    },
+      { href: '/dashboard/cuentas',               icon: 'bank',  key: 'accounts' },
+      { href: '/dashboard/cuentas-compartidas',   icon: 'users', key: 'shared'   },
+      { href: '/dashboard/presupuestos',          icon: 'flag',  key: 'budgets'  },
+      { href: '/dashboard/metas',                 icon: 'spark', key: 'goals'    },
+      { href: '/dashboard/gastos-fijos',          icon: 'shield',key: 'fixed'    },
     ],
   },
   {
@@ -86,6 +87,7 @@ function DashInner({ children }: { children: ReactNode }) {
 
   const navLabels: Record<string, string> = {
     home: t.home, movements: t.movements, accounts: t.accounts,
+    shared: t.shared,
     budgets: t.budgets, goals: t.goals, fixed: t.fixed, divisas: t.divisas, reports: t.reports,
   };
 
