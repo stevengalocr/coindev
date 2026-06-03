@@ -827,7 +827,7 @@ export async function fetchSharedAccounts(): Promise<(DbSharedAccount & { member
   const sb = createClient();
   const { data, error } = await sb
     .from('shared_accounts')
-    .select(`*, members:shared_account_members(*, profile:profiles(full_name, email, avatar_url))`)
+    .select(`*, members:shared_account_members(*, profile:profiles!shared_account_members_user_id_profiles_fkey(full_name, email, avatar_url))`)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as (DbSharedAccount & { members: DbSharedMember[] })[];
@@ -837,7 +837,7 @@ export async function fetchSharedTransactions(sharedAccountId: string): Promise<
   const sb = createClient();
   const { data, error } = await sb
     .from('shared_account_transactions')
-    .select(`*, profile:profiles(full_name, email)`)
+    .select(`*, profile:profiles!shared_account_transactions_user_id_profiles_fkey(full_name, email)`)
     .eq('shared_account_id', sharedAccountId)
     .order('date', { ascending: false })
     .order('created_at', { ascending: false });

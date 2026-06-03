@@ -73,7 +73,7 @@ export default function CuentasCompartidasPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try { setAccounts(await fetchSharedAccounts()); }
-    catch { /* ignore */ }
+    catch (e) { console.error('fetchSharedAccounts:', e); }
     finally { setLoading(false); }
   }, []);
 
