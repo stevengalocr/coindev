@@ -164,10 +164,17 @@ export function CreateSharedAccountModal({ open, onClose, onSuccess }: Props) {
             }
           </button>
 
-          {/* Bottom breathing room so button clears the keyboard */}
-          <div style={{ height: 8 }} />
+          {/* Spacer: clears mobile floating nav (64px + 18px gap + safe area) */}
+          <div className="modal-nav-spacer" />
         </div>
       </div>
+
+      <style>{`
+        .modal-nav-spacer { height: 8px; }
+        @media (max-width: 768px) {
+          .modal-nav-spacer { height: calc(96px + env(safe-area-inset-bottom, 0px)); }
+        }
+      `}</style>
     </div>
   );
 }

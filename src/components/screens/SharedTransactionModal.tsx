@@ -184,7 +184,7 @@ export function SharedTransactionModal({
             <select
               value={accountId}
               onChange={e => setAccountId(e.target.value)}
-              style={{ width: '100%', padding: '11px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, cursor: 'pointer' }}
+              style={{ width: '100%', padding: '11px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 16, cursor: 'pointer' }}
             >
               {eligibleAccounts.map(a => (
                 <option key={a.id} value={a.id}>{a.name} · {fmtMoney(a.balance, a.currency)}</option>
@@ -201,7 +201,8 @@ export function SharedTransactionModal({
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder={isDeposit ? (lang === 'es' ? 'Ej: Aporte mensual' : 'E.g. Monthly contribution') : (lang === 'es' ? 'Ej: Gastos del viaje' : 'E.g. Trip expenses')}
-              style={{ width: '100%', padding: '11px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+              inputMode="text"
+              style={{ width: '100%', padding: '11px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 16, outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
 
@@ -214,7 +215,7 @@ export function SharedTransactionModal({
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              style={{ padding: '11px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, outline: 'none' }}
+              style={{ padding: '11px 14px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 16, outline: 'none' }}
             />
           </div>
 
