@@ -61,7 +61,8 @@ export default function CuentasCompartidasPage() {
   const [accounts, setAccounts] = useState<FullSharedAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
-  const [actionId, setActionId] = useState<string | null>(null); // busy id for respond/delete
+  const [actionId, setActionId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const [txModal, setTxModal] = useState<{ accountId: string; name: string; balance: number; currency: string; type: 'deposit' | 'withdrawal' } | null>(null);
   const [movPanel, setMovPanel] = useState<{ account: FullSharedAccount } | null>(null);
@@ -128,30 +129,61 @@ export default function CuentasCompartidasPage() {
     const myMember = acc.members.find(m => m.user_id === myId)!;
     const owner = acc.members.find(m => m.role === 'owner');
     const ownerName = owner?.profile?.full_name ?? owner?.invited_email ?? '—';
-    const busy = actionId === myMember.id;
+    const busyMember = actionId === myMember.id;
+    const busyAccount = actionId === acc.id;
+    const busy = busyMember || busyAccount;
     return (
-      <div key={acc.id} className="cd-card" style={{ padding: '16px 18px', background: 'color-mix(in oklab, var(--warn) 5%, var(--surface))' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ width: 42, height: 42, borderRadius: 12, background: 'color-mix(in oklab, var(--warn) 14%, var(--surface-2))', border: '1px solid color-mix(in oklab, var(--warn) 25%, var(--border))', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-            <Icon name="users" size={19} stroke={1.7} style={{ color: 'var(--warn)' }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{acc.name}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
-              {lang === 'es' ? `De: ${ownerName}` : `From: ${ownerName}`}
-              {' · '}<span style={{ fontWeight: 600 }}>{acc.currency}</span>
+      <div key={acc.id} className="cd-card" style={{ overflow: 'hidden', background: 'color-mix(in oklab, var(--warn) 4%, var(--surface))' }}>
+        {/* Info banner */}
+        <div style={{ padding: '7px 14px', background: 'color-mix(in oklab, var(--warn) 10%, var(--surface-2))', borderBottom: '1px solid color-mix(in oklab, var(--warn) 22%, var(--border))', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="bell" size={12} style={{ color: 'var(--warn)', flexShrink: 0 }} />
+          <span style={{ fontSize: 11.5, color: 'var(--warn)', fontWeight: 600 }}>
+            {lang === 'es' ? 'Tienes una invitación pendiente' : 'You have a pending invitation'}
+          </span>
+        </div>
+        <div style={{ padding: '14px 16px' }}>
+          {/* Account info */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 11, background: 'color-mix(in oklab, var(--warn) 14%, var(--surface-2))', border: '1px solid color-mix(in oklab, var(--warn) 25%, var(--border))', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              <Icon name="users" size={18} stroke={1.7} style={{ color: 'var(--warn)' }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{acc.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
+                {lang === 'es' ? 'De: ' : 'From: '}
+                <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>{ownerName}</span>
+                {' · '}<span style={{ fontWeight: 600, color: 'var(--text-2)' }}>{acc.currency}</span>
+              </div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <button onClick={() => respond(myMember.id, false)} disabled={busy}
-              style={{ height: 34, padding: '0 14px', borderRadius: 9, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, opacity: busy ? 0.5 : 1 }}>
-              {lang === 'es' ? 'Rechazar' : 'Decline'}
-            </button>
+          {/* Actions: Accept (full width), then Decline + Delete */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button onClick={() => respond(myMember.id, true)} disabled={busy}
-              style={{ height: 34, padding: '0 14px', borderRadius: 9, background: 'var(--income-soft)', border: '1px solid color-mix(in oklab, var(--income) 30%, transparent)', color: 'var(--income)', fontSize: 13, fontWeight: 700, opacity: busy ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-              {busy ? <Icon name="spark" size={13} /> : <Icon name="check" size={13} stroke={2.5} />}
-              {lang === 'es' ? 'Aceptar' : 'Accept'}
+              style={{ width: '100%', padding: '10px', borderRadius: 10, background: busy ? 'var(--surface-3)' : 'var(--income-soft)', border: `1px solid ${busy ? 'var(--border)' : 'color-mix(in oklab, var(--income) 30%, transparent)'}`, color: busy ? 'var(--text-3)' : 'var(--income)', fontSize: 13.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+              {busyMember && !busy ? <Icon name="spark" size={14} /> : <Icon name="check" size={14} stroke={2.5} />}
+              {lang === 'es' ? 'Aceptar invitación' : 'Accept invitation'}
             </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {/* Decline = marks rejected, blocks future invites */}
+              <button onClick={() => respond(myMember.id, false)} disabled={busy}
+                title={lang === 'es' ? 'Rechazar bloquea futuras invitaciones de este usuario' : 'Declining blocks future invitations from this user'}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 600, opacity: busy ? 0.5 : 1 }}>
+                {lang === 'es' ? 'Rechazar' : 'Decline'}
+              </button>
+              {/* Delete = removes completely, sender can re-invite */}
+              <button onClick={() => deleteAccount(acc.id)} disabled={busy}
+                title={lang === 'es' ? 'Eliminar borra la invitación sin bloquear al remitente' : 'Delete removes the invite without blocking the sender'}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 10, background: 'color-mix(in oklab, var(--expense) 8%, var(--surface-2))', border: '1px solid color-mix(in oklab, var(--expense) 20%, var(--border))', color: 'var(--expense)', fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, opacity: busy ? 0.5 : 1 }}>
+                {busyAccount ? <Icon name="spark" size={12} /> : <Icon name="trash" size={12} stroke={1.8} />}
+                {lang === 'es' ? 'Eliminar' : 'Delete'}
+              </button>
+            </div>
+            {/* Helper text */}
+            <div style={{ fontSize: 10.5, color: 'var(--text-4)', lineHeight: 1.4, paddingTop: 2 }}>
+              {lang === 'es'
+                ? '· Rechazar bloquea futuras invitaciones de este remitente · Eliminar borra sin bloquear'
+                : '· Decline blocks future invitations from this sender · Delete removes without blocking'}
+            </div>
           </div>
         </div>
       </div>
@@ -290,7 +322,7 @@ export default function CuentasCompartidasPage() {
         </div>
 
         {/* Members */}
-        <div style={{ padding: '12px 18px' }}>
+        <div style={{ padding: '12px 18px 0' }}>
           <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
             {lang === 'es' ? 'Miembros' : 'Members'}
           </div>
@@ -321,6 +353,37 @@ export default function CuentasCompartidasPage() {
               );
             })}
           </div>
+        </div>
+
+        {/* Danger zone: delete for both members */}
+        <div style={{ padding: '12px 18px 14px', marginTop: 4, borderTop: '1px solid var(--border)' }}>
+          {confirmDeleteId === acc.id ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--expense)', fontWeight: 600, textAlign: 'center' }}>
+                {lang === 'es' ? '¿Eliminar esta cuenta para ambos miembros? Esta acción no se puede deshacer.' : 'Delete this account for both members? This cannot be undone.'}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setConfirmDeleteId(null)}
+                  style={{ flex: 1, padding: '8px 0', borderRadius: 9, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-2)', fontSize: 13, fontWeight: 600 }}>
+                  {lang === 'es' ? 'Cancelar' : 'Cancel'}
+                </button>
+                <button onClick={() => { setConfirmDeleteId(null); deleteAccount(acc.id); }} disabled={actionId === acc.id}
+                  style={{ flex: 1, padding: '8px 0', borderRadius: 9, background: 'color-mix(in oklab, var(--expense) 15%, var(--surface-2))', border: '1px solid color-mix(in oklab, var(--expense) 35%, var(--border))', color: 'var(--expense)', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  {actionId === acc.id ? <Icon name="spark" size={13} /> : <Icon name="trash" size={13} stroke={2} />}
+                  {lang === 'es' ? 'Sí, eliminar' : 'Yes, delete'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmDeleteId(acc.id)}
+              style={{ width: '100%', padding: '8px 0', borderRadius: 9, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-4)', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 140ms' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'color-mix(in oklab, var(--expense) 40%, var(--border))'; e.currentTarget.style.color = 'var(--expense)'; e.currentTarget.style.background = 'color-mix(in oklab, var(--expense) 6%, transparent)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-4)'; e.currentTarget.style.background = 'transparent'; }}
+            >
+              <Icon name="trash" size={12} stroke={1.8} />
+              {lang === 'es' ? 'Eliminar cuenta para ambos' : 'Delete account for both'}
+            </button>
+          )}
         </div>
       </div>
     );

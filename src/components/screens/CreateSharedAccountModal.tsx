@@ -46,6 +46,12 @@ export function CreateSharedAccountModal({ open, onClose, onSuccess }: Props) {
         setError(lang === 'es' ? 'No existe ningún usuario con ese correo' : 'No user found with that email');
       } else if (msg.includes('yourself')) {
         setError(lang === 'es' ? 'No puedes invitarte a ti mismo' : 'You cannot invite yourself');
+      } else if (msg.includes('duplicate_name')) {
+        setError(lang === 'es' ? 'Ya tienes una cuenta compartida con ese nombre. Usa un nombre diferente.' : 'You already have a shared account with that name. Choose a different name.');
+      } else if (msg.includes('already_rejected')) {
+        setError(lang === 'es' ? 'Esa persona rechazó una invitación tuya. Elimina esa solicitud antes de volver a invitar.' : 'That person declined your invitation. Delete that request before inviting again.');
+      } else if (msg.includes('already_pending')) {
+        setError(lang === 'es' ? 'Ya tienes una solicitud pendiente con esa persona.' : 'You already have a pending invitation with that person.');
       } else {
         setError(lang === 'es' ? 'Ocurrió un error. Intenta de nuevo.' : 'An error occurred. Please try again.');
       }
